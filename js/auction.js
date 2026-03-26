@@ -23,6 +23,7 @@ let pausedAt = null;
 let poolByIndex = {};
 let lastPoolNoticeId = null;
 let poolIndexMap = {};
+let removedFromRoom = false;
 
 // ---- Firebase listeners ----
 let listeners = {};
@@ -75,6 +76,20 @@ async function initAuction() {
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
     teamsData = snap.val() || {};
+
+    // If this client's team no longer exists, the host removed them.
+    if (!teamsData[myTeamId]) {
+      if (!removedFromRoom) {
+        removedFromRoom = true;
+        showToast('You were removed from this auction by host.', 'error');
+        setTimeout(() => {
+          clearSession();
+          window.location.href = 'index.html';
+        }, 900);
+      }
+      return;
+    }
+
     renderSidebar();
     updateMyPurse();
   });
@@ -853,6 +868,7 @@ function renderSidebar() {
         <div class="team-row-top">
           <span class="team-short-badge">${t?.logo ? `<img class="sidebar-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.short}</span>
           <span class="team-owner-name">${team.ownerName}</span>
+          ${(isHost && !isMe) ? `<button class="team-remove-btn" onclick="event.stopPropagation(); removeTeamFromAuction('${tId}')" title="Remove ${team.ownerName}">Remove</button>` : ''}
           ${(isHost && isLeading) ? '<span class="leading-crown">👑</span>' : ''}
         </div>
         <div class="team-row-bottom">
@@ -862,6 +878,49 @@ function renderSidebar() {
       </div>
     `;
   }).join('');
+}
+
+async function removeTeamFromAuction(targetTeamId) {
+  if (!isHost) return;
+  if (!targetTeamId || targetTeamId === myTeamId) {
+    showToast('Host team cannot be removed.', 'error');
+    return;
+  }
+
+  const target = teamsData[targetTeamId];
+  if (!target) {
+    showToast('Team not found.', 'error');
+    return;
+  }
+
+  if (!confirm(`Remove ${target.ownerName} (${target.short}) from this auction?`)) return;
+
+  try {
+    await db.ref(`rooms/${roomCode}/teams/${targetTeamId}`).remove();
+
+    // Clean up this team from the current round state.
+    await db.ref(`rooms/${roomCode}/currentAuction`).transaction(auction => {
+      if (!auction) return auction;
+
+      if (auction.skipVotes) delete auction.skipVotes[targetTeamId];
+      if (auction.poolSkipVotes) delete auction.poolSkipVotes[targetTeamId];
+      if (auction.withdrawnTeams) delete auction.withdrawnTeams[targetTeamId];
+
+      if (auction.highestBidder === targetTeamId) {
+        auction.highestBidder = null;
+        const currentPlayer = playerMap[auction.playerId];
+        if (currentPlayer) auction.currentBid = currentPlayer.base_price_lakh;
+        auction.timerEnd = Date.now() + timerSeconds * 1000;
+      }
+
+      return auction;
+    });
+
+    showToast(`${target.ownerName} removed`, 'success');
+  } catch (err) {
+    console.error('Remove user failed:', err);
+    showToast('Failed to remove user.', 'error');
+  }
 }
 
 function showTeamSquad(teamId) {

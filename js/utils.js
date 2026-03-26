@@ -35,6 +35,12 @@ function getBidIncrement(currentBid) {
   return 50;
 }
 
+function getBidJumpOptions(basePriceLakh) {
+  if ([150, 200].includes(basePriceLakh)) return [50, 100];
+  if ([50, 75, 100].includes(basePriceLakh)) return [25, 50, 100];
+  return [25, 50, 100];
+}
+
 function formatPrice(lakh) {
   if (!lakh && lakh !== 0) return '—';
   if (lakh >= 100) {

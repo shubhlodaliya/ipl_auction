@@ -899,6 +899,35 @@ input[type=range]::-webkit-slider-thumb {
   box-shadow: none;
 }
 
+.quick-bid-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+
+.quick-bid-btn {
+  padding: 0.55rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: var(--transition);
+}
+
+.quick-bid-btn:hover:not(:disabled) {
+  border-color: rgba(255, 203, 48, 0.5);
+  color: #ffe8a6;
+  background: rgba(255, 203, 48, 0.12);
+}
+
+.quick-bid-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .withdraw-btn {
   width: 100%;
   padding: 0.75rem;

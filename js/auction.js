@@ -192,15 +192,17 @@ function renderBidDisplay(data, player) {
 
   // BID button
   const bidBtn = document.getElementById('bidBtn');
+  const quickBid25 = document.getElementById('quickBid25');
+  const quickBid50 = document.getElementById('quickBid50');
+  const quickBid100 = document.getElementById('quickBid100');
   const withdrawBtn = document.getElementById('withdrawBtn');
   const passBtn = document.getElementById('passBtn');
   const skipPoolBtn = document.getElementById('skipPoolBtn');
   const warnEl = document.getElementById('noPurseWarn');
 
   if (data.status === 'bidding') {
-    const nextBid = data.highestBidder
-      ? data.currentBid + getBidIncrement(data.currentBid)
-      : data.currentBid;
+    const bidJumps = getBidJumpOptions(player.base_price_lakh);
+    const minJump = bidJumps[0];
     const myTeam = teamsData[myTeamId];
     const withdrawn = !!(data.withdrawnTeams && data.withdrawnTeams[myTeamId]);
     const skipVoted = !!(data.skipVotes && data.skipVotes[myTeamId]);
@@ -210,13 +212,37 @@ function renderBidDisplay(data, player) {
     const poolSkipCount = Object.keys(data.poolSkipVotes || {}).length;
     const currentPool = getCurrentPoolMeta();
     const canSkipPool = !!currentPool?.poolId;
-    const canAfford = myTeam && myTeam.purse >= nextBid;
+    const affordableJumps = bidJumps.filter(j => myTeam && (myTeam.purse >= data.currentBid + j));
+    const canAffordAny = affordableJumps.length > 0;
     const isLeading = data.highestBidder === myTeamId;
     const squadFull = myTeam && myTeam.squad && myTeam.squad.length >= roomConfig.maxSquadSize;
-    const canTryBid = !paused && !withdrawn && !isLeading;
+    const canTryBid = !paused && !withdrawn && !isLeading && !squadFull;
 
-    bidBtn.textContent = `BID ${formatPrice(nextBid)}`;
-    bidBtn.disabled = !canTryBid;
+    bidBtn.textContent = `BID +${formatPrice(minJump)}`;
+    bidBtn.disabled = !canTryBid || !canAffordAny;
+
+    const quickButtons = {
+      25: quickBid25,
+      50: quickBid50,
+      100: quickBid100
+    };
+
+    Object.entries(quickButtons).forEach(([jumpStr, btn]) => {
+      if (!btn) return;
+      const jump = Number(jumpStr);
+      const allowed = bidJumps.includes(jump);
+      if (!allowed) {
+        btn.style.display = 'none';
+        btn.disabled = true;
+        return;
+      }
+
+      btn.style.display = '';
+      btn.textContent = `+${formatPrice(jump)}`;
+
+      const canAffordThis = myTeam && myTeam.purse >= (data.currentBid + jump);
+      btn.disabled = !canTryBid || !canAffordThis;
+    });
 
     if (withdrawn) {
       withdrawBtn.disabled = true;
@@ -253,13 +279,16 @@ function renderBidDisplay(data, player) {
 
     if (paused) { warnEl.textContent = '⏸️ Auction is paused by host'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--orange)'; }
     else if (withdrawn) { warnEl.textContent = '⏭️ You withdrew for this player'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--text-sec)'; }
-    else if (!canAfford) { warnEl.textContent = '⚠️ Not enough purse!'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--red)'; }
+    else if (!canAffordAny) { warnEl.textContent = '⚠️ Not enough purse for available bid jumps!'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--red)'; }
     else if (isLeading) { warnEl.textContent = '✓ You are the leading bidder'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--green)'; }
     else if (squadFull) { warnEl.textContent = '⚠️ Your squad is full!'; warnEl.style.display = 'block'; }
     else { warnEl.style.display = 'none'; warnEl.style.color = 'var(--red)'; }
   } else {
     bidBtn.disabled = true;
     bidBtn.textContent = 'BID';
+    if (quickBid25) { quickBid25.disabled = true; quickBid25.style.display = ''; }
+    if (quickBid50) { quickBid50.disabled = true; quickBid50.style.display = ''; }
+    if (quickBid100) { quickBid100.disabled = true; quickBid100.style.display = ''; }
     withdrawBtn.disabled = true;
     withdrawBtn.textContent = 'Withdraw For This Player';
     passBtn.disabled = true;
@@ -312,16 +341,19 @@ function updateTimerDisplay(secondsLeft, total) {
 }
 
 // ---- PLACE BID ----
-async function placeBid() {
+async function placeBid(selectedJump = null) {
   if (!currentAuctionData || currentAuctionData.status !== 'bidding') return;
   if (paused) {
     showToast('Auction is paused.', 'error');
     return;
   }
 
-  const nextBid = currentAuctionData.highestBidder
-    ? currentAuctionData.currentBid + getBidIncrement(currentAuctionData.currentBid)
-    : currentAuctionData.currentBid;
+  const currentPlayer = playerMap[currentAuctionData.playerId];
+  if (!currentPlayer) return;
+
+  const allowedJumps = getBidJumpOptions(currentPlayer.base_price_lakh);
+  const jump = selectedJump && allowedJumps.includes(selectedJump) ? selectedJump : allowedJumps[0];
+  const nextBid = currentAuctionData.currentBid + jump;
   const myTeam = teamsData[myTeamId];
   if (currentAuctionData.withdrawnTeams && currentAuctionData.withdrawnTeams[myTeamId]) {
     showToast('You withdrew for this player.', 'error');
@@ -350,9 +382,11 @@ async function placeBid() {
   try {
     await db.ref(`rooms/${roomCode}/currentAuction`).transaction(auction => {
       if (!auction || auction.status !== 'bidding') return; // abort
-      const txnNextBid = auction.highestBidder
-        ? auction.currentBid + getBidIncrement(auction.currentBid)
-        : auction.currentBid;
+      const txnPlayer = playerMap[auction.playerId];
+      if (!txnPlayer) return;
+      const txnAllowedJumps = getBidJumpOptions(txnPlayer.base_price_lakh);
+      if (!txnAllowedJumps.includes(jump)) return;
+      const txnNextBid = auction.currentBid + jump;
       if (txnNextBid !== nextBid) return; // stale UI value, abort and let client refresh
       if (auction.withdrawnTeams && auction.withdrawnTeams[myTeamId]) return;
       auction.currentBid = txnNextBid;
@@ -454,7 +488,10 @@ async function hostEvaluateFastPath(data) {
     return;
   }
 
-  const nextBid = data.currentBid + getBidIncrement(data.currentBid);
+  const currentPlayer = playerMap[data.playerId];
+  if (!currentPlayer) return;
+  const minJump = getBidJumpOptions(currentPlayer.base_price_lakh)[0];
+  const nextBid = data.currentBid + minJump;
   const openChallengers = Object.entries(teamsData).filter(([teamId, team]) => {
     if (teamId === data.highestBidder) return false;
     if (data.withdrawnTeams && data.withdrawnTeams[teamId]) return false;

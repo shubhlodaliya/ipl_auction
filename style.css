@@ -253,6 +253,7 @@ img { display: block; }
 input[type=range] {
   flex: 1;
   -webkit-appearance: none;
+  appearance: none;
   height: 4px;
   border-radius: 4px;
   background: rgba(255,255,255,0.1);
@@ -1410,6 +1411,94 @@ input[type=range]::-webkit-slider-thumb {
 .fade-in { animation: fadeIn 0.4s ease forwards; }
 
 /* ============================================================
+   STATIC INFO PAGES + FOOTER
+   ============================================================ */
+.info-page-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+.info-card {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 1.75rem;
+}
+.info-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  color: var(--gold);
+  margin-bottom: 0.8rem;
+}
+.info-subtitle {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.2rem;
+  color: #ffd86a;
+  margin: 1.4rem 0 0.55rem;
+}
+.info-text {
+  color: var(--text-sec);
+  line-height: 1.7;
+  margin-bottom: 0.6rem;
+}
+.info-note {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 0.85rem;
+}
+.contact-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.35rem 0 0.9rem;
+}
+.contact-list a {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+}
+.contact-form {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.5rem;
+}
+.form-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: rgba(6,11,24,0.7);
+  backdrop-filter: blur(10px);
+  padding: 0.85rem 1rem;
+}
+.site-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.site-footer-links {
+  display: flex;
+  gap: 0.95rem;
+  align-items: center;
+}
+.site-footer-links a {
+  color: var(--text-sec);
+  transition: var(--transition);
+}
+.site-footer-links a:hover {
+  color: var(--gold);
+}
+
+/* ============================================================
    SCROLLBAR
    ============================================================ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -1447,5 +1536,12 @@ input[type=range]::-webkit-slider-thumb {
   }
   .pool-sold-team {
     max-width: 130px;
+  }
+  .info-card {
+    padding: 1.2rem;
+  }
+  .site-footer-inner {
+    justify-content: center;
+    text-align: center;
   }
 }

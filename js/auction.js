@@ -169,7 +169,10 @@ function renderPlayerSpotlight(player) {
   `;
 }
 
-function renderBidDisplay(data, player) {
+function renderBidDisplay(data, player = null) {
+  const resolvedPlayer = player || playerMap[data.playerId];
+  if (!resolvedPlayer) return;
+
   const bidEl = document.getElementById('currentBidDisplay');
   bidEl.textContent = formatPrice(data.currentBid);
   bidEl.classList.remove('bumped');
@@ -200,7 +203,7 @@ function renderBidDisplay(data, player) {
   const warnEl = document.getElementById('noPurseWarn');
 
   if (data.status === 'bidding') {
-    const bidJumps = getBidJumpOptions(player.base_price_lakh);
+    const bidJumps = getBidJumpOptions(resolvedPlayer.base_price_lakh);
     const myTeam = teamsData[myTeamId];
     const withdrawn = !!(data.withdrawnTeams && data.withdrawnTeams[myTeamId]);
     const skipVoted = !!(data.skipVotes && data.skipVotes[myTeamId]);

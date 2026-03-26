@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auction — IPL Auction</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🏏 IPL Auction</div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <span id="myTeamChip" class="my-team-chip" style="display:none;"></span>
+      <div id="auctionProgress" style="display:none;"></div>
+    </div>
+  </header>
+
+  <!-- WAITING SCREEN -->
+  <div class="waiting-screen" id="waitingScreen">
+    <div class="spinner"></div>
+    <p style="color:var(--text-sec)">Joining auction...</p>
+  </div>
+
+  <!-- MAIN AUCTION LAYOUT -->
+  <div class="auction-layout" id="auctionLayout" style="display:none;">
+
+    <!-- LEFT: Teams Sidebar -->
+    <aside class="teams-sidebar">
+      <div class="sidebar-title">Teams</div>
+      <div id="sidebarTeams"></div>
+    </aside>
+
+    <!-- RIGHT: Auction Main -->
+    <div class="auction-main">
+
+      <!-- Top Bar -->
+      <div class="auction-topbar">
+        <div class="auction-progress">
+          <span class="progress-text" id="progressText">Player 0/0</span>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+          </div>
+          <button class="pool-banner-btn" id="currentPoolBanner" onclick="showCurrentPoolDetails()" style="display:none;">
+            <span class="pool-banner-label">Current Pool</span>
+            <span class="pool-banner-name" id="currentPoolBannerName">--</span>
+            <span class="pool-banner-meta" id="currentPoolBannerMeta">0 players</span>
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <span id="auctionStatus"
+            style="font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:100px;background:var(--gold-dim);color:var(--gold);font-weight:600;">
+            LIVE
+          </span>
+          <div id="hostAuctionControls" style="display:none;align-items:center;gap:0.6rem;">
+            <button class="btn btn-secondary" id="pauseBtn" onclick="togglePauseAuction()">Pause</button>
+            <button class="btn btn-danger" id="terminateBtn" onclick="terminateAuction()">Terminate</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auction Body -->
+      <div class="auction-body">
+
+        <!-- Player Spotlight -->
+        <div class="player-spotlight" id="playerSpotlight">
+          <div class="state-loading">
+            <div class="spinner"></div>
+            <p style="color:var(--text-sec)">Loading next player...</p>
+          </div>
+        </div>
+
+        <!-- Bid Panel -->
+        <div class="bid-panel">
+          <div>
+            <div class="current-bid-label">Current Bid</div>
+            <div class="current-bid-amount" id="currentBidDisplay">₹—</div>
+          </div>
+
+          <div class="highest-bidder-chip" id="highestBidderChip">
+            No bids yet
+          </div>
+
+          <!-- Timer -->
+          <div class="timer-container">
+            <svg class="timer-ring-svg" viewBox="0 0 100 100">
+              <circle class="timer-ring-bg" cx="50" cy="50" r="45" />
+              <circle class="timer-ring-progress" id="timerRing" cx="50" cy="50" r="45" />
+            </svg>
+            <div class="timer-value" id="timerValue">—</div>
+          </div>
+
+          <!-- Bid Actions -->
+          <button class="bid-btn" id="bidBtn" onclick="placeBid()" disabled>
+            BID
+          </button>
+
+          <button class="withdraw-btn" id="withdrawBtn" onclick="withdrawFromPlayer()" disabled>
+            Withdraw For This Player
+          </button>
+
+          <p class="no-purse-warning" id="noPurseWarn">⚠️ Not enough purse!</p>
+
+          <!-- Host: Pass button -->
+          <button class="pass-btn" id="passBtn" onclick="passPlayer()" disabled>
+            Skip Player
+          </button>
+
+          <!-- My purse -->
+          <div style="text-align:center;padding-top:0.5rem;border-top:1px solid var(--border);width:100%;">
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:0.2rem;">My Purse</div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--green);" id="myPurseDisplay">—</div>
+          </div>
+        </div>
+
+      </div><!-- end auction-body -->
+    </div><!-- end auction-main -->
+  </div><!-- end auction-layout -->
+
+  <!-- SOLD / UNSOLD BANNER -->
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-banner" id="resultBanner">
+      <span class="result-word" id="resultWord"></span>
+      <div class="result-detail" id="resultDetail"></div>
+    </div>
+  </div>
+
+  <div class="pool-start-banner" id="poolStartBanner">
+    <div class="pool-start-inner">
+      <div class="pool-start-title">New Pool Started</div>
+      <div class="pool-start-name" id="poolStartName">Marquee Pool</div>
+    </div>
+  </div>
+
+  <!-- TEAM SQUAD MODAL -->
+  <div class="team-modal-overlay" id="teamModalOverlay" onclick="closeTeamSquadModal()">
+    <div class="team-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="teamModalTitle">Team Squad</h3>
+        <button class="btn btn-ghost" onclick="closeTeamSquadModal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="teamModalContent"></div>
+    </div>
+  </div>
+
+  <div class="team-modal-overlay" id="poolModalOverlay" onclick="closePoolDetailsModal()">
+    <div class="team-modal pool-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="poolModalTitle">Current Pool</h3>
+        <button class="btn btn-ghost" onclick="closePoolDetailsModal()">Close</button>
+      </div>
+      <div class="pool-summary" id="poolSummaryRow"></div>
+      <div class="team-modal-content" id="poolModalContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auction.js"></script>
+</body>
+</html>

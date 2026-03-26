@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results — IPL Auction</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🏏 IPL Auction</div>
+    <button class="btn btn-ghost" onclick="newAuction()">New Auction</button>
+  </header>
+
+  <!-- LOADING -->
+  <div class="waiting-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <p style="color:var(--text-sec)">Loading results...</p>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsContent" style="display:none;">
+    <div class="results-layout">
+
+      <div class="results-hero fade-in">
+        <div style="font-size:3rem;margin-bottom:0.5rem;">🏆</div>
+        <h1 class="results-title">Auction Complete!</h1>
+        <p class="results-sub" id="resultsSub">Here are the final squad breakdowns</p>
+      </div>
+
+      <!-- Summary Stats -->
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;" id="summaryStats"></div>
+
+      <!-- Teams Grid -->
+      <div class="results-grid" id="resultsGrid"></div>
+
+      <div style="text-align:center;margin-top:2rem;">
+        <button class="btn btn-primary btn-lg" onclick="newAuction()">🏏 Start New Auction</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/results.js"></script>
+
+  <script>
+    function newAuction() {
+      clearSession();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IPL Auction — Play with Friends</title>
+  <meta name="description" content="Create or join a real-time IPL player auction with friends. Bid on real IPL players using virtual currency!" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🏏 IPL Auction</div>
+    <div class="header-badge">LIVE</div>
+  </header>
+
+  <!-- HERO -->
+  <main class="page-center">
+    <div class="hero fade-in">
+      <div class="hero-icon">🏆</div>
+      <h1 class="hero-title">IPL Player Auction</h1>
+      <p class="hero-sub">Create a room · Invite friends · Bid live · Win glory</p>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="glass landing-card fade-in" style="animation-delay:0.1s">
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tabCreate" onclick="switchTab('create')">🎉 Create Auction</button>
+        <button class="tab-btn" id="tabJoin" onclick="switchTab('join')">🔗 Join Auction</button>
+      </div>
+
+      <!-- CREATE PANEL -->
+      <div class="tab-panel active" id="panelCreate">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input class="form-input" id="createName" type="text" placeholder="Enter your name" maxlength="24" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Select Your IPL Team</label>
+          <div class="team-grid" id="createTeamGrid"></div>
+          <input type="hidden" id="createTeamId" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Budget per Team</label>
+          <div class="range-wrapper">
+            <input type="range" id="budgetRange" min="500" max="10000" step="100" value="2000"
+                   oninput="document.getElementById('budgetVal').textContent=formatPrice(+this.value)" />
+            <span class="range-val" id="budgetVal">₹2000L</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Max Squad Size</label>
+          <div class="range-wrapper">
+            <input type="range" id="squadRange" min="5" max="25" step="1" value="25"
+                   oninput="document.getElementById('squadVal').textContent=this.value+' players'" />
+            <span class="range-val" id="squadVal">25 players</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Bid Timer (seconds)</label>
+          <div class="range-wrapper">
+            <input type="range" id="timerRange" min="10" max="60" step="5" value="30"
+                   oninput="document.getElementById('timerVal').textContent=this.value+'s'" />
+            <span class="range-val" id="timerVal">30s</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Player Order</label>
+          <div class="mode-toggle" id="auctionModeToggle">
+            <label class="mode-option active" for="modeRandom">
+              <input type="radio" id="modeRandom" name="auctionMode" value="random" checked />
+              <span>Random</span>
+            </label>
+            <label class="mode-option" for="modeCategory">
+              <input type="radio" id="modeCategory" name="auctionMode" value="category" />
+              <span>By Category</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg btn-full" id="createBtn" onclick="createRoom()">
+          🚀 Create Auction Room
+        </button>
+        <p id="createError" style="color:var(--red);font-size:0.85rem;display:none;"></p>
+      </div>
+
+      <!-- JOIN PANEL -->
+      <div class="tab-panel" id="panelJoin">
+        <div class="form-group">
+          <label class="form-label">Room Code</label>
+          <input class="form-input" id="joinCode" type="text" placeholder="Enter 6-character code"
+                 maxlength="6" style="text-transform:uppercase;font-size:1.3rem;letter-spacing:6px;font-family:'Rajdhani',sans-serif;font-weight:700;"
+                 oninput="this.value=this.value.toUpperCase(); checkRoomCode(this.value)" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input class="form-input" id="joinName" type="text" placeholder="Enter your name" maxlength="24" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pick Your IPL Team</label>
+          <div class="team-grid" id="joinTeamGrid">
+            <div class="state-loading" style="grid-column:1/-1;padding:1rem;">
+              <p style="color:var(--text-dim);font-size:0.85rem;">Enter room code to see available teams</p>
+            </div>
+          </div>
+          <input type="hidden" id="joinTeamId" />
+        </div>
+
+        <button class="btn btn-primary btn-lg btn-full" id="joinBtn" onclick="joinRoom()">
+          🚀 Join Auction
+        </button>
+        <p id="joinError" style="color:var(--red);font-size:0.85rem;display:none;"></p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/create.js"></script>
+
+  <script>
+    // Render team grids on load
+    renderCreateTeamGrid();
+
+    function switchTab(tab) {
+      document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+      document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+      document.getElementById('panelCreate').classList.toggle('active', tab === 'create');
+      document.getElementById('panelJoin').classList.toggle('active', tab === 'join');
+    }
+
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 2500);
+    }
+  </script>
+</body>
+</html>

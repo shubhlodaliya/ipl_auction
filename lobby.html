@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lobby — IPL Auction</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🏏 IPL Auction</div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <span id="myTeamChip" class="my-team-chip" style="display:none;"></span>
+      <button class="btn btn-ghost" onclick="leaveRoom()">Leave</button>
+    </div>
+  </header>
+
+  <!-- WAITING SCREEN (shown while not in lobby) -->
+  <div class="waiting-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <p style="color:var(--text-sec)">Connecting to room...</p>
+  </div>
+
+  <!-- LOBBY CONTENT -->
+  <div id="lobbyContent" style="display:none;">
+    <div class="lobby-layout">
+
+      <!-- Room Code Box -->
+      <div class="room-code-box fade-in" onclick="copyRoomCode()">
+        <div class="room-code-label">Room Code</div>
+        <div class="room-code-value" id="roomCodeDisplay">------</div>
+        <div class="room-code-hint">👆 Click to copy · Share with friends to join!</div>
+      </div>
+
+      <!-- Config Info -->
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;" id="configInfo"></div>
+
+      <!-- Teams Grid -->
+      <div style="width:100%;">
+        <h2 class="display" style="font-size:1.4rem;margin-bottom:1rem;text-align:center;">IPL Teams
+          <span style="font-size:0.9rem;font-weight:400;color:var(--text-sec);font-family:'Inter',sans-serif;" id="joinedCount"></span>
+        </h2>
+        <div class="lobby-teams-grid" id="teamSlotsGrid"></div>
+      </div>
+
+      <!-- Start Button (host only) -->
+      <div id="hostControls" style="display:none;text-align:center;">
+        <p id="waitingHint" style="color:var(--text-sec);font-size:0.9rem;margin-bottom:1rem;"></p>
+        <button class="btn btn-primary btn-xl" id="startBtn" onclick="startAuction()" disabled>
+          🏏 Start Auction
+        </button>
+      </div>
+
+      <!-- Non-host waiting -->
+      <div id="guestWaiting" style="display:none;text-align:center;">
+        <div class="spinner" style="margin:0 auto 1rem;"></div>
+        <p style="color:var(--text-sec)">Waiting for the host to start the auction...</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/lobby.js"></script>
+
+  <script>
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 2500);
+    }
+    function copyRoomCode() {
+      const code = document.getElementById('roomCodeDisplay').textContent;
+      navigator.clipboard.writeText(code).then(() => showToast('Room code copied!', 'success'));
+    }
+    function leaveRoom() {
+      if (confirm('Leave this auction room?')) {
+        clearSession();
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>

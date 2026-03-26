@@ -1,0 +1,2090 @@
+[
+    {
+        "id":  1,
+        "name":  "Virat Kohli",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  2,
+        "name":  "Rohit Sharma",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  3,
+        "name":  "Shikhar Dhawan",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  4,
+        "name":  "Shubman Gill",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  5,
+        "name":  "Ruturaj Gaikwad",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  6,
+        "name":  "Yashasvi Jaiswal",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  7,
+        "name":  "Prithvi Shaw",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  8,
+        "name":  "Devdutt Padikkal",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  9,
+        "name":  "Shreyas Iyer",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  10,
+        "name":  "Suryakumar Yadav",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  11,
+        "name":  "Tilak Varma",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  12,
+        "name":  "Rinku Singh",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  13,
+        "name":  "Mayank Agarwal",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  14,
+        "name":  "Abhishek Sharma",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  15,
+        "name":  "MS Dhoni",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  16,
+        "name":  "KL Rahul",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  17,
+        "name":  "Rishabh Pant",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  18,
+        "name":  "Sanju Samson",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  19,
+        "name":  "Ishan Kishan",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  20,
+        "name":  "Dinesh Karthik",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  21,
+        "name":  "Dhruv Jurel",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  22,
+        "name":  "Wriddhiman Saha",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  23,
+        "name":  "Hardik Pandya",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  24,
+        "name":  "Ravindra Jadeja",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  25,
+        "name":  "Axar Patel",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  26,
+        "name":  "Washington Sundar",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  27,
+        "name":  "Shardul Thakur",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  28,
+        "name":  "Venkatesh Iyer",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  29,
+        "name":  "Deepak Hooda",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  30,
+        "name":  "Nitish Kumar Reddy",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  31,
+        "name":  "Riyan Parag",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  32,
+        "name":  "Suresh Raina",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  33,
+        "name":  "Krunal Pandya",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  34,
+        "name":  "Jasprit Bumrah",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  35,
+        "name":  "Mohammed Shami",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  200,
+        "category":  "Indian"
+    },
+    {
+        "id":  36,
+        "name":  "Mohammed Siraj",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  37,
+        "name":  "Bhuvneshwar Kumar",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  38,
+        "name":  "Yuzvendra Chahal",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  39,
+        "name":  "Kuldeep Yadav",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  40,
+        "name":  "Ravi Bishnoi",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  41,
+        "name":  "Arshdeep Singh",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  42,
+        "name":  "Prasidh Krishna",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  43,
+        "name":  "Umesh Yadav",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  44,
+        "name":  "Deepak Chahar",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  45,
+        "name":  "Avesh Khan",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  46,
+        "name":  "T Natarajan",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  47,
+        "name":  "Harshit Rana",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  48,
+        "name":  "Harshal Patel",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  49,
+        "name":  "Naman Dhir",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  50,
+        "name":  "Robin Uthappa",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  51,
+        "name":  "David Warner",
+        "role":  "Batsman",
+        "country":  "Australia",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  52,
+        "name":  "Faf du Plessis",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  53,
+        "name":  "Chris Gayle",
+        "role":  "Batsman",
+        "country":  "West Indies",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  54,
+        "name":  "David Miller",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  55,
+        "name":  "Alex Hales",
+        "role":  "Batsman",
+        "country":  "England",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  56,
+        "name":  "Devon Conway",
+        "role":  "Batsman",
+        "country":  "New Zealand",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  57,
+        "name":  "Dawid Malan",
+        "role":  "Batsman",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  58,
+        "name":  "Travis Head",
+        "role":  "Batsman",
+        "country":  "Australia",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  59,
+        "name":  "Harry Brook",
+        "role":  "Batsman",
+        "country":  "England",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  60,
+        "name":  "Shimron Hetmyer",
+        "role":  "Batsman",
+        "country":  "West Indies",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  61,
+        "name":  "AB de Villiers",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  62,
+        "name":  "Jos Buttler",
+        "role":  "Wicket-keeper",
+        "country":  "England",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  63,
+        "name":  "Quinton de Kock",
+        "role":  "Wicket-keeper",
+        "country":  "South Africa",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  64,
+        "name":  "Jonny Bairstow",
+        "role":  "Wicket-keeper",
+        "country":  "England",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  65,
+        "name":  "Nicholas Pooran",
+        "role":  "Wicket-keeper",
+        "country":  "West Indies",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  66,
+        "name":  "Phil Salt",
+        "role":  "Wicket-keeper",
+        "country":  "England",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  67,
+        "name":  "Matthew Wade",
+        "role":  "Wicket-keeper",
+        "country":  "Australia",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  68,
+        "name":  "Andre Russell",
+        "role":  "All-rounder",
+        "country":  "West Indies",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  69,
+        "name":  "Ben Stokes",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  70,
+        "name":  "Moeen Ali",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  71,
+        "name":  "Mitchell Marsh",
+        "role":  "All-rounder",
+        "country":  "Australia",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  72,
+        "name":  "Glenn Maxwell",
+        "role":  "All-rounder",
+        "country":  "Australia",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  73,
+        "name":  "Marcus Stoinis",
+        "role":  "All-rounder",
+        "country":  "Australia",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  74,
+        "name":  "Sam Curran",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  75,
+        "name":  "Jason Holder",
+        "role":  "All-rounder",
+        "country":  "West Indies",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  76,
+        "name":  "Kieron Pollard",
+        "role":  "All-rounder",
+        "country":  "West Indies",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  77,
+        "name":  "Wanindu Hasaranga",
+        "role":  "All-rounder",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  78,
+        "name":  "Kyle Jamieson",
+        "role":  "All-rounder",
+        "country":  "New Zealand",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  79,
+        "name":  "Sunil Narine",
+        "role":  "All-rounder",
+        "country":  "West Indies",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  80,
+        "name":  "Rashid Khan",
+        "role":  "All-rounder",
+        "country":  "Afghanistan",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  81,
+        "name":  "Liam Livingstone",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  82,
+        "name":  "Will Jacks",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  83,
+        "name":  "Glenn Phillips",
+        "role":  "All-rounder",
+        "country":  "New Zealand",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  84,
+        "name":  "Mohammad Nabi",
+        "role":  "All-rounder",
+        "country":  "Afghanistan",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  85,
+        "name":  "Dwayne Bravo",
+        "role":  "All-rounder",
+        "country":  "West Indies",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  86,
+        "name":  "Pat Cummins",
+        "role":  "Fast Bowler",
+        "country":  "Australia",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  87,
+        "name":  "Kagiso Rabada",
+        "role":  "Fast Bowler",
+        "country":  "South Africa",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  88,
+        "name":  "Anrich Nortje",
+        "role":  "Fast Bowler",
+        "country":  "South Africa",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  89,
+        "name":  "Mark Wood",
+        "role":  "Fast Bowler",
+        "country":  "England",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  90,
+        "name":  "Jofra Archer",
+        "role":  "Fast Bowler",
+        "country":  "England",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  91,
+        "name":  "Trent Boult",
+        "role":  "Fast Bowler",
+        "country":  "New Zealand",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  92,
+        "name":  "Tim Southee",
+        "role":  "Fast Bowler",
+        "country":  "New Zealand",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  93,
+        "name":  "Lungi Ngidi",
+        "role":  "Fast Bowler",
+        "country":  "South Africa",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  94,
+        "name":  "Mitchell Starc",
+        "role":  "Fast Bowler",
+        "country":  "Australia",
+        "base_price_lakh":  200,
+        "category":  "Overseas"
+    },
+    {
+        "id":  95,
+        "name":  "Josh Hazlewood",
+        "role":  "Fast Bowler",
+        "country":  "Australia",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  96,
+        "name":  "Adam Zampa",
+        "role":  "Spinner",
+        "country":  "Australia",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  97,
+        "name":  "Mujeeb ur Rahman",
+        "role":  "Spinner",
+        "country":  "Afghanistan",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  98,
+        "name":  "Lasith Malinga",
+        "role":  "Fast Bowler",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  99,
+        "name":  "Chris Jordan",
+        "role":  "Fast Bowler",
+        "country":  "England",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  100,
+        "name":  "Jhye Richardson",
+        "role":  "Fast Bowler",
+        "country":  "Australia",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  101,
+        "name":  "Ajinkya Rahane",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  102,
+        "name":  "Manish Pandey",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  103,
+        "name":  "Rahul Tripathi",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  104,
+        "name":  "Nitish Rana",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  105,
+        "name":  "Sarfaraz Khan",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  106,
+        "name":  "Shivam Dube",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  107,
+        "name":  "Ravisrinivasan Sai Kishore",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  108,
+        "name":  "Yash Dayal",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  109,
+        "name":  "Mukesh Kumar",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  110,
+        "name":  "Chetan Sakariya",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  111,
+        "name":  "Harpreet Brar",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  112,
+        "name":  "Rahul Tewatia",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  113,
+        "name":  "Shahbaz Ahmed",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  114,
+        "name":  "Abhinav Manohar",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  115,
+        "name":  "Lalit Yadav",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  116,
+        "name":  "Sameer Rizvi",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  117,
+        "name":  "Ramandeep Singh",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  118,
+        "name":  "Rajat Patidar",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  119,
+        "name":  "Nehal Wadhera",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  120,
+        "name":  "Ashutosh Sharma",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  121,
+        "name":  "Shashank Singh",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  122,
+        "name":  "Anuj Rawat",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  123,
+        "name":  "Jitesh Sharma",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  124,
+        "name":  "Prabhsimran Singh",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  125,
+        "name":  "KS Bharat",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  126,
+        "name":  "Narayan Jagadeesan",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  127,
+        "name":  "Ryan Rickelton",
+        "role":  "Wicket-keeper",
+        "country":  "South Africa",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  128,
+        "name":  "Heinrich Klaasen",
+        "role":  "Wicket-keeper",
+        "country":  "South Africa",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  129,
+        "name":  "Rahmanullah Gurbaz",
+        "role":  "Wicket-keeper",
+        "country":  "Afghanistan",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  130,
+        "name":  "Tim David",
+        "role":  "All-rounder",
+        "country":  "Australia",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  131,
+        "name":  "Sherfane Rutherford",
+        "role":  "Batsman",
+        "country":  "West Indies",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  132,
+        "name":  "Rovman Powell",
+        "role":  "Batsman",
+        "country":  "West Indies",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  133,
+        "name":  "Romario Shepherd",
+        "role":  "All-rounder",
+        "country":  "West Indies",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  134,
+        "name":  "Alzarri Joseph",
+        "role":  "Fast Bowler",
+        "country":  "West Indies",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  135,
+        "name":  "Akeal Hosein",
+        "role":  "Spinner",
+        "country":  "West Indies",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  136,
+        "name":  "Obed McCoy",
+        "role":  "Fast Bowler",
+        "country":  "West Indies",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  137,
+        "name":  "Naveen-ul-Haq",
+        "role":  "Fast Bowler",
+        "country":  "Afghanistan",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  138,
+        "name":  "Fazalhaq Farooqi",
+        "role":  "Fast Bowler",
+        "country":  "Afghanistan",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  139,
+        "name":  "Noor Ahmad",
+        "role":  "Spinner",
+        "country":  "Afghanistan",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  140,
+        "name":  "Azmatullah Omarzai",
+        "role":  "All-rounder",
+        "country":  "Afghanistan",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  141,
+        "name":  "Gerald Coetzee",
+        "role":  "Fast Bowler",
+        "country":  "South Africa",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  142,
+        "name":  "Marco Jansen",
+        "role":  "All-rounder",
+        "country":  "South Africa",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  143,
+        "name":  "Nandre Burger",
+        "role":  "Fast Bowler",
+        "country":  "South Africa",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  144,
+        "name":  "Reeza Hendricks",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  145,
+        "name":  "Tristan Stubbs",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  146,
+        "name":  "Dewald Brevis",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  147,
+        "name":  "Rilee Rossouw",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  148,
+        "name":  "Temba Bavuma",
+        "role":  "Batsman",
+        "country":  "South Africa",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  149,
+        "name":  "Kusal Perera",
+        "role":  "Wicket-keeper",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  150,
+        "name":  "Thisara Perera",
+        "role":  "All-rounder",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  151,
+        "name":  "Daryl Mitchell",
+        "role":  "All-rounder",
+        "country":  "New Zealand",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  152,
+        "name":  "Rachin Ravindra",
+        "role":  "All-rounder",
+        "country":  "New Zealand",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  153,
+        "name":  "Finn Allen",
+        "role":  "Batsman",
+        "country":  "New Zealand",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  154,
+        "name":  "Michael Bracewell",
+        "role":  "All-rounder",
+        "country":  "New Zealand",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  155,
+        "name":  "Lockie Ferguson",
+        "role":  "Fast Bowler",
+        "country":  "New Zealand",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  156,
+        "name":  "Matt Henry",
+        "role":  "Fast Bowler",
+        "country":  "New Zealand",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  157,
+        "name":  "Ben Sears",
+        "role":  "Fast Bowler",
+        "country":  "New Zealand",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  158,
+        "name":  "Will O\u0027Rourke",
+        "role":  "Fast Bowler",
+        "country":  "New Zealand",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  159,
+        "name":  "Mitchell Santner",
+        "role":  "All-rounder",
+        "country":  "New Zealand",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  160,
+        "name":  "Ish Sodhi",
+        "role":  "Spinner",
+        "country":  "New Zealand",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  161,
+        "name":  "Tom Banton",
+        "role":  "Wicket-keeper",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  162,
+        "name":  "Jamie Smith",
+        "role":  "Wicket-keeper",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  163,
+        "name":  "Rehan Ahmed",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  164,
+        "name":  "Gus Atkinson",
+        "role":  "Fast Bowler",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  165,
+        "name":  "Brydon Carse",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  166,
+        "name":  "Tymal Mills",
+        "role":  "Fast Bowler",
+        "country":  "England",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  167,
+        "name":  "Reece Topley",
+        "role":  "Fast Bowler",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  168,
+        "name":  "Sam Billings",
+        "role":  "Wicket-keeper",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  169,
+        "name":  "David Willey",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  170,
+        "name":  "Chris Woakes",
+        "role":  "All-rounder",
+        "country":  "England",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  171,
+        "name":  "Sikandar Raza",
+        "role":  "All-rounder",
+        "country":  "Zimbabwe",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  172,
+        "name":  "Blessing Muzarabani",
+        "role":  "Fast Bowler",
+        "country":  "Zimbabwe",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  173,
+        "name":  "Richard Ngarava",
+        "role":  "Fast Bowler",
+        "country":  "Zimbabwe",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  174,
+        "name":  "Sean Williams",
+        "role":  "All-rounder",
+        "country":  "Zimbabwe",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  175,
+        "name":  "Hazratullah Zazai",
+        "role":  "Batsman",
+        "country":  "Afghanistan",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  176,
+        "name":  "Ibrahim Zadran",
+        "role":  "Batsman",
+        "country":  "Afghanistan",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  177,
+        "name":  "Kartik Tyagi",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  178,
+        "name":  "Umran Malik",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  179,
+        "name":  "Mayank Yadav",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  180,
+        "name":  "Abishek Porel",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    },
+    {
+        "id":  181,
+        "name":  "Sai Sudharsan",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  182,
+        "name":  "Vijay Shankar",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  183,
+        "name":  "Rishi Dhawan",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  184,
+        "name":  "Anukul Roy",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  185,
+        "name":  "Sandeep Sharma",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  186,
+        "name":  "Yash Dhull",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  187,
+        "name":  "Priyam Garg",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  188,
+        "name":  "Pathum Nissanka",
+        "role":  "Batsman",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  189,
+        "name":  "Kusal Mendis",
+        "role":  "Wicket-keeper",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  190,
+        "name":  "Charith Asalanka",
+        "role":  "Batsman",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  191,
+        "name":  "Dhananjaya de Silva",
+        "role":  "All-rounder",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  192,
+        "name":  "Maheesh Theekshana",
+        "role":  "Spinner",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  193,
+        "name":  "Dilshan Madushanka",
+        "role":  "Fast Bowler",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  194,
+        "name":  "Matheesha Pathirana",
+        "role":  "Fast Bowler",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  195,
+        "name":  "Nuwan Thushara",
+        "role":  "Fast Bowler",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  196,
+        "name":  "Dasun Shanaka",
+        "role":  "All-rounder",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  197,
+        "name":  "Chamika Karunaratne",
+        "role":  "All-rounder",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  50,
+        "category":  "Overseas"
+    },
+    {
+        "id":  198,
+        "name":  "Akash Madhwal",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  199,
+        "name":  "Vyshak Vijaykumar",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  200,
+        "name":  "Suyash Sharma",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  201,
+        "name":  "Abdul Samad",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  202,
+        "name":  "Shahrukh Khan",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  203,
+        "name":  "Rahul Chahar",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  204,
+        "name":  "Khaleel Ahmed",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  205,
+        "name":  "Arjun Tendulkar",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  206,
+        "name":  "Akash Singh",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  207,
+        "name":  "Kumar Kartikeya",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  208,
+        "name":  "Hrithik Shokeen",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  209,
+        "name":  "Mandeep Singh",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  210,
+        "name":  "Prerak Mankad",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  211,
+        "name":  "Suyash Prabhudessai",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  212,
+        "name":  "Ripal Patel",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  213,
+        "name":  "Yudhvir Singh Charak",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  214,
+        "name":  "Anshul Kamboj",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  215,
+        "name":  "Aman Khan",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  216,
+        "name":  "Angkrish Raghuvanshi",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  217,
+        "name":  "Arshin Kulkarni",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  218,
+        "name":  "Ayush Badoni",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  219,
+        "name":  "Harpreet Bhatia",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  220,
+        "name":  "Mohsin Khan",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  221,
+        "name":  "Mukesh Choudhary",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  222,
+        "name":  "Sandeep Warrier",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  223,
+        "name":  "Karn Sharma",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  224,
+        "name":  "Swapnil Singh",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  225,
+        "name":  "Vishnu Vinod",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  226,
+        "name":  "Abhinandan Singh",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  227,
+        "name":  "Rasikh Salam",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  228,
+        "name":  "Manav Suthar",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  229,
+        "name":  "Rajvardhan Hangargekar",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  230,
+        "name":  "Nishant Sindhu",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  231,
+        "name":  "Shubham Dubey",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  232,
+        "name":  "Robin Minz",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  233,
+        "name":  "Saurabh Kumar",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  234,
+        "name":  "Vidwath Kaverappa",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  235,
+        "name":  "Harshit Bisht",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  236,
+        "name":  "Josh Inglis",
+        "role":  "Wicket-keeper",
+        "country":  "Australia",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  237,
+        "name":  "Ben Duckett",
+        "role":  "Batsman",
+        "country":  "England",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  238,
+        "name":  "Tom Kohler-Cadmore",
+        "role":  "Wicket-keeper",
+        "country":  "England",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  239,
+        "name":  "Brandon King",
+        "role":  "Batsman",
+        "country":  "West Indies",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  240,
+        "name":  "Keacy Carty",
+        "role":  "Batsman",
+        "country":  "West Indies",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  241,
+        "name":  "Alick Athanaze",
+        "role":  "Batsman",
+        "country":  "West Indies",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  242,
+        "name":  "Dunith Wellalage",
+        "role":  "All-rounder",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  243,
+        "name":  "Kamindu Mendis",
+        "role":  "All-rounder",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  244,
+        "name":  "Asitha Fernando",
+        "role":  "Fast Bowler",
+        "country":  "Sri Lanka",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  245,
+        "name":  "Taskin Ahmed",
+        "role":  "Fast Bowler",
+        "country":  "Bangladesh",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  246,
+        "name":  "Mustafizur Rahman",
+        "role":  "Fast Bowler",
+        "country":  "Bangladesh",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  247,
+        "name":  "Towhid Hridoy",
+        "role":  "Batsman",
+        "country":  "Bangladesh",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  248,
+        "name":  "Litton Das",
+        "role":  "Wicket-keeper",
+        "country":  "Bangladesh",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  249,
+        "name":  "Gerhard Erasmus",
+        "role":  "All-rounder",
+        "country":  "Zimbabwe",
+        "base_price_lakh":  75,
+        "category":  "Overseas"
+    },
+    {
+        "id":  250,
+        "name":  "Mark Chapman",
+        "role":  "Batsman",
+        "country":  "New Zealand",
+        "base_price_lakh":  100,
+        "category":  "Overseas"
+    },
+    {
+        "id":  251,
+        "name":  "Kane Williamson",
+        "role":  "Batsman",
+        "country":  "New Zealand",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  252,
+        "name":  "Ambati Rayudu",
+        "role":  "Wicket-keeper",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  253,
+        "name":  "Shane Watson",
+        "role":  "All-rounder",
+        "country":  "Australia",
+        "base_price_lakh":  150,
+        "category":  "Overseas"
+    },
+    {
+        "id":  254,
+        "name":  "Ravichandran Ashwin",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  255,
+        "name":  "Gautam Gambhir",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  256,
+        "name":  "Murali Vijay",
+        "role":  "Batsman",
+        "country":  "India",
+        "base_price_lakh":  75,
+        "category":  "Indian"
+    },
+    {
+        "id":  257,
+        "name":  "Yusuf Pathan",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  258,
+        "name":  "Irfan Pathan",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  259,
+        "name":  "Zaheer Khan",
+        "role":  "Fast Bowler",
+        "country":  "India",
+        "base_price_lakh":  100,
+        "category":  "Indian"
+    },
+    {
+        "id":  260,
+        "name":  "Pragyan Ojha",
+        "role":  "Spinner",
+        "country":  "India",
+        "base_price_lakh":  50,
+        "category":  "Indian"
+    },
+    {
+        "id":  261,
+        "name":  "Yuvraj Singh",
+        "role":  "All-rounder",
+        "country":  "India",
+        "base_price_lakh":  150,
+        "category":  "Indian"
+    }
+]

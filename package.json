@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "description": "Real-time IPL Player Auction with friends",
   "scripts": {
-    "start": "npx serve . -p 3000",
-    "dev": "npx serve . -p 3000"
+    "build": "echo 'Static site ready'"
   },
-  "keywords": ["ipl", "auction", "cricket", "firebase"],
+  "keywords": ["ipl", "auction", "cricket", "Firebase"],
   "author": "Tilak"
 }

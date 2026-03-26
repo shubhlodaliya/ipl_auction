@@ -902,29 +902,40 @@ input[type=range]::-webkit-slider-thumb {
 .quick-bid-row {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.45rem;
 }
 
+/* Hide legacy single bid button if an old cached HTML still contains it */
+.bid-panel .bid-btn {
+  display: none !important;
+}
+
 .quick-bid-btn {
-  padding: 0.55rem 0.4rem;
+  padding: 0.78rem 0.5rem;
   border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  color: var(--text-sec);
-  font-size: 0.75rem;
+  background: linear-gradient(135deg, #FFCB30, #FF9D00);
+  border: 1px solid rgba(255, 203, 48, 0.55);
+  color: #060B18;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.02rem;
   font-weight: 700;
+  letter-spacing: 0.6px;
   transition: var(--transition);
+  box-shadow: 0 4px 20px rgba(255,203,48,0.2);
 }
 
 .quick-bid-btn:hover:not(:disabled) {
-  border-color: rgba(255, 203, 48, 0.5);
-  color: #ffe8a6;
-  background: rgba(255, 203, 48, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255,203,48,0.4);
 }
 
 .quick-bid-btn:disabled {
-  opacity: 0.35;
+  background: linear-gradient(135deg, #FFCB30, #FF9D00);
+  border: 1px solid rgba(255, 203, 48, 0.55);
+  color: #060B18;
+  box-shadow: 0 4px 20px rgba(255,203,48,0.15);
+  opacity: 0.55;
   cursor: not-allowed;
 }
 

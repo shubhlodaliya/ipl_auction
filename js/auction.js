@@ -190,8 +190,7 @@ function renderBidDisplay(data, player) {
     chipEl.textContent = 'No bids yet';
   }
 
-  // BID button
-  const bidBtn = document.getElementById('bidBtn');
+  // Bid buttons
   const quickBid25 = document.getElementById('quickBid25');
   const quickBid50 = document.getElementById('quickBid50');
   const quickBid100 = document.getElementById('quickBid100');
@@ -202,7 +201,6 @@ function renderBidDisplay(data, player) {
 
   if (data.status === 'bidding') {
     const bidJumps = getBidJumpOptions(player.base_price_lakh);
-    const minJump = bidJumps[0];
     const myTeam = teamsData[myTeamId];
     const withdrawn = !!(data.withdrawnTeams && data.withdrawnTeams[myTeamId]);
     const skipVoted = !!(data.skipVotes && data.skipVotes[myTeamId]);
@@ -218,9 +216,6 @@ function renderBidDisplay(data, player) {
     const squadFull = myTeam && myTeam.squad && myTeam.squad.length >= roomConfig.maxSquadSize;
     const canTryBid = !paused && !withdrawn && !isLeading && !squadFull;
 
-    bidBtn.textContent = `BID +${formatPrice(minJump)}`;
-    bidBtn.disabled = !canTryBid || !canAffordAny;
-
     const quickButtons = {
       25: quickBid25,
       50: quickBid50,
@@ -231,17 +226,11 @@ function renderBidDisplay(data, player) {
       if (!btn) return;
       const jump = Number(jumpStr);
       const allowed = bidJumps.includes(jump);
-      if (!allowed) {
-        btn.style.display = 'none';
-        btn.disabled = true;
-        return;
-      }
-
       btn.style.display = '';
       btn.textContent = `+${formatPrice(jump)}`;
 
       const canAffordThis = myTeam && myTeam.purse >= (data.currentBid + jump);
-      btn.disabled = !canTryBid || !canAffordThis;
+      btn.disabled = !allowed || !canTryBid || !canAffordThis;
     });
 
     if (withdrawn) {
@@ -284,8 +273,6 @@ function renderBidDisplay(data, player) {
     else if (squadFull) { warnEl.textContent = '⚠️ Your squad is full!'; warnEl.style.display = 'block'; }
     else { warnEl.style.display = 'none'; warnEl.style.color = 'var(--red)'; }
   } else {
-    bidBtn.disabled = true;
-    bidBtn.textContent = 'BID';
     if (quickBid25) { quickBid25.disabled = true; quickBid25.style.display = ''; }
     if (quickBid50) { quickBid50.disabled = true; quickBid50.style.display = ''; }
     if (quickBid100) { quickBid100.disabled = true; quickBid100.style.display = ''; }
@@ -376,8 +363,6 @@ async function placeBid(selectedJump = null) {
     showToast('You are already the highest bidder.', 'error');
     return;
   }
-
-  document.getElementById('bidBtn').disabled = true;
 
   try {
     await db.ref(`rooms/${roomCode}/currentAuction`).transaction(auction => {

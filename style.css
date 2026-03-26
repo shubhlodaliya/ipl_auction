@@ -937,6 +937,24 @@ input[type=range]::-webkit-slider-thumb {
 }
 .pass-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
+.skip-pool-btn {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: var(--radius-sm);
+  background: rgba(29,160,255,0.08);
+  border: 1px solid rgba(29,160,255,0.28);
+  color: #8ed2ff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.skip-pool-btn:hover:not(:disabled) {
+  border-color: var(--blue);
+  color: #d7f0ff;
+  background: rgba(29,160,255,0.2);
+}
+.skip-pool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
 .no-purse-warning {
   font-size: 0.8rem;
   color: var(--red);

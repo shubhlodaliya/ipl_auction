@@ -227,6 +227,7 @@ async function startAuction() {
       poolId: firstPool?.poolId || null,
       poolLabel: firstPool?.poolLabel || null,
       skipVotes: {},
+      poolSkipVotes: {},
       withdrawnTeams: {},
       timerEnd: Date.now() + roomConfig.timerSeconds * 1000,
       status: 'bidding'

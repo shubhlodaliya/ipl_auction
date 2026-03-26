@@ -194,6 +194,7 @@ function renderBidDisplay(data, player) {
   const bidBtn = document.getElementById('bidBtn');
   const withdrawBtn = document.getElementById('withdrawBtn');
   const passBtn = document.getElementById('passBtn');
+  const skipPoolBtn = document.getElementById('skipPoolBtn');
   const warnEl = document.getElementById('noPurseWarn');
 
   if (data.status === 'bidding') {
@@ -203,8 +204,12 @@ function renderBidDisplay(data, player) {
     const myTeam = teamsData[myTeamId];
     const withdrawn = !!(data.withdrawnTeams && data.withdrawnTeams[myTeamId]);
     const skipVoted = !!(data.skipVotes && data.skipVotes[myTeamId]);
+    const poolSkipVoted = !!(data.poolSkipVotes && data.poolSkipVotes[myTeamId]);
     const totalTeams = Object.keys(teamsData).length;
     const skipCount = Object.keys(data.skipVotes || {}).length;
+    const poolSkipCount = Object.keys(data.poolSkipVotes || {}).length;
+    const currentPool = getCurrentPoolMeta();
+    const canSkipPool = !!currentPool?.poolId;
     const canAfford = myTeam && myTeam.purse >= nextBid;
     const isLeading = data.highestBidder === myTeamId;
     const squadFull = myTeam && myTeam.squad && myTeam.squad.length >= roomConfig.maxSquadSize;
@@ -235,6 +240,17 @@ function renderBidDisplay(data, player) {
       passBtn.textContent = `Skip Player (${skipCount}/${totalTeams})`;
     }
 
+    if (!canSkipPool) {
+      skipPoolBtn.disabled = true;
+      skipPoolBtn.textContent = 'Skip Pool (Category Only)';
+    } else if (poolSkipVoted) {
+      skipPoolBtn.disabled = true;
+      skipPoolBtn.textContent = `Pool Skip Voted (${poolSkipCount}/${totalTeams})`;
+    } else {
+      skipPoolBtn.disabled = paused;
+      skipPoolBtn.textContent = `Skip Current Pool (${poolSkipCount}/${totalTeams})`;
+    }
+
     if (paused) { warnEl.textContent = '⏸️ Auction is paused by host'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--orange)'; }
     else if (withdrawn) { warnEl.textContent = '⏭️ You withdrew for this player'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--text-sec)'; }
     else if (!canAfford) { warnEl.textContent = '⚠️ Not enough purse!'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--red)'; }
@@ -248,6 +264,8 @@ function renderBidDisplay(data, player) {
     withdrawBtn.textContent = 'Withdraw For This Player';
     passBtn.disabled = true;
     passBtn.textContent = 'Skip Player';
+    skipPoolBtn.disabled = true;
+    skipPoolBtn.textContent = 'Skip Current Pool';
     warnEl.style.display = 'none';
   }
 }
@@ -370,6 +388,29 @@ async function passPlayer() {
   }
 }
 
+async function skipCurrentPool() {
+  if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
+
+  const currentPool = getCurrentPoolMeta();
+  if (!currentPool?.poolId) {
+    showToast('Pool skip is available only in category mode.', 'error');
+    return;
+  }
+
+  try {
+    await db.ref(`rooms/${roomCode}/currentAuction`).transaction(auction => {
+      if (!auction || auction.status !== 'bidding') return;
+      const poolId = auction.poolId || currentPool.poolId;
+      if (!poolId) return;
+      auction.poolSkipVotes = auction.poolSkipVotes || {};
+      auction.poolSkipVotes[myTeamId] = true;
+      return auction;
+    });
+  } catch (err) {
+    console.error('Pool skip vote failed:', err);
+  }
+}
+
 async function withdrawFromPlayer() {
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
   if (currentAuctionData.highestBidder === myTeamId) {
@@ -395,7 +436,15 @@ async function hostEvaluateFastPath(data) {
 
   const totalTeams = Object.keys(teamsData).length;
   const skipCount = Object.keys(data.skipVotes || {}).length;
+  const poolSkipCount = Object.keys(data.poolSkipVotes || {}).length;
   const withdrawnCount = Object.keys(data.withdrawnTeams || {}).length;
+  const currentPool = getCurrentPoolMeta();
+
+  if (currentPool?.poolId && totalTeams > 0 && poolSkipCount >= totalTeams) {
+    processingRound = true;
+    await processSkipCurrentPool();
+    return;
+  }
 
   if (!data.highestBidder) {
     if (totalTeams > 0 && (skipCount >= totalTeams || withdrawnCount >= totalTeams)) {
@@ -418,6 +467,59 @@ async function hostEvaluateFastPath(data) {
     processingRound = true;
     await processAuctionRound();
   }
+}
+
+async function processSkipCurrentPool() {
+  const statusRef = db.ref(`rooms/${roomCode}/currentAuction/status`);
+  const result = await statusRef.transaction(status => {
+    if (status === 'bidding') return 'processing';
+    return undefined;
+  });
+  if (!result.committed) return;
+  await skipToNextPool();
+}
+
+async function skipToNextPool() {
+  const currentPool = getCurrentPoolMeta();
+  const currentPoolId = currentPool?.poolId;
+  if (!currentPoolId) {
+    await markUnsold();
+    return;
+  }
+
+  let nextIndex = currentIndex + 1;
+  while (nextIndex < playerQueue.length) {
+    const nextPool = getPoolMetaAtIndex(nextIndex);
+    if (!nextPool?.poolId || nextPool.poolId !== currentPoolId) break;
+    nextIndex += 1;
+  }
+
+  if (nextIndex >= playerQueue.length) {
+    await db.ref(`rooms/${roomCode}/config/status`).set('finished');
+    return;
+  }
+
+  const nextPlayerId = playerQueue[nextIndex];
+  const nextPlayer = playerMap[nextPlayerId];
+  if (!nextPlayer) {
+    await advanceHelper(nextIndex);
+    return;
+  }
+  const nextPool = getPoolMetaAtIndex(nextIndex);
+
+  await db.ref(`rooms/${roomCode}/currentIndex`).set(nextIndex);
+  await db.ref(`rooms/${roomCode}/currentAuction`).set({
+    playerId: nextPlayerId,
+    currentBid: nextPlayer.base_price_lakh,
+    highestBidder: null,
+    poolId: nextPool?.poolId || null,
+    poolLabel: nextPool?.poolLabel || null,
+    skipVotes: {},
+    poolSkipVotes: {},
+    withdrawnTeams: {},
+    timerEnd: Date.now() + timerSeconds * 1000,
+    status: 'bidding'
+  });
 }
 
 async function processAsUnsold() {
@@ -514,6 +616,7 @@ async function advanceToNextPlayer() {
     poolId: nextPool?.poolId || null,
     poolLabel: nextPool?.poolLabel || null,
     skipVotes: {},
+    poolSkipVotes: {},
     withdrawnTeams: {},
     timerEnd: Date.now() + timerSeconds * 1000,
     status: 'bidding'

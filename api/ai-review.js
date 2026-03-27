@@ -5,10 +5,6 @@ module.exports = async function handler(req, res) {
   }
 
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'Server is missing OPENROUTER_API_KEY' });
-    return;
-  }
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
@@ -58,6 +54,13 @@ module.exports = async function handler(req, res) {
       teamsSummary
     ].join('\n');
 
+    // If API key is not configured, return a deterministic backend fallback analysis.
+    if (!apiKey) {
+      const fallbackText = buildRuleBasedReview(teams);
+      res.status(200).json({ text: fallbackText, model: 'rule-based-fallback' });
+      return;
+    }
+
     const preferredModel = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat-v3-0324:free';
     const fallbackModels = (process.env.OPENROUTER_MODEL_FALLBACKS || '')
       .split(',')
@@ -105,15 +108,15 @@ module.exports = async function handler(req, res) {
       lastErrorMessage = json?.error?.message || lastErrorMessage;
 
       // If rate-limited or unauthorized, fail fast instead of trying more models.
-      if (response.status === 401 || response.status === 429) {
-        res.status(response.status).json({ error: lastErrorMessage });
-        return;
-      }
+      if (response.status === 401 || response.status === 429) break;
     }
 
     if (!text || !selectedModel) {
-      res.status(502).json({
-        error: `${lastErrorMessage}. Tried models: ${modelCandidates.join(', ')}`
+      const fallbackText = buildRuleBasedReview(teams);
+      res.status(200).json({
+        text: fallbackText,
+        model: 'rule-based-fallback',
+        warning: `${lastErrorMessage}. Tried models: ${modelCandidates.join(', ')}`
       });
       return;
     }
@@ -131,4 +134,109 @@ function formatPriceLakh(value) {
     return `Rs ${cr % 1 === 0 ? cr : cr.toFixed(2)}Cr`;
   }
   return `Rs ${lakh}L`;
+}
+
+function clamp10(x) {
+  return Math.max(0, Math.min(10, Number(x.toFixed(1))));
+}
+
+function getRoleBuckets(squad) {
+  const buckets = { bats: 0, bowl: 0, ar: 0, wk: 0, spin: 0, fast: 0 };
+  (squad || []).forEach((p) => {
+    const role = String(p.role || '').toLowerCase();
+    if (role.includes('wicket')) buckets.wk += 1;
+    if (role.includes('all-rounder')) buckets.ar += 1;
+    if (role.includes('batsman')) buckets.bats += 1;
+    if (role.includes('spinner')) {
+      buckets.spin += 1;
+      buckets.bowl += 1;
+    }
+    if (role.includes('fast') || role === 'bowler') {
+      buckets.fast += 1;
+      buckets.bowl += 1;
+    }
+    if (role === 'bowler') buckets.bowl += 1;
+  });
+  return buckets;
+}
+
+function scoreTeam(team) {
+  const squad = Array.isArray(team.squad) ? team.squad : [];
+  const n = Math.max(1, squad.length);
+  const b = getRoleBuckets(squad);
+
+  const hasWK = b.wk > 0 ? 1 : 0;
+  const hasAR = b.ar > 0 ? 1 : 0;
+  const hasPaceAndSpin = (b.fast > 0 && b.spin > 0) ? 1 : 0;
+  const bowlingUnits = b.bowl + b.ar * 0.5;
+  const battingUnits = b.bats + b.wk + b.ar * 0.5;
+
+  const balance = clamp10((hasWK * 2.5) + (hasAR * 2.5) + (hasPaceAndSpin * 2.5) + Math.min(2.5, (n / Math.max(1, team.maxSquadSize || n)) * 2.5));
+  const bowlingDepth = clamp10((bowlingUnits / n) * 12);
+  const battingDepth = clamp10((battingUnits / n) * 12);
+
+  const overall = clamp10(balance * 0.45 + bowlingDepth * 0.275 + battingDepth * 0.275);
+  return { overall, balance, bowlingDepth, battingDepth, buckets: b };
+}
+
+function detectNeeds(score) {
+  const needs = [];
+  if (score.buckets.wk === 0) needs.push('Wicket-keeper batsman');
+  if (score.buckets.ar === 0) needs.push('Quality all-rounder');
+  if (score.buckets.spin === 0) needs.push('Frontline spinner');
+  if (score.buckets.fast === 0) needs.push('Death-overs fast bowler');
+  if (!needs.length) needs.push('Finisher batter');
+  if (needs.length < 2) needs.push('Powerplay wicket-taking bowler');
+  return needs.slice(0, 2);
+}
+
+function buildRuleBasedReview(teams) {
+  const scored = (teams || []).map((t) => ({
+    team: t,
+    score: scoreTeam(t)
+  })).sort((a, b) => b.score.overall - a.score.overall);
+
+  if (!scored.length) {
+    return [
+      '1) Best Stable Team: Not enough data',
+      '2) Why it is best (3 bullet points)',
+      '- No team data was available.',
+      '- Could not compute role balance.',
+      '- Please retry after auction data is loaded.',
+      '3) Team-wise quick ratings (out of 10 for balance, bowling depth, batting depth)',
+      '- NA',
+      '4) Suggested 2 unsold-player target types for weaker teams',
+      '- Quality all-rounder',
+      '- Death-overs fast bowler'
+    ].join('\n');
+  }
+
+  const best = scored[0];
+  const topReasons = [
+    `Strong role balance score (${best.score.balance}/10) with key role coverage.`,
+    `Reliable bowling depth (${best.score.bowlingDepth}/10) for multiple match phases.`,
+    `Competitive batting depth (${best.score.battingDepth}/10) with stable core options.`
+  ];
+
+  const ratings = scored.map(({ team, score }) => (
+    `- ${team.name}: balance ${score.balance}/10, bowling depth ${score.bowlingDepth}/10, batting depth ${score.battingDepth}/10`
+  )).join('\n');
+
+  const weaker = scored.slice(-2).reverse();
+  const suggestions = weaker.map(({ team, score }) => {
+    const needs = detectNeeds(score);
+    return `- ${team.name}: ${needs[0]}, ${needs[1]}`;
+  }).join('\n');
+
+  return [
+    `1) Best Stable Team: ${best.team.name}`,
+    '2) Why it is best (3 bullet points)',
+    `- ${topReasons[0]}`,
+    `- ${topReasons[1]}`,
+    `- ${topReasons[2]}`,
+    '3) Team-wise quick ratings (out of 10 for balance, bowling depth, batting depth)',
+    ratings,
+    '4) Suggested 2 unsold-player target types for weaker teams',
+    suggestions
+  ].join('\n');
 }

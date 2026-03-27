@@ -35,6 +35,15 @@
       <!-- Summary Stats -->
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;" id="summaryStats"></div>
 
+      <!-- Re-auction Setup -->
+      <section class="reauction-section glass" id="reAuctionSection" style="display:none;">
+        <div class="reauction-head">
+          <h2>Re-Auction For Unsold Players</h2>
+          <p id="reAuctionHint">Select unsold players and mark your team ready.</p>
+        </div>
+        <div class="reauction-body" id="reAuctionBody"></div>
+      </section>
+
       <!-- Teams Grid -->
       <div class="results-grid" id="resultsGrid"></div>
 
@@ -62,6 +71,8 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/results.js"></script>
+
+  <div class="toast" id="toast"></div>
 
   <script>
     function newAuction() {

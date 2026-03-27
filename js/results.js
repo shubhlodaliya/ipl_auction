@@ -2,7 +2,19 @@
 // RESULTS.JS — Final auction results display
 // ============================================================
 
+const reAuctionState = {
+  roomCode: null,
+  room: null,
+  session: null,
+  playersById: {},
+  unsoldQueue: [],
+  eligibleTeamIds: [],
+  data: {},
+  listeners: {}
+};
+
 window.addEventListener('DOMContentLoaded', loadResults);
+window.addEventListener('beforeunload', cleanupReAuctionListeners);
 
 async function loadResults() {
   // Try to get roomCode from session, or from URL param
@@ -35,15 +47,19 @@ async function loadResults() {
 
     const room = roomSnap.val();
     const playerMap = {};
-    playersData.forEach(p => { playerMap[p.id] = p; });
+    playersData.forEach(p => {
+      playerMap[p.id] = p;
+      playerMap[String(p.id)] = p;
+    });
 
     const teams = room.teams || {};
     const soldPlayers = room.soldPlayers || {};
+    const playerQueue = normalizeQueue(room.playerQueue);
 
     // Summary stats
     const totalSales = Object.values(soldPlayers).reduce((s, sp) => s + sp.soldPrice, 0);
     const soldCount = Object.keys(soldPlayers).length;
-    const unsoldCount = (room.playerQueue || []).length - soldCount;
+    const unsoldCount = buildUnsoldQueue(playerQueue, soldPlayers).length;
 
     document.getElementById('summaryStats').innerHTML = `
       <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
@@ -133,12 +149,14 @@ async function loadResults() {
       `;
     }).join('');
 
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('resultsContent').style.display = 'block';
-
     // Update subtitle
     document.getElementById('resultsSub').textContent =
       `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams`;
+
+    setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers);
+
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('resultsContent').style.display = 'block';
 
   } catch (err) {
     console.error(err);
@@ -146,3 +164,298 @@ async function loadResults() {
       <p style="color:var(--red)">Failed to load results. <button class="btn btn-ghost" onclick="location.reload()">Retry</button></p>`;
   }
 }
+
+function normalizeQueue(queue) {
+  if (Array.isArray(queue)) return queue;
+  return Object.values(queue || {});
+}
+
+function isSoldPlayer(soldPlayers, playerId) {
+  return !!(soldPlayers?.[playerId] || soldPlayers?.[String(playerId)]);
+}
+
+function buildUnsoldQueue(playerQueue, soldPlayers) {
+  return playerQueue.filter(pid => !isSoldPlayer(soldPlayers, pid));
+}
+
+function setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers) {
+  cleanupReAuctionListeners();
+
+  reAuctionState.roomCode = roomCode;
+  reAuctionState.room = room;
+  reAuctionState.session = session || null;
+  reAuctionState.playersById = playerMap;
+  reAuctionState.unsoldQueue = buildUnsoldQueue(playerQueue, soldPlayers);
+
+  const teams = room.teams || {};
+  const maxSquadSize = room.config?.maxSquadSize || 0;
+  reAuctionState.eligibleTeamIds = Object.entries(teams)
+    .filter(([, team]) => (team.squad || []).length < maxSquadSize)
+    .map(([teamId]) => teamId);
+
+  const section = document.getElementById('reAuctionSection');
+  if (!section) return;
+
+  section.style.display = 'block';
+
+  reAuctionState.listeners.reAuction = db.ref(`rooms/${roomCode}/reAuction`).on('value', snap => {
+    reAuctionState.data = snap.val() || {};
+    renderReAuctionSection();
+  });
+
+  reAuctionState.listeners.status = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
+    if (snap.val() === 'auction') {
+      window.location.href = 'auction.html';
+    }
+  });
+
+  renderReAuctionSection();
+}
+
+function cleanupReAuctionListeners() {
+  const { roomCode, listeners } = reAuctionState;
+  if (!roomCode) return;
+  if (listeners.reAuction) db.ref(`rooms/${roomCode}/reAuction`).off('value', listeners.reAuction);
+  if (listeners.status) db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
+  reAuctionState.listeners = {};
+}
+
+function renderReAuctionSection() {
+  const body = document.getElementById('reAuctionBody');
+  const hint = document.getElementById('reAuctionHint');
+  if (!body || !hint) return;
+
+  const { room, session, unsoldQueue, eligibleTeamIds, data } = reAuctionState;
+  const teams = room?.teams || {};
+  const myTeamId = session?.teamId;
+  const amHost = !!session?.isHost;
+  const myEligible = !!myTeamId && eligibleTeamIds.includes(myTeamId);
+
+  if (!unsoldQueue.length) {
+    hint.textContent = 'No unsold players left. Re-auction is not needed.';
+    body.innerHTML = `<div class="state-empty"><p>All players are sold.</p></div>`;
+    return;
+  }
+
+  if (!eligibleTeamIds.length) {
+    hint.textContent = 'All teams have full squads. Re-auction is not available.';
+    body.innerHTML = `<div class="state-empty"><p>No team has an empty slot.</p></div>`;
+    return;
+  }
+
+  const selections = data.selections || {};
+  const readyMap = data.ready || {};
+
+  const selectedUnion = new Set();
+  eligibleTeamIds.forEach(teamId => {
+    const teamSel = selections[teamId] || {};
+    Object.keys(teamSel).forEach(pid => {
+      if (teamSel[pid]) selectedUnion.add(String(pid));
+    });
+  });
+
+  const selectedQueue = unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
+  const allReady = eligibleTeamIds.every(teamId => !!readyMap[teamId]);
+
+  const teamReadyHtml = eligibleTeamIds.map(teamId => {
+    const t = getTeam(teamId);
+    const team = teams[teamId];
+    const selectedCount = Object.keys(selections[teamId] || {}).filter(pid => (selections[teamId] || {})[pid]).length;
+    const ready = !!readyMap[teamId];
+    return `
+      <div class="reauction-team-chip ${ready ? 'ready' : ''}">
+        <span>${t?.short || team?.short || teamId} · ${team?.ownerName || 'Team'}</span>
+        <span>${selectedCount} selected</span>
+        <span>${ready ? 'Ready' : 'Pending'}</span>
+      </div>
+    `;
+  }).join('');
+
+  const mySelection = selections[myTeamId] || {};
+  const mySelectedCount = Object.keys(mySelection).filter(pid => mySelection[pid]).length;
+  const myReady = !!readyMap[myTeamId];
+
+  const playerListHtml = unsoldQueue.map(pid => {
+    const player = reAuctionState.playersById[pid] || reAuctionState.playersById[String(pid)];
+    if (!player) return '';
+    const checked = !!(mySelection[String(pid)] || mySelection[pid]);
+    return `
+      <label class="reauction-player-row ${checked ? 'selected' : ''}">
+        <input type="checkbox" ${checked ? 'checked' : ''}
+          onchange="toggleReAuctionPlayer('${String(pid)}')"
+          ${myEligible ? '' : 'disabled'} />
+        <span class="reauction-player-name">${player.name}</span>
+        <span class="reauction-player-meta">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</span>
+      </label>
+    `;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="reauction-status-grid">
+      <div class="reauction-stat-card">
+        <div class="reauction-stat-label">Unsold Players</div>
+        <div class="reauction-stat-value">${unsoldQueue.length}</div>
+      </div>
+      <div class="reauction-stat-card">
+        <div class="reauction-stat-label">Eligible Teams</div>
+        <div class="reauction-stat-value">${eligibleTeamIds.length}</div>
+      </div>
+      <div class="reauction-stat-card">
+        <div class="reauction-stat-label">Selected For Re-Auction</div>
+        <div class="reauction-stat-value">${selectedQueue.length}</div>
+      </div>
+    </div>
+
+    <div class="reauction-team-ready-list">${teamReadyHtml}</div>
+
+    ${myEligible ? `
+      <div class="reauction-controls">
+        <span>Your selection: ${mySelectedCount}</span>
+        <button class="btn ${myReady ? 'btn-secondary' : 'btn-primary'}" onclick="toggleReAuctionReady()">
+          ${myReady ? 'Mark Pending' : 'Mark Ready'}
+        </button>
+      </div>
+    ` : `<div class="reauction-note">Only teams with empty slots can select players.</div>`}
+
+    <div class="reauction-player-list">${playerListHtml}</div>
+
+    ${amHost ? `
+      <div class="reauction-host-actions">
+        <p>All teams ready: <strong>${allReady ? 'Yes' : 'No'}</strong></p>
+        <button class="btn btn-primary btn-lg" onclick="startReAuctionFromResults()" ${(!allReady || selectedQueue.length === 0) ? 'disabled' : ''}>
+          Start Re-Auction (${selectedQueue.length} players)
+        </button>
+      </div>
+    ` : ''}
+  `;
+
+  hint.textContent = 'Teams with empty slots select unsold players, mark ready, then host starts re-auction.';
+}
+
+async function toggleReAuctionPlayer(playerId) {
+  const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
+  if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
+
+  const teamId = session.teamId;
+  const teamSelections = data.selections?.[teamId] || {};
+  const isSelected = !!teamSelections[playerId];
+
+  const updates = {};
+  updates[`rooms/${roomCode}/reAuction/selections/${teamId}/${playerId}`] = isSelected ? null : true;
+  updates[`rooms/${roomCode}/reAuction/ready/${teamId}`] = false;
+  updates[`rooms/${roomCode}/reAuction/updatedAt`] = Date.now();
+  await db.ref().update(updates);
+}
+
+async function toggleReAuctionReady() {
+  const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
+  if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
+
+  const teamId = session.teamId;
+  const ready = !!data.ready?.[teamId];
+
+  if (!ready) {
+    const selectedCount = Object.keys(data.selections?.[teamId] || {}).filter(pid => (data.selections?.[teamId] || {})[pid]).length;
+    if (selectedCount === 0) {
+      showToast('Select at least 1 player before marking ready.', 'error');
+      return;
+    }
+  }
+
+  await db.ref(`rooms/${roomCode}/reAuction/ready/${teamId}`).set(!ready);
+  await db.ref(`rooms/${roomCode}/reAuction/updatedAt`).set(Date.now());
+}
+
+async function startReAuctionFromResults() {
+  const { roomCode, session, playersById } = reAuctionState;
+  if (!roomCode || !session?.isHost) return;
+
+  const roomSnap = await db.ref(`rooms/${roomCode}`).get();
+  if (!roomSnap.exists()) {
+    showToast('Room not found.', 'error');
+    return;
+  }
+
+  const room = roomSnap.val();
+  const teams = room.teams || {};
+  const soldPlayers = room.soldPlayers || {};
+  const playerQueue = normalizeQueue(room.playerQueue);
+  const unsoldQueue = buildUnsoldQueue(playerQueue, soldPlayers);
+  const maxSquadSize = room.config?.maxSquadSize || 0;
+  const eligibleTeamIds = Object.entries(teams)
+    .filter(([, team]) => (team.squad || []).length < maxSquadSize)
+    .map(([teamId]) => teamId);
+
+  const reAuction = room.reAuction || {};
+  const selections = reAuction.selections || {};
+  const readyMap = reAuction.ready || {};
+
+  const allReady = eligibleTeamIds.length > 0 && eligibleTeamIds.every(teamId => !!readyMap[teamId]);
+  if (!allReady) {
+    showToast('All eligible teams must be ready.', 'error');
+    return;
+  }
+
+  const selectedUnion = new Set();
+  eligibleTeamIds.forEach(teamId => {
+    const teamSel = selections[teamId] || {};
+    Object.keys(teamSel).forEach(pid => {
+      if (teamSel[pid]) selectedUnion.add(String(pid));
+    });
+  });
+
+  const selectedQueue = unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
+  if (!selectedQueue.length) {
+    showToast('No players selected for re-auction.', 'error');
+    return;
+  }
+
+  const firstPlayerId = selectedQueue[0];
+  const firstPlayer = playersById[firstPlayerId] || playersById[String(firstPlayerId)];
+  if (!firstPlayer) {
+    showToast('Failed to load selected players.', 'error');
+    return;
+  }
+
+  const now = Date.now();
+  const timerSec = room.config?.timerSeconds || 30;
+  const reAuctionRound = (room.config?.reAuctionRound || 0) + 1;
+
+  const updates = {};
+  updates[`rooms/${roomCode}/playerQueue`] = selectedQueue;
+  updates[`rooms/${roomCode}/poolByIndex`] = {};
+  updates[`rooms/${roomCode}/currentIndex`] = 0;
+  updates[`rooms/${roomCode}/currentAuction`] = {
+    playerId: firstPlayerId,
+    currentBid: firstPlayer.base_price_lakh,
+    highestBidder: null,
+    poolId: null,
+    poolLabel: null,
+    skipVotes: {},
+    poolSkipVotes: {},
+    withdrawnTeams: {},
+    timerEnd: now + timerSec * 1000,
+    status: 'bidding'
+  };
+  updates[`rooms/${roomCode}/auctionControl`] = { paused: false, pausedAt: null };
+  updates[`rooms/${roomCode}/config/status`] = 'auction';
+  updates[`rooms/${roomCode}/config/reAuctionRound`] = reAuctionRound;
+  updates[`rooms/${roomCode}/config/reAuctionStartedAt`] = now;
+  updates[`rooms/${roomCode}/reAuction/started`] = true;
+  updates[`rooms/${roomCode}/reAuction/startedAt`] = now;
+  updates[`rooms/${roomCode}/reAuction/startedBy`] = session.teamId;
+
+  await db.ref().update(updates);
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast'; }, 2400);
+}
+
+window.toggleReAuctionPlayer = toggleReAuctionPlayer;
+window.toggleReAuctionReady = toggleReAuctionReady;
+window.startReAuctionFromResults = startReAuctionFromResults;

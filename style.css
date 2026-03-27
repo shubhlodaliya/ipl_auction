@@ -1272,6 +1272,137 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--gold);
 }
 .results-sub { color: var(--text-sec); margin-top: 0.5rem; }
+.reauction-section {
+  margin-bottom: 1.75rem;
+  padding: 1rem;
+}
+.reauction-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+.reauction-head h2 {
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--gold);
+  font-size: 1.4rem;
+}
+.reauction-head p {
+  color: var(--text-sec);
+  font-size: 0.9rem;
+}
+.reauction-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.reauction-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.7rem;
+}
+.reauction-stat-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  padding: 0.7rem 0.8rem;
+}
+.reauction-stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-sec);
+}
+.reauction-stat-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+.reauction-team-ready-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.reauction-team-chip {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-sec);
+}
+.reauction-team-chip.ready {
+  border-color: rgba(0,196,140,0.4);
+  background: rgba(0,196,140,0.12);
+  color: #8cf3d0;
+}
+.reauction-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.reauction-controls span,
+.reauction-note {
+  color: var(--text-sec);
+  font-size: 0.85rem;
+}
+.reauction-player-list {
+  max-height: 330px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.reauction-player-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.02);
+  padding: 0.48rem 0.55rem;
+}
+.reauction-player-row.selected {
+  border-color: rgba(255,203,48,0.35);
+  background: rgba(255,203,48,0.1);
+}
+.reauction-player-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+.reauction-player-name {
+  font-weight: 600;
+}
+.reauction-player-meta {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-align: right;
+}
+.reauction-host-actions {
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.reauction-host-actions p {
+  color: var(--text-sec);
+  font-size: 0.85rem;
+}
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

@@ -1272,9 +1272,45 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--gold);
 }
 .results-sub { color: var(--text-sec); margin-top: 0.5rem; }
+.results-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
 .reauction-section {
   margin-bottom: 1.75rem;
   padding: 1rem;
+}
+.ai-review-modal {
+  width: min(780px, 94vw);
+}
+.ai-review-note {
+  color: var(--text-sec);
+  font-size: 0.85rem;
+}
+.ai-review-config-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+.ai-review-meta {
+  font-size: 0.78rem;
+  color: var(--text-sec);
+}
+.ai-review-output {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  padding: 0.8rem;
+  min-height: 240px;
+  max-height: 52vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
 }
 .reauction-head {
   display: flex;

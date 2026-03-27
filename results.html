@@ -35,6 +35,10 @@
       <!-- Summary Stats -->
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;" id="summaryStats"></div>
 
+      <div class="results-actions">
+        <button class="btn btn-secondary" onclick="openAiReviewModal()">AI Review</button>
+      </div>
+
       <!-- Re-auction Setup -->
       <section class="reauction-section glass" id="reAuctionSection" style="display:none;">
         <div class="reauction-head">
@@ -73,6 +77,23 @@
   <script src="js/results.js"></script>
 
   <div class="toast" id="toast"></div>
+
+  <div class="team-modal-overlay" id="aiReviewModalOverlay" onclick="closeAiReviewModal()">
+    <div class="team-modal ai-review-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>AI Team Review</h3>
+        <button class="btn btn-ghost" onclick="closeAiReviewModal()">Close</button>
+      </div>
+      <div class="team-modal-content">
+        <p class="ai-review-note">AI response is generated from backend when you open this review.</p>
+        <div class="ai-review-actions">
+          <button class="btn btn-primary" id="aiGenerateBtn" onclick="generateAiReview()">Refresh AI Review</button>
+        </div>
+        <div class="ai-review-meta" id="aiReviewMeta">No AI review generated yet.</div>
+        <pre class="ai-review-output" id="aiReviewOutput">Click AI Review to load best stable team analysis.</pre>
+      </div>
+    </div>
+  </div>
 
   <script>
     function newAuction() {

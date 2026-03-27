@@ -58,34 +58,67 @@ module.exports = async function handler(req, res) {
       teamsSummary
     ].join('\n');
 
-    const model = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat-v3-0324:free';
+    const preferredModel = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat-v3-0324:free';
+    const fallbackModels = (process.env.OPENROUTER_MODEL_FALLBACKS || '')
+      .split(',')
+      .map((m) => m.trim())
+      .filter(Boolean);
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: 'Be concise and practical.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.2
-      })
-    });
+    const defaultFallbacks = [
+      'meta-llama/llama-3.1-8b-instruct:free',
+      'mistralai/mistral-7b-instruct:free',
+      'google/gemma-2-9b-it:free'
+    ];
 
-    const json = await response.json();
-    const text = json?.choices?.[0]?.message?.content;
+    const modelCandidates = Array.from(new Set([preferredModel, ...fallbackModels, ...defaultFallbacks]));
 
-    if (!response.ok || !text) {
-      const errMsg = json?.error?.message || 'AI provider failed to return response';
-      res.status(502).json({ error: errMsg });
+    let selectedModel = null;
+    let text = null;
+    let lastErrorMessage = 'AI provider failed to return response';
+
+    for (const model of modelCandidates) {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: 'Be concise and practical.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.2
+        })
+      });
+
+      const json = await response.json();
+      const candidateText = json?.choices?.[0]?.message?.content;
+
+      if (response.ok && candidateText) {
+        selectedModel = model;
+        text = candidateText;
+        break;
+      }
+
+      lastErrorMessage = json?.error?.message || lastErrorMessage;
+
+      // If rate-limited or unauthorized, fail fast instead of trying more models.
+      if (response.status === 401 || response.status === 429) {
+        res.status(response.status).json({ error: lastErrorMessage });
+        return;
+      }
+    }
+
+    if (!text || !selectedModel) {
+      res.status(502).json({
+        error: `${lastErrorMessage}. Tried models: ${modelCandidates.join(', ')}`
+      });
       return;
     }
 
-    res.status(200).json({ text, model });
+    res.status(200).json({ text, model: selectedModel });
   } catch (error) {
     res.status(500).json({ error: error.message || 'Unknown backend error' });
   }

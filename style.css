@@ -1284,33 +1284,87 @@ input[type=range]::-webkit-slider-thumb {
 .ai-review-modal {
   width: min(780px, 94vw);
 }
-.ai-review-note {
-  color: var(--text-sec);
-  font-size: 0.85rem;
-}
-.ai-review-config-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.6rem;
-  align-items: center;
-}
-.ai-review-meta {
-  font-size: 0.78rem;
-  color: var(--text-sec);
-}
 .ai-review-output {
+  min-height: 260px;
+  max-height: 60vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.ai-review-rich {
+  padding-right: 0.15rem;
+}
+.ai-review-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.02);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  padding: 0.85rem 0.95rem;
+}
+.ai-review-section h4 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.15rem;
+  color: var(--gold);
+  margin-bottom: 0.55rem;
+  letter-spacing: 0.2px;
+}
+.ai-review-paragraph {
   color: var(--text);
-  padding: 0.8rem;
-  min-height: 240px;
-  max-height: 52vh;
-  overflow: auto;
-  white-space: pre-wrap;
-  line-height: 1.45;
-  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-bottom: 0.35rem;
+}
+.ai-review-list,
+.ai-review-numbered {
+  margin: 0.25rem 0 0.55rem 1.1rem;
+  color: var(--text);
+  display: grid;
+  gap: 0.22rem;
+}
+.ai-review-list li,
+.ai-review-numbered li {
+  line-height: 1.5;
+  font-size: 0.93rem;
+}
+.ai-review-empty-title {
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--gold);
+  font-size: 1.2rem;
+  margin-bottom: 0.35rem;
+}
+.ai-review-empty-copy {
+  color: var(--text-sec);
   font-size: 0.9rem;
+}
+.ai-review-loading {
+  overflow: hidden;
+  position: relative;
+}
+.ai-skel-line {
+  height: 11px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  margin-bottom: 0.55rem;
+  position: relative;
+  overflow: hidden;
+}
+.ai-skel-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  animation: aiShimmer 1.2s linear infinite;
+}
+.ai-skel-line.w-40 { width: 40%; }
+.ai-skel-line.w-66 { width: 66%; }
+.ai-skel-line.w-70 { width: 70%; }
+.ai-skel-line.w-85 { width: 85%; }
+.ai-skel-line.w-90 { width: 90%; }
+.ai-skel-line.w-92 { width: 92%; }
+@keyframes aiShimmer {
+  to { transform: translateX(100%); }
 }
 .reauction-head {
   display: flex;

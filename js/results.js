@@ -19,7 +19,8 @@ const aiReviewState = {
   maxSquadSize: 0,
   teamSquads: {},
   teams: {},
-  latest: null
+  latest: null,
+  loading: false
 };
 
 window.addEventListener('DOMContentLoaded', loadResults);
@@ -286,15 +287,11 @@ function buildAiReviewPayload() {
 }
 
 async function generateAiReview() {
-  const btn = document.getElementById('aiGenerateBtn');
+  if (aiReviewState.loading) return;
+  aiReviewState.loading = true;
   const payload = buildAiReviewPayload();
 
   try {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = 'Generating...';
-    }
-
     const meta = document.getElementById('aiReviewMeta');
     const output = document.getElementById('aiReviewOutput');
     if (meta) meta.textContent = 'Generating AI review from backend...';
@@ -331,10 +328,7 @@ async function generateAiReview() {
     renderAiReviewOutput();
     showToast(err.message || 'Failed to generate AI review.', 'error');
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Generate Review';
-    }
+    aiReviewState.loading = false;
   }
 }
 
@@ -346,7 +340,7 @@ function renderAiReviewOutput() {
   const latest = aiReviewState.latest;
   if (!latest) {
     meta.textContent = 'No AI review generated yet.';
-    output.textContent = 'Click Generate Review to get best stable team analysis.';
+    output.textContent = 'AI review will load automatically when this modal opens.';
     return;
   }
 

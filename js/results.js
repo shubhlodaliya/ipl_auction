@@ -475,7 +475,7 @@ function renderAiRankingCards(lines) {
   return `
     <div class="ai-ranking-grid">
       ${cards.map((card, idx) => `
-        <details class="ai-rank-card" ${idx === 0 ? 'open' : ''}>
+        <details class="ai-rank-card">
           <summary>
             <span class="ai-rank-badge">#${escapeHtml(card.rank)}</span>
             <span class="ai-rank-team">${escapeHtml(card.teamName)}</span>

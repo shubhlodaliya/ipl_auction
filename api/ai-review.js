@@ -42,12 +42,15 @@ module.exports = async function handler(req, res) {
 
     const prompt = [
       'You are a cricket auction analyst.',
-      'From the teams below, decide the best stable team after the auction.',
-      'Give output in this exact format:',
-      '1) Best Stable Team: <team name>',
-      '2) Why it is best (3 bullet points)',
-      '3) Team-wise quick ratings (out of 10 for balance, bowling depth, batting depth)',
-      '4) Suggested 2 unsold-player target types for weaker teams',
+      'Create a user-friendly ranking for ALL teams from strongest to weakest.',
+      'Keep language simple and practical.',
+      'Output must include these sections exactly:',
+      '1) Team Rankings (best to worst)',
+      '   - For each rank: Team Name, Overall Score out of 10, and 2 short reasons for that position.',
+      '2) Final Verdict',
+      '   - Mention which is the most stable team and why in 2 points.',
+      '3) Improvement Suggestions For Bottom Teams',
+      '   - For last 2 ranked teams, give 2 actionable player-type suggestions each.',
       '',
       `Room: ${roomCode}`,
       'Auction Team Data:',
@@ -198,45 +201,55 @@ function buildRuleBasedReview(teams) {
 
   if (!scored.length) {
     return [
-      '1) Best Stable Team: Not enough data',
-      '2) Why it is best (3 bullet points)',
-      '- No team data was available.',
-      '- Could not compute role balance.',
-      '- Please retry after auction data is loaded.',
-      '3) Team-wise quick ratings (out of 10 for balance, bowling depth, batting depth)',
-      '- NA',
-      '4) Suggested 2 unsold-player target types for weaker teams',
-      '- Quality all-rounder',
-      '- Death-overs fast bowler'
+      '1) Team Rankings (best to worst)',
+      'No team data available.',
+      '',
+      '2) Final Verdict',
+      'Could not compute ranking because no squads are available.',
+      '',
+      '3) Improvement Suggestions For Bottom Teams',
+      '- Add quality all-rounders.',
+      '- Add death-overs bowlers.'
     ].join('\n');
   }
 
   const best = scored[0];
-  const topReasons = [
-    `Strong role balance score (${best.score.balance}/10) with key role coverage.`,
-    `Reliable bowling depth (${best.score.bowlingDepth}/10) for multiple match phases.`,
-    `Competitive batting depth (${best.score.battingDepth}/10) with stable core options.`
-  ];
 
-  const ratings = scored.map(({ team, score }) => (
-    `- ${team.name}: balance ${score.balance}/10, bowling depth ${score.bowlingDepth}/10, batting depth ${score.battingDepth}/10`
-  )).join('\n');
+  const rankingLines = scored.map(({ team, score }, idx) => {
+    const reasons = [
+      `Balance ${score.balance}/10, Bowling depth ${score.bowlingDepth}/10, Batting depth ${score.battingDepth}/10.`,
+      score.buckets.ar > 0
+        ? 'Has at least one all-rounder for squad flexibility.'
+        : 'Missing all-rounder coverage, reducing flexibility.'
+    ];
 
-  const weaker = scored.slice(-2).reverse();
+    return [
+      `${idx + 1}. ${team.name} - Overall ${score.overall}/10`,
+      `   - ${reasons[0]}`,
+      `   - ${reasons[1]}`
+    ].join('\n');
+  }).join('\n');
+
+  const weaker = scored.slice(-2);
   const suggestions = weaker.map(({ team, score }) => {
     const needs = detectNeeds(score);
-    return `- ${team.name}: ${needs[0]}, ${needs[1]}`;
+    return [
+      `- ${team.name}:`,
+      `  1. Target ${needs[0]}.`,
+      `  2. Target ${needs[1]}.`
+    ].join('\n');
   }).join('\n');
 
   return [
-    `1) Best Stable Team: ${best.team.name}`,
-    '2) Why it is best (3 bullet points)',
-    `- ${topReasons[0]}`,
-    `- ${topReasons[1]}`,
-    `- ${topReasons[2]}`,
-    '3) Team-wise quick ratings (out of 10 for balance, bowling depth, batting depth)',
-    ratings,
-    '4) Suggested 2 unsold-player target types for weaker teams',
+    '1) Team Rankings (best to worst)',
+    rankingLines,
+    '',
+    '2) Final Verdict',
+    `Most stable team: ${best.team.name}.`,
+    `- Their balance score is ${best.score.balance}/10 with better role distribution.`,
+    `- They combine bowling depth (${best.score.bowlingDepth}/10) and batting depth (${best.score.battingDepth}/10) effectively.`,
+    '',
+    '3) Improvement Suggestions For Bottom Teams',
     suggestions
   ].join('\n');
 }

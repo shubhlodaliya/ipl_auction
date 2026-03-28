@@ -361,7 +361,7 @@ function renderAiReviewHtml(text) {
   return sections.map((section, idx) => `
     <section class="ai-review-card ai-review-section fade-in" style="animation-delay:${idx * 0.05}s">
       <h4>${escapeHtml(section.title)}</h4>
-      ${renderAiSectionBlocks(section.lines)}
+      ${renderAiSectionBlocks(section.title, section.lines)}
     </section>
   `).join('');
 }
@@ -392,7 +392,12 @@ function parseAiSections(text) {
   return sections;
 }
 
-function renderAiSectionBlocks(lines) {
+function renderAiSectionBlocks(title, lines) {
+  if (/team\s+rankings/i.test(title || '')) {
+    const rankingHtml = renderAiRankingCards(lines);
+    if (rankingHtml) return rankingHtml;
+  }
+
   let html = '';
   let bulletBuffer = [];
   let numberedBuffer = [];
@@ -436,6 +441,55 @@ function renderAiSectionBlocks(lines) {
   flushBullets();
   flushNumbered();
   return html;
+}
+
+function renderAiRankingCards(lines) {
+  const rankPattern = /^(\d+)\.\s+(.+?)\s*[\-–]\s*Overall\s*([0-9.]+\/10)$/i;
+  const cards = [];
+  let current = null;
+
+  lines.forEach((line) => {
+    if (!line) return;
+
+    const rankMatch = line.match(rankPattern);
+    if (rankMatch) {
+      if (current) cards.push(current);
+      current = {
+        rank: rankMatch[1],
+        teamName: rankMatch[2],
+        score: rankMatch[3],
+        reasons: []
+      };
+      return;
+    }
+
+    const cleanLine = line.replace(/^[-•]\s*/, '').trim();
+    if (current && cleanLine) {
+      current.reasons.push(cleanLine);
+    }
+  });
+
+  if (current) cards.push(current);
+  if (!cards.length) return '';
+
+  return `
+    <div class="ai-ranking-grid">
+      ${cards.map((card, idx) => `
+        <details class="ai-rank-card" ${idx === 0 ? 'open' : ''}>
+          <summary>
+            <span class="ai-rank-badge">#${escapeHtml(card.rank)}</span>
+            <span class="ai-rank-team">${escapeHtml(card.teamName)}</span>
+            <span class="ai-rank-score">${escapeHtml(card.score)}</span>
+          </summary>
+          <div class="ai-rank-reasons">
+            ${card.reasons.length
+              ? `<ul class="ai-review-list">${card.reasons.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`
+              : `<p class="ai-review-paragraph">No details available for this rank.</p>`}
+          </div>
+        </details>
+      `).join('')}
+    </div>
+  `;
 }
 
 function buildAiLoadingSkeleton() {

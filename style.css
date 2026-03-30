@@ -1046,6 +1046,22 @@ input[type=range]::-webkit-slider-thumb {
   animation: fadeIn 0.2s ease;
 }
 
+.player-extra-fields {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0.6rem;
+}
+
+.badge-extra-field {
+  background: rgba(29,160,255,0.12);
+  border: 1px solid rgba(29,160,255,0.28);
+  color: #bfe6ff;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
 /* Bid Panel */
 .bid-panel {
   border-left: 1px solid var(--border);

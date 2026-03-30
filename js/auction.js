@@ -235,6 +235,18 @@ function renderPlayerSpotlight(player) {
   const icon = getRoleIcon(player.role);
   const inWatchlist = !!watchlistForMe[player.id];
   const ageText = player.age ? ` · Age ${player.age}` : '';
+  const manualPlayer = isManualAuction || String(player.country || '').toLowerCase() === 'manual';
+  const categoryText = String(player.category || '').trim();
+  const roleText = String(player.role || '').trim();
+  const showCategory = !!categoryText && categoryText.toLowerCase() !== roleText.toLowerCase();
+  const extraFields = player.extraFields && typeof player.extraFields === 'object' ? player.extraFields : {};
+  const extraFieldChips = Object.entries(extraFields)
+    .filter(([, value]) => String(value || '').trim())
+    .map(([key, value]) => {
+      const label = String(key || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      const safeVal = String(value || '').trim();
+      return `<span class="badge badge-extra-field">${label}: ${safeVal}</span>`;
+    }).join('');
   const avatarInner = player.photo_url
     ? `<img src="${player.photo_url}" alt="${player.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
     : initials;
@@ -247,9 +259,10 @@ function renderPlayerSpotlight(player) {
       <h2 class="player-name">${player.name}</h2>
       <div class="player-badges">
         <span class="badge badge-role">${icon} ${player.role}</span>
-        <span class="badge badge-country">${flag} ${player.country}${ageText}</span>
-        <span class="badge badge-category-${player.category}">${player.category}</span>
+        ${manualPlayer ? (player.age ? `<span class="badge badge-country">Age ${player.age}</span>` : '') : `<span class="badge badge-country">${flag} ${player.country}${ageText}</span>`}
+        ${showCategory ? `<span class="badge badge-category-${player.category}">${player.category}</span>` : ''}
       </div>
+      ${extraFieldChips ? `<div class="player-extra-fields">${extraFieldChips}</div>` : ''}
       ${inWatchlist ? '<div class="watchlist-live-pill">⭐ Watchlist Player</div>' : ''}
       <div class="base-price">Base Price: <span>${formatPrice(player.base_price_lakh)}</span></div>
     </div>

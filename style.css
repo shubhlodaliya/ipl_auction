@@ -588,6 +588,54 @@ input[type=range]::-webkit-slider-thumb {
 .manual-player-row > :nth-child(5) { flex: 1 1 260px; }
 .manual-player-row > :nth-child(6) { flex: 0 1 120px; }
 
+.manual-player-custom {
+  width: 100%;
+  display: none;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.45rem;
+  border-top: 1px dashed rgba(255,255,255,0.12);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+.manual-custom-field-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.55rem;
+}
+
+.manual-custom-field-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.manual-custom-field-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(255,203,48,0.35);
+  background: rgba(255,203,48,0.12);
+  color: #ffe29c;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  padding: 0.2rem 0.45rem 0.2rem 0.55rem;
+}
+
+.manual-custom-field-chip button {
+  border: 1px solid rgba(255,203,48,0.35);
+  background: rgba(6,11,24,0.45);
+  color: #ffd86a;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+}
+
 .manual-team-row input[type="file"],
 .manual-player-row input[type="file"] {
   width: 100%;
@@ -2233,6 +2281,9 @@ input[type=range]::-webkit-slider-thumb {
   .manual-team-row > :nth-child(5),
   .manual-player-row > :nth-child(6) {
     flex: 1 1 100%;
+  }
+  .manual-custom-field-bar {
+    grid-template-columns: 1fr;
   }
 }
 @media (max-width: 500px) {

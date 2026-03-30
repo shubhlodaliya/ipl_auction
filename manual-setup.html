@@ -64,6 +64,13 @@
             <button class="btn btn-secondary" onclick="addPlayerRow()">+ Add Player</button>
           </div>
         </div>
+
+        <div class="manual-custom-field-bar">
+          <input class="form-input" id="customFieldLabel" type="text" maxlength="24" placeholder="Custom field name (e.g. Batting Style)" />
+          <button class="btn btn-secondary" onclick="addCustomPlayerField()">+ Add Custom Field</button>
+          <div id="customFieldList" class="manual-custom-field-list"></div>
+        </div>
+
         <div id="manualPlayersList" class="manual-list"></div>
       </section>
 

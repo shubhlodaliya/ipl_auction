@@ -4,6 +4,7 @@
 
 let teamCounter = 0;
 let playerCounter = 0;
+let customPlayerFields = [];
 
 window.addEventListener('DOMContentLoaded', initManualSetup);
 
@@ -64,9 +65,82 @@ function addPlayerRow() {
     <input class="form-input p-base" type="number" min="1" step="1" placeholder="Base Lakh" />
     <input class="form-input p-photo-file" type="file" accept="image/*" />
     <button class="btn btn-danger" onclick="removeRow('${rowId}')">Remove</button>
+    <div class="manual-player-custom" data-custom-wrap="1"></div>
   `;
 
   container.appendChild(row);
+  syncCustomFieldsToRows();
+}
+
+function toFieldKey(label) {
+  return String(label || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 24);
+}
+
+function renderCustomFieldList() {
+  const list = document.getElementById('customFieldList');
+  if (!list) return;
+  list.innerHTML = customPlayerFields.map((f) => `
+    <span class="manual-custom-field-chip">
+      ${f.label}
+      <button type="button" onclick="removeCustomPlayerField('${f.key}')">×</button>
+    </span>
+  `).join('');
+}
+
+function addCustomPlayerField() {
+  const input = document.getElementById('customFieldLabel');
+  if (!input) return;
+  const label = input.value.trim();
+  if (!label) {
+    showToast('Enter custom field name first.', 'error');
+    return;
+  }
+
+  const key = toFieldKey(label);
+  if (!key) {
+    showToast('Invalid custom field name.', 'error');
+    return;
+  }
+  if (customPlayerFields.some(f => f.key === key)) {
+    showToast('Custom field already exists.', 'error');
+    return;
+  }
+
+  customPlayerFields.push({ key, label });
+  input.value = '';
+  renderCustomFieldList();
+  syncCustomFieldsToRows();
+}
+
+function removeCustomPlayerField(fieldKey) {
+  customPlayerFields = customPlayerFields.filter(f => f.key !== fieldKey);
+  renderCustomFieldList();
+  syncCustomFieldsToRows();
+}
+
+function syncCustomFieldsToRows() {
+  const rows = [...document.querySelectorAll('.manual-player-row')];
+  rows.forEach((row) => {
+    const wrap = row.querySelector('[data-custom-wrap="1"]');
+    if (!wrap) return;
+
+    const existingValues = {};
+    wrap.querySelectorAll('input[data-extra-key]').forEach((el) => {
+      existingValues[el.dataset.extraKey] = el.value;
+    });
+
+    wrap.innerHTML = customPlayerFields.map((field) => {
+      const value = existingValues[field.key] || '';
+      return `<input class="form-input p-extra" data-extra-key="${field.key}" type="text" maxlength="40" placeholder="${field.label}" value="${value.replace(/"/g, '&quot;')}" />`;
+    }).join('');
+
+    wrap.style.display = customPlayerFields.length ? 'grid' : 'none';
+  });
 }
 
 function removeRow(rowId, callback = null) {
@@ -134,6 +208,12 @@ function collectPlayers() {
     const category = row.querySelector('.p-category').value;
     const base = Number(row.querySelector('.p-base').value || 0);
     const photoFile = row.querySelector('.p-photo-file')?.files?.[0] || null;
+    const extraFields = {};
+    row.querySelectorAll('.p-extra[data-extra-key]').forEach((el) => {
+      const key = el.dataset.extraKey;
+      const value = el.value.trim();
+      if (key && value) extraFields[key] = value;
+    });
 
     if (!name || !base) return null;
 
@@ -145,6 +225,7 @@ function collectPlayers() {
       role: category,
       base_price_lakh: base,
       country: 'Manual',
+      extraFields,
       photoFile
     };
   }).filter(Boolean);
@@ -285,6 +366,7 @@ async function createManualRoom() {
       role: p.role,
       base_price_lakh: p.base_price_lakh,
       country: p.country || 'Manual',
+      extraFields: p.extraFields || {},
       photo_url: p.photo_url || null
     }));
 
@@ -300,6 +382,7 @@ async function createManualRoom() {
         maxSquadSize,
         timerSeconds,
         bidOptions,
+        manualPlayerFields: customPlayerFields,
         auctionMode: 'manual',
         invitePasscode: passcode || null,
         status: 'lobby',

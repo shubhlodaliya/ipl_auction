@@ -213,6 +213,8 @@ function renderBidDisplay(data, player = null) {
   const quickBid50 = document.getElementById('quickBid50');
   const quickBid100 = document.getElementById('quickBid100');
   const withdrawBtn = document.getElementById('withdrawBtn');
+  const withdrawnTeamsWrap = document.getElementById('withdrawnTeamsWrap');
+  const withdrawnTeamsList = document.getElementById('withdrawnTeamsList');
   const passBtn = document.getElementById('passBtn');
   const skipPoolBtn = document.getElementById('skipPoolBtn');
   const warnEl = document.getElementById('noPurseWarn');
@@ -221,6 +223,7 @@ function renderBidDisplay(data, player = null) {
     const bidJumps = getBidJumpOptions(resolvedPlayer.base_price_lakh);
     const myTeam = teamsData[myTeamId];
     const withdrawn = !!(data.withdrawnTeams && data.withdrawnTeams[myTeamId]);
+    const withdrawnTeamIds = Object.keys(data.withdrawnTeams || {});
     const skipVoted = !!(data.skipVotes && data.skipVotes[myTeamId]);
     const poolSkipVoted = !!(data.poolSkipVotes && data.poolSkipVotes[myTeamId]);
     const totalTeams = Object.keys(teamsData).length;
@@ -250,6 +253,21 @@ function renderBidDisplay(data, player = null) {
       const canAffordThis = myTeam && myTeam.purse >= (data.currentBid + jump);
       btn.disabled = !allowed || !canTryBid || !canAffordThis;
     });
+
+    if (withdrawnTeamsWrap && withdrawnTeamsList) {
+      if (withdrawnTeamIds.length) {
+        withdrawnTeamsWrap.style.display = 'block';
+        withdrawnTeamsList.innerHTML = withdrawnTeamIds.map((tId) => {
+          const team = teamsData[tId] || getTeam(tId) || {};
+          const short = team.short || tId;
+          const logo = team.logo ? `<img src="${team.logo}" alt="${short} logo" />` : '';
+          return `<span class="withdrawn-team-chip">${logo}${short}</span>`;
+        }).join('');
+      } else {
+        withdrawnTeamsWrap.style.display = 'none';
+        withdrawnTeamsList.innerHTML = '';
+      }
+    }
 
     if (withdrawn) {
       withdrawBtn.disabled = true;
@@ -294,6 +312,8 @@ function renderBidDisplay(data, player = null) {
     if (quickBid25) { quickBid25.disabled = true; quickBid25.style.display = ''; }
     if (quickBid50) { quickBid50.disabled = true; quickBid50.style.display = ''; }
     if (quickBid100) { quickBid100.disabled = true; quickBid100.style.display = ''; }
+    if (withdrawnTeamsWrap) withdrawnTeamsWrap.style.display = 'none';
+    if (withdrawnTeamsList) withdrawnTeamsList.innerHTML = '';
     withdrawBtn.disabled = true;
     withdrawBtn.textContent = 'Withdraw For This Player';
     passBtn.disabled = true;

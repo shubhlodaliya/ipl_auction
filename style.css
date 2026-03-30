@@ -976,6 +976,49 @@ input[type=range]::-webkit-slider-thumb {
   cursor: not-allowed;
 }
 
+.withdrawn-teams-wrap {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  padding: 0.55rem 0.6rem;
+}
+
+.withdrawn-teams-title {
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.42rem;
+}
+
+.withdrawn-teams-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.withdrawn-team-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  border: 1px solid rgba(255, 140, 0, 0.35);
+  background: rgba(255, 140, 0, 0.14);
+  color: #ffd6a4;
+  border-radius: 999px;
+  padding: 0.2rem 0.48rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.withdrawn-team-chip img {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  object-fit: contain;
+  background: rgba(255,255,255,0.06);
+}
+
 .pass-btn {
   width: 100%;
   padding: 0.6rem;

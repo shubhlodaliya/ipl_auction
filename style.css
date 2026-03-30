@@ -553,16 +553,61 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: var(--radius-sm);
   padding: 0.55rem;
   background: rgba(255,255,255,0.03);
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 .manual-team-row {
-  grid-template-columns: 1.3fr 0.6fr 1.6fr 100px auto;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .manual-player-row {
-  grid-template-columns: 1.4fr 0.5fr 1fr 0.6fr 1.5fr auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.manual-team-row > *,
+.manual-player-row > * {
+  min-width: 0;
+}
+
+.manual-team-row > :nth-child(1) { flex: 1 1 220px; }
+.manual-team-row > :nth-child(2) { flex: 0 1 110px; }
+.manual-team-row > :nth-child(3) { flex: 1 1 260px; }
+.manual-team-row > :nth-child(4) { flex: 0 1 90px; }
+.manual-team-row > :nth-child(5) { flex: 0 1 120px; }
+
+.manual-player-row > :nth-child(1) { flex: 1 1 220px; }
+.manual-player-row > :nth-child(2) { flex: 0 1 100px; }
+.manual-player-row > :nth-child(3) { flex: 1 1 170px; }
+.manual-player-row > :nth-child(4) { flex: 0 1 120px; }
+.manual-player-row > :nth-child(5) { flex: 1 1 260px; }
+.manual-player-row > :nth-child(6) { flex: 0 1 120px; }
+
+.manual-team-row input[type="file"],
+.manual-player-row input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  color: var(--text-sec);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.48rem;
+  font-size: 0.85rem;
+}
+
+.manual-team-row input[type="file"]::file-selector-button,
+.manual-player-row input[type="file"]::file-selector-button {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem;
+  margin-right: 0.45rem;
 }
 
 .lobby-teams-grid {
@@ -2185,9 +2230,9 @@ input[type=range]::-webkit-slider-thumb {
   .manual-grid-four {
     grid-template-columns: 1fr 1fr;
   }
-  .manual-team-row,
-  .manual-player-row {
-    grid-template-columns: 1fr 1fr;
+  .manual-team-row > :nth-child(5),
+  .manual-player-row > :nth-child(6) {
+    flex: 1 1 100%;
   }
 }
 @media (max-width: 500px) {
@@ -2229,8 +2274,8 @@ input[type=range]::-webkit-slider-thumb {
   }
   .manual-grid-two,
   .manual-grid-four,
-  .manual-team-row,
-  .manual-player-row {
-    grid-template-columns: 1fr;
+  .manual-team-row > *,
+  .manual-player-row > * {
+    flex: 1 1 100%;
   }
 }

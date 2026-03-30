@@ -248,7 +248,7 @@ function renderPlayerSpotlight(player) {
       return `<span class="badge badge-extra-field">${label}: ${safeVal}</span>`;
     }).join('');
   const avatarInner = player.photo_url
-    ? `<img src="${player.photo_url}" alt="${player.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+    ? `<img src="${player.photo_url}" alt="${player.name}" />`
     : initials;
 
   document.getElementById('playerSpotlight').innerHTML = `

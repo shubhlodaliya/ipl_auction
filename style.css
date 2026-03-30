@@ -966,9 +966,9 @@ input[type=range]::-webkit-slider-thumb {
   gap: 1.5rem;
 }
 .player-avatar {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
+  width: 220px;
+  height: 220px;
+  border-radius: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -985,9 +985,16 @@ input[type=range]::-webkit-slider-thumb {
   content: '';
   position: absolute;
   inset: -8px;
-  border-radius: 50%;
+  border-radius: 34px;
   border: 2px solid var(--gold);
   animation: pulseRing 1.5s ease-in-out infinite;
+}
+
+.player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 .player-info-card {
   text-align: center;
@@ -2297,6 +2304,14 @@ input[type=range]::-webkit-slider-thumb {
   .team-grid { grid-template-columns: repeat(5, 1fr); }
   .pool-banner-meta { display: none; }
   .chat-messages { max-height: 190px; }
+  .player-avatar {
+    width: 180px;
+    height: 180px;
+    border-radius: 24px;
+  }
+  .player-avatar.pulse-ring::after {
+    border-radius: 30px;
+  }
   .manual-grid-two,
   .manual-grid-four {
     grid-template-columns: 1fr 1fr;
@@ -2354,5 +2369,13 @@ input[type=range]::-webkit-slider-thumb {
   .manual-team-row > *,
   .manual-player-row > * {
     flex: 1 1 100%;
+  }
+  .player-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 20px;
+  }
+  .player-avatar.pulse-ring::after {
+    border-radius: 26px;
   }
 }

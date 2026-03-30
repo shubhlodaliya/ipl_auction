@@ -166,6 +166,7 @@ function getRoleBuckets(squad) {
 function scoreTeam(team) {
   const squad = Array.isArray(team.squad) ? team.squad : [];
   const n = Math.max(1, squad.length);
+  const maxSquad = Math.max(1, Number(team.maxSquadSize) || n);
   const b = getRoleBuckets(squad);
 
   const hasWK = b.wk > 0 ? 1 : 0;
@@ -177,9 +178,10 @@ function scoreTeam(team) {
   const balance = clamp10((hasWK * 2.5) + (hasAR * 2.5) + (hasPaceAndSpin * 2.5) + Math.min(2.5, (n / Math.max(1, team.maxSquadSize || n)) * 2.5));
   const bowlingDepth = clamp10((bowlingUnits / n) * 12);
   const battingDepth = clamp10((battingUnits / n) * 12);
+  const squadFill = clamp10((n / maxSquad) * 10);
 
-  const overall = clamp10(balance * 0.45 + bowlingDepth * 0.275 + battingDepth * 0.275);
-  return { overall, balance, bowlingDepth, battingDepth, buckets: b };
+  const overall = clamp10(balance * 0.4 + bowlingDepth * 0.25 + battingDepth * 0.25 + squadFill * 0.1);
+  return { overall, balance, bowlingDepth, battingDepth, squadFill, buckets: b };
 }
 
 function detectNeeds(score) {
@@ -191,6 +193,41 @@ function detectNeeds(score) {
   if (!needs.length) needs.push('Finisher batter');
   if (needs.length < 2) needs.push('Powerplay wicket-taking bowler');
   return needs.slice(0, 2);
+}
+
+function metricLeaders(scored) {
+  return {
+    balance: Math.max(...scored.map(x => x.score.balance)),
+    bowlingDepth: Math.max(...scored.map(x => x.score.bowlingDepth)),
+    battingDepth: Math.max(...scored.map(x => x.score.battingDepth)),
+    squadFill: Math.max(...scored.map(x => x.score.squadFill))
+  };
+}
+
+function buildPositionReason(score, idx, scored) {
+  if (idx === 0) return `Leads the table with the strongest overall combination (Overall ${score.overall}/10).`;
+
+  const gapFromAbove = (scored[idx - 1].score.overall - score.overall).toFixed(1);
+  return `At #${idx + 1}, it is ${gapFromAbove}/10 behind the team above in overall score.`;
+}
+
+function buildCompositionReason(team, score, leaders) {
+  const strengths = [];
+  if (score.balance === leaders.balance) strengths.push(`joint-best balance (${score.balance}/10)`);
+  if (score.bowlingDepth === leaders.bowlingDepth) strengths.push(`top bowling depth (${score.bowlingDepth}/10)`);
+  if (score.battingDepth === leaders.battingDepth) strengths.push(`top batting depth (${score.battingDepth}/10)`);
+  if (score.squadFill === leaders.squadFill) strengths.push(`best squad fill (${score.squadFill}/10)`);
+
+  if (strengths.length) {
+    return `Key edge: ${strengths[0]}.`;
+  }
+
+  if (score.buckets.wk === 0) return 'Weak point: no wicket-keeper option in current squad structure.';
+  if (score.buckets.ar === 0) return 'Weak point: no all-rounder, reducing batting-bowling flexibility.';
+  if (score.buckets.spin === 0) return 'Weak point: no frontline spinner for middle-overs control.';
+  if (score.buckets.fast === 0) return 'Weak point: no specialist pace option for powerplay/death phases.';
+
+  return `Squad mix is decent with ${score.buckets.bats} batters, ${score.buckets.bowl} bowlers and ${score.buckets.ar} all-rounders.`;
 }
 
 function buildRuleBasedReview(teams) {
@@ -214,13 +251,12 @@ function buildRuleBasedReview(teams) {
   }
 
   const best = scored[0];
+  const leaders = metricLeaders(scored);
 
   const rankingLines = scored.map(({ team, score }, idx) => {
     const reasons = [
-      `Balance ${score.balance}/10, Bowling depth ${score.bowlingDepth}/10, Batting depth ${score.battingDepth}/10.`,
-      score.buckets.ar > 0
-        ? 'Has at least one all-rounder for squad flexibility.'
-        : 'Missing all-rounder coverage, reducing flexibility.'
+      buildPositionReason(score, idx, scored),
+      `${buildCompositionReason(team, score, leaders)} (Balance ${score.balance}/10, Bowling ${score.bowlingDepth}/10, Batting ${score.battingDepth}/10)`
     ];
 
     return [
@@ -246,8 +282,8 @@ function buildRuleBasedReview(teams) {
     '',
     '2) Final Verdict',
     `Most stable team: ${best.team.name}.`,
-    `- Their balance score is ${best.score.balance}/10 with better role distribution.`,
-    `- They combine bowling depth (${best.score.bowlingDepth}/10) and batting depth (${best.score.battingDepth}/10) effectively.`,
+    `- They lead with Overall ${best.score.overall}/10 and balance ${best.score.balance}/10.`,
+    `- Their squad provides strong phase coverage (Bowling ${best.score.bowlingDepth}/10, Batting ${best.score.battingDepth}/10).`,
     '',
     '3) Improvement Suggestions For Bottom Teams',
     suggestions

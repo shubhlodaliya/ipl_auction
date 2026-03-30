@@ -24,6 +24,14 @@ let poolByIndex = {};
 let lastPoolNoticeId = null;
 let poolIndexMap = {};
 let removedFromRoom = false;
+let watchlistForMe = {};
+let chatMessages = {};
+let chatMutedMap = {};
+let isChatMuted = false;
+let lastChatSentAt = 0;
+let soundEnabled = true;
+let lastTimerSoundSecond = -1;
+let lastAnnouncedResultKey = '';
 
 // ---- Firebase listeners ----
 let listeners = {};
@@ -32,6 +40,9 @@ let listeners = {};
 window.addEventListener('DOMContentLoaded', initAuction);
 
 async function initAuction() {
+  soundEnabled = localStorage.getItem('ipl_sound_enabled') !== '0';
+  updateSoundToggleButton();
+
   // Load players
   allPlayers = await loadPlayers();
   allPlayers.forEach(p => { playerMap[p.id] = p; });
@@ -117,10 +128,34 @@ async function initAuction() {
   // Listen to currentAuction (main)
   listeners.auction = db.ref(`rooms/${roomCode}/currentAuction`).on('value', snap => {
     if (!snap.exists()) return;
+    const prevAuctionData = currentAuctionData;
     currentAuctionData = snap.val();
     processingRound = false;
-    renderAuction(currentAuctionData);
+    renderAuction(currentAuctionData, prevAuctionData);
     if (isHost) hostEvaluateFastPath(currentAuctionData);
+  });
+
+  listeners.watchlist = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).on('value', snap => {
+    watchlistForMe = snap.val() || {};
+    if (currentAuctionData && currentAuctionData.playerId) {
+      const currentPlayer = playerMap[currentAuctionData.playerId];
+      if (currentPlayer) renderPlayerSpotlight(currentPlayer);
+    }
+  });
+
+  listeners.chatMessages = db.ref(`rooms/${roomCode}/chat/messages`).limitToLast(80).on('value', snap => {
+    chatMessages = snap.val() || {};
+    renderChatMessages();
+  });
+
+  listeners.chatMutedMap = db.ref(`rooms/${roomCode}/chat/muted`).on('value', snap => {
+    chatMutedMap = snap.val() || {};
+    renderChatMessages();
+  });
+
+  listeners.chatMuted = db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).on('value', snap => {
+    isChatMuted = !!snap.val();
+    updateChatMuteState();
   });
 
   // Listen to room status (finished → results)
@@ -135,10 +170,12 @@ async function initAuction() {
 }
 
 // ---- RENDER AUCTION STATE ----
-function renderAuction(data) {
+function renderAuction(data, prevData = null) {
   if (!data) return;
   const player = playerMap[data.playerId];
   if (!player) return;
+
+  handleAudioEvents(data, prevData);
 
   if (data.status === 'bidding') {
     const currentPool = getCurrentPoolMeta();
@@ -167,6 +204,7 @@ function renderPlayerSpotlight(player) {
   const initials = getPlayerInitials(player.name);
   const flag = getCountryFlag(player.country);
   const icon = getRoleIcon(player.role);
+  const inWatchlist = !!watchlistForMe[player.id];
 
   document.getElementById('playerSpotlight').innerHTML = `
     <div class="player-avatar pulse-ring" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
@@ -179,6 +217,7 @@ function renderPlayerSpotlight(player) {
         <span class="badge badge-country">${flag} ${player.country}</span>
         <span class="badge badge-category-${player.category}">${player.category}</span>
       </div>
+      ${inWatchlist ? '<div class="watchlist-live-pill">⭐ Watchlist Player</div>' : ''}
       <div class="base-price">Base Price: <span>${formatPrice(player.base_price_lakh)}</span></div>
     </div>
   `;
@@ -363,6 +402,15 @@ function updateTimerDisplay(secondsLeft, total) {
   if (secondsLeft <= 5) { ring.style.stroke = '#FF4D4D'; val.style.color = '#FF4D4D'; }
   else if (secondsLeft <= 10) { ring.style.stroke = '#FF8C00'; val.style.color = '#FF8C00'; }
   else { ring.style.stroke = 'var(--gold)'; val.style.color = 'var(--gold)'; }
+
+  if (!paused && currentAuctionData && currentAuctionData.status === 'bidding' && secondsLeft > 0 && secondsLeft <= 5) {
+    if (lastTimerSoundSecond !== secondsLeft) {
+      lastTimerSoundSecond = secondsLeft;
+      playTimerCountdownSfx(secondsLeft);
+    }
+  } else if (secondsLeft > 5 || secondsLeft === 0) {
+    lastTimerSoundSecond = -1;
+  }
 }
 
 // ---- PLACE BID ----
@@ -1035,6 +1083,243 @@ function showToast(msg, type = '') {
   setTimeout(() => { t.className = 'toast'; }, 2500);
 }
 
+function updateSoundToggleButton() {
+  const btn = document.getElementById('soundToggleBtn');
+  if (!btn) return;
+  btn.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
+}
+
+function toggleSoundPack() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('ipl_sound_enabled', soundEnabled ? '1' : '0');
+  updateSoundToggleButton();
+  showToast(soundEnabled ? 'Sound pack enabled' : 'Sound pack disabled', 'success');
+}
+
+function handleAudioEvents(data, prevData) {
+  if (!soundEnabled) return;
+
+  if (
+    prevData &&
+    prevData.status === 'bidding' &&
+    data.status === 'bidding' &&
+    data.currentBid > (prevData.currentBid || 0)
+  ) {
+    playBidSfx();
+  }
+
+  const resultKey = `${data.playerId}:${data.status}:${data.highestBidder || ''}:${data.currentBid || 0}`;
+  if ((data.status === 'sold' || data.status === 'unsold') && lastAnnouncedResultKey !== resultKey) {
+    lastAnnouncedResultKey = resultKey;
+
+    if (data.status === 'sold') {
+      playSoldSfx();
+      const winner = teamsData[data.highestBidder] || getTeam(data.highestBidder);
+      const winnerName = winner?.short || winner?.name || 'Unknown team';
+      speakCallout(`Sold to ${winnerName} for ${formatPrice(data.currentBid)}`);
+    } else {
+      playUnsoldSfx();
+      speakCallout('Unsold. No valid bids.');
+    }
+  }
+
+  if (data.status === 'bidding') {
+    lastAnnouncedResultKey = '';
+  }
+}
+
+function playTone(frequency, duration = 0.08, type = 'sine', delayMs = 0) {
+  if (!soundEnabled) return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const trigger = () => {
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.value = frequency;
+
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration + 0.02);
+
+      setTimeout(() => ctx.close(), Math.max(180, Math.ceil(duration * 1000) + 90));
+    };
+
+    if (delayMs > 0) setTimeout(trigger, delayMs);
+    else trigger();
+  } catch (err) {
+    console.warn('Audio tone failed:', err);
+  }
+}
+
+function playBidSfx() {
+  playTone(760, 0.07, 'square');
+  playTone(980, 0.07, 'square', 70);
+}
+
+function playTimerCountdownSfx(second) {
+  const freq = second <= 2 ? 420 : 520;
+  playTone(freq, 0.06, 'triangle');
+}
+
+function playSoldSfx() {
+  playTone(620, 0.09, 'triangle');
+  playTone(820, 0.09, 'triangle', 90);
+  playTone(1040, 0.12, 'triangle', 180);
+}
+
+function playUnsoldSfx() {
+  playTone(420, 0.09, 'sawtooth');
+  playTone(320, 0.11, 'sawtooth', 100);
+}
+
+function speakCallout(text) {
+  if (!soundEnabled || !window.speechSynthesis || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.replace('₹', 'Rupees '));
+    utterance.rate = 1.02;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.warn('Voice callout failed:', err);
+  }
+}
+
+function updateChatMuteState() {
+  const input = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('chatSendBtn');
+  const badge = document.getElementById('chatMuteBadge');
+
+  if (input) input.disabled = isChatMuted;
+  if (sendBtn) sendBtn.disabled = isChatMuted;
+  if (badge) badge.style.display = isChatMuted ? 'inline-flex' : 'none';
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatChatTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderChatMessages() {
+  const el = document.getElementById('chatMessages');
+  if (!el) return;
+
+  const rows = Object.values(chatMessages || {}).sort((a, b) => (a?.at || 0) - (b?.at || 0));
+  const visibleRows = rows.slice(-80);
+
+  if (!visibleRows.length) {
+    el.innerHTML = '<div class="chat-empty">No messages yet. Start the banter.</div>';
+    return;
+  }
+
+  el.innerHTML = visibleRows.map(msg => {
+    const senderTeam = msg.senderTeamId;
+    const team = teamsData[senderTeam] || getTeam(senderTeam) || {};
+    const short = team.short || msg.senderShort || senderTeam || 'TEAM';
+    const owner = team.ownerName || msg.senderName || 'Unknown';
+    const isMine = senderTeam === myTeamId;
+    const isMuted = !!chatMutedMap[senderTeam];
+    const hostControls = isHost && !isMine
+      ? `<div class="chat-host-actions">
+          <button onclick="toggleMuteTeam('${senderTeam}')">${isMuted ? 'Unmute' : 'Mute'}</button>
+          <button onclick="kickTeamFromChat('${senderTeam}')">Kick</button>
+        </div>`
+      : '';
+
+    return `
+      <div class="chat-msg ${isMine ? 'mine' : ''}">
+        <div class="chat-msg-head">
+          <span class="chat-team">${escapeHtml(short)}</span>
+          <span class="chat-owner">${escapeHtml(owner)}</span>
+          ${isMuted ? '<span class="chat-muted-pill">Muted</span>' : ''}
+          <span class="chat-time">${formatChatTime(msg.at)}</span>
+        </div>
+        <div class="chat-msg-text">${escapeHtml(msg.text)}</div>
+        ${hostControls}
+      </div>
+    `;
+  }).join('');
+
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendChatMessage() {
+  if (isChatMuted) {
+    showToast('You are muted by host.', 'error');
+    return;
+  }
+
+  const input = document.getElementById('chatInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const now = Date.now();
+  if (now - lastChatSentAt < 700) {
+    showToast('Please slow down.', 'error');
+    return;
+  }
+  lastChatSentAt = now;
+
+  const myTeam = teamsData[myTeamId] || getTeam(myTeamId) || {};
+
+  try {
+    await db.ref(`rooms/${roomCode}/chat/messages`).push({
+      senderTeamId: myTeamId,
+      senderShort: myTeam.short || myTeamId,
+      senderName: myTeam.ownerName || playerName,
+      text,
+      at: now
+    });
+    input.value = '';
+  } catch (err) {
+    console.error('Send chat failed:', err);
+    showToast('Failed to send message.', 'error');
+  }
+}
+
+async function toggleMuteTeam(teamId) {
+  if (!isHost || !teamId || teamId === myTeamId) return;
+  const ref = db.ref(`rooms/${roomCode}/chat/muted/${teamId}`);
+  try {
+    if (chatMutedMap[teamId]) {
+      await ref.remove();
+      showToast('Team unmuted.', 'success');
+    } else {
+      await ref.set(true);
+      showToast('Team muted.', 'success');
+    }
+  } catch (err) {
+    console.error('Toggle mute failed:', err);
+    showToast('Failed to update mute state.', 'error');
+  }
+}
+
+async function kickTeamFromChat(teamId) {
+  if (!isHost || !teamId || teamId === myTeamId) return;
+  await removeTeamFromAuction(teamId);
+}
+
 function updateMyPurse() {
   const myTeam = teamsData[myTeamId];
   const el = document.getElementById('myPurseDisplay');
@@ -1074,4 +1359,8 @@ window.addEventListener('beforeunload', () => {
   db.ref(`rooms/${roomCode}/currentAuction`).off('value', listeners.auction);
   db.ref(`rooms/${roomCode}/currentIndex`).off('value', listeners.index);
   db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
+  db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', listeners.watchlist);
+  db.ref(`rooms/${roomCode}/chat/messages`).off('value', listeners.chatMessages);
+  db.ref(`rooms/${roomCode}/chat/muted`).off('value', listeners.chatMutedMap);
+  db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).off('value', listeners.chatMuted);
 });

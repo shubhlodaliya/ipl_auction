@@ -109,6 +109,7 @@ function selectJoinTeam(teamId) {
 async function createRoom() {
   const name = document.getElementById('createName').value.trim();
   const teamId = selectedCreateTeam;
+  const passcode = document.getElementById('createPasscode').value.trim();
   const budget = parseInt(document.getElementById('budgetRange').value);
   const maxSquad = parseInt(document.getElementById('squadRange').value);
   const timerSec = parseInt(document.getElementById('timerRange').value);
@@ -135,6 +136,7 @@ async function createRoom() {
         maxSquadSize: maxSquad,
         timerSeconds: timerSec,
         auctionMode,
+        invitePasscode: passcode || null,
         status: 'lobby',
         createdAt: Date.now()
       },
@@ -170,6 +172,7 @@ async function createRoom() {
 async function joinRoom() {
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   const name = document.getElementById('joinName').value.trim();
+  const passcode = document.getElementById('joinPasscode').value.trim();
   const teamId = selectedJoinTeam;
 
   const errEl = document.getElementById('joinError');
@@ -190,6 +193,12 @@ async function joinRoom() {
     const room = snap.val();
     if (room.config.status === 'auction') { showError(errEl, 'This auction has already started!'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
     if (room.config.status === 'finished') { showError(errEl, 'This auction has ended.'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
+    if (room.config.invitePasscode && room.config.invitePasscode !== passcode) {
+      showError(errEl, 'Invalid room passcode.');
+      btn.disabled = false;
+      btn.textContent = '🚀 Join Auction';
+      return;
+    }
 
     const existing = room.teams && room.teams[teamId];
     if (existing) { showError(errEl, 'That team is already taken! Pick another.'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }

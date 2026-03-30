@@ -75,6 +75,11 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Invite Passcode (optional)</label>
+          <input class="form-input" id="createPasscode" type="text" placeholder="Optional room passcode" maxlength="20" />
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Player Order</label>
           <div class="mode-toggle" id="auctionModeToggle">
             <label class="mode-option active" for="modeRandom">
@@ -106,6 +111,11 @@
         <div class="form-group">
           <label class="form-label">Your Name</label>
           <input class="form-input" id="joinName" type="text" placeholder="Enter your name" maxlength="24" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Passcode (if required)</label>
+          <input class="form-input" id="joinPasscode" type="text" placeholder="Enter room passcode" maxlength="20" />
         </div>
 
         <div class="form-group">
@@ -151,6 +161,25 @@
   <script>
     // Render team grids on load
     renderCreateTeamGrid();
+
+    (function applyInviteParams() {
+      const params = new URLSearchParams(window.location.search);
+      const inviteRoom = (params.get('room') || '').trim().toUpperCase();
+      const invitePasscode = (params.get('passcode') || '').trim();
+      if (!inviteRoom) return;
+
+      switchTab('join');
+      const codeInput = document.getElementById('joinCode');
+      if (codeInput) {
+        codeInput.value = inviteRoom.slice(0, 6);
+        checkRoomCode(codeInput.value);
+      }
+
+      if (invitePasscode) {
+        const passInput = document.getElementById('joinPasscode');
+        if (passInput) passInput.value = invitePasscode;
+      }
+    })();
 
     function switchTab(tab) {
       document.getElementById('tabCreate').classList.toggle('active', tab === 'create');

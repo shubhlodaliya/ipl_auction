@@ -126,3 +126,12 @@ function requireSession(redirectTo = 'index.html') {
   }
   return s;
 }
+
+function buildInviteUrl(roomCode, passcode = null, includePasscode = false) {
+  const url = new URL(window.location.origin + window.location.pathname.replace(/[^/]+$/, 'index.html'));
+  url.searchParams.set('room', roomCode);
+  if (includePasscode && passcode) {
+    url.searchParams.set('passcode', passcode);
+  }
+  return url.toString();
+}

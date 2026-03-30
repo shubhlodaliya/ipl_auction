@@ -10,6 +10,9 @@ const { roomCode, teamId: myTeamId, playerName, isHost } = session;
 let roomConfig = null;
 let teamsListener = null;
 let statusListener = null;
+let watchlistListener = null;
+let allPlayers = [];
+let watchlistSet = new Set();
 
 function buildPlayerQueue(players, mode) {
   if (mode !== 'category') {
@@ -82,6 +85,7 @@ function initLobby() {
   db.ref(`rooms/${roomCode}/config`).get().then(snap => {
     if (!snap.exists()) { alert('Room not found!'); window.location.href = 'index.html'; return; }
     roomConfig = snap.val();
+    window.getLobbyInviteLink = (includePasscode = false) => buildInviteUrl(roomCode, roomConfig.invitePasscode, includePasscode);
 
     document.getElementById('configInfo').innerHTML = `
       <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
@@ -107,6 +111,18 @@ function initLobby() {
     document.getElementById('lobbyContent').style.display = 'block';
   });
 
+  loadPlayers().then(players => {
+    allPlayers = players || [];
+  }).catch(err => {
+    console.error('Failed to load players for watchlist:', err);
+  });
+
+  watchlistListener = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).on('value', snap => {
+    const data = snap.val() || {};
+    watchlistSet = new Set(Object.keys(data));
+    updateWatchlistCounter();
+  });
+
   // Listen to teams
   teamsListener = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
     const teams = snap.val() || {};
@@ -122,6 +138,74 @@ function initLobby() {
       window.location.href = 'results.html';
     }
   });
+}
+
+function updateWatchlistCounter() {
+  const label = document.getElementById('watchlistCountLabel');
+  if (!label) return;
+  label.textContent = `${watchlistSet.size} selected`;
+}
+
+function openWatchlistModal() {
+  const overlay = document.getElementById('watchlistModalOverlay');
+  const list = document.getElementById('watchlistList');
+  if (!overlay || !list) return;
+
+  updateWatchlistCounter();
+
+  const sortedPlayers = [...allPlayers].sort((a, b) => {
+    if (a.base_price_lakh !== b.base_price_lakh) return b.base_price_lakh - a.base_price_lakh;
+    return a.name.localeCompare(b.name);
+  });
+
+  list.innerHTML = sortedPlayers.map(player => {
+    const checked = watchlistSet.has(player.id);
+    return `
+      <label class="watchlist-row ${checked ? 'selected' : ''}" for="wl-${player.id}">
+        <input type="checkbox" id="wl-${player.id}" ${checked ? 'checked' : ''} onchange="toggleWatchlistPlayer('${player.id}', this.checked)" />
+        <span class="watchlist-star">${checked ? '★' : '☆'}</span>
+        <span class="watchlist-player-name">${player.name}</span>
+        <span class="watchlist-player-meta">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</span>
+      </label>
+    `;
+  }).join('');
+
+  overlay.classList.add('visible');
+}
+
+function closeWatchlistModal() {
+  const overlay = document.getElementById('watchlistModalOverlay');
+  if (overlay) overlay.classList.remove('visible');
+}
+
+async function toggleWatchlistPlayer(playerId, checked) {
+  try {
+    const ref = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}/${playerId}`);
+    if (checked) {
+      await ref.set(true);
+      watchlistSet.add(playerId);
+    } else {
+      await ref.remove();
+      watchlistSet.delete(playerId);
+    }
+    updateWatchlistCounter();
+  } catch (err) {
+    console.error('Watchlist update failed:', err);
+    showToast('Failed to update watchlist.', 'error');
+  }
+}
+
+async function clearWatchlist() {
+  if (!watchlistSet.size) return;
+  try {
+    await db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).remove();
+    watchlistSet.clear();
+    updateWatchlistCounter();
+    openWatchlistModal();
+  } catch (err) {
+    console.error('Clear watchlist failed:', err);
+    showToast('Failed to clear watchlist.', 'error');
+  }
 }
 
 function renderTeamSlots(teams) {
@@ -252,4 +336,5 @@ async function startAuction() {
 window.addEventListener('beforeunload', () => {
   if (teamsListener) db.ref(`rooms/${roomCode}/teams`).off('value', teamsListener);
   if (statusListener) db.ref(`rooms/${roomCode}/config/status`).off('value', statusListener);
+  if (watchlistListener) db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', watchlistListener);
 });

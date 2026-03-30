@@ -55,6 +55,7 @@
             style="font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:100px;background:var(--gold-dim);color:var(--gold);font-weight:600;">
             LIVE
           </span>
+          <button class="btn btn-ghost" id="soundToggleBtn" onclick="toggleSoundPack()">🔊 Sound On</button>
           <div id="hostAuctionControls" style="display:none;align-items:center;gap:0.6rem;">
             <button class="btn btn-secondary" id="pauseBtn" onclick="togglePauseAuction()">Pause</button>
             <button class="btn btn-danger" id="terminateBtn" onclick="terminateAuction()">Terminate</button>
@@ -124,6 +125,18 @@
           <div style="text-align:center;padding-top:0.5rem;border-top:1px solid var(--border);width:100%;">
             <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:0.2rem;">My Purse</div>
             <div style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--green);" id="myPurseDisplay">—</div>
+          </div>
+
+          <div class="chat-panel">
+            <div class="chat-head">
+              <span>Room Chat</span>
+              <span id="chatMuteBadge" class="chat-mute-badge" style="display:none;">Muted by host</span>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-row">
+              <input id="chatInput" class="chat-input" type="text" placeholder="Type message..." maxlength="140" onkeydown="if(event.key==='Enter'){sendChatMessage();}" />
+              <button class="btn btn-secondary" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
+            </div>
           </div>
         </div>
 

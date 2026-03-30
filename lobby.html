@@ -36,6 +36,12 @@
         <div class="room-code-hint">👆 Click to copy · Share with friends to join!</div>
       </div>
 
+      <div class="lobby-share-actions">
+        <button class="btn btn-secondary" onclick="copyInviteLink()">Copy Invite Link</button>
+        <button class="btn btn-secondary" onclick="copyPrivateInviteLink()">Copy Private Invite</button>
+        <button class="btn btn-ghost" onclick="shareInviteWhatsApp()">Share on WhatsApp</button>
+      </div>
+
       <!-- Config Info -->
       <div style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;" id="configInfo"></div>
 
@@ -53,12 +59,18 @@
         <button class="btn btn-primary btn-xl" id="startBtn" onclick="startAuction()" disabled>
           🏏 Start Auction
         </button>
+        <div style="margin-top:0.75rem;">
+          <button class="btn btn-secondary" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+        </div>
       </div>
 
       <!-- Non-host waiting -->
       <div id="guestWaiting" style="display:none;text-align:center;">
         <div class="spinner" style="margin:0 auto 1rem;"></div>
         <p style="color:var(--text-sec)">Waiting for the host to start the auction...</p>
+        <div style="margin-top:0.8rem;">
+          <button class="btn btn-secondary" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+        </div>
       </div>
 
     </div>
@@ -66,6 +78,21 @@
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
+
+  <div class="team-modal-overlay" id="watchlistModalOverlay" onclick="closeWatchlistModal()">
+    <div class="team-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>My Watchlist</h3>
+        <button class="btn btn-ghost" onclick="closeWatchlistModal()">Close</button>
+      </div>
+      <p class="watchlist-help">Star players you want to track. You will get a highlight when they come up in auction.</p>
+      <div class="watchlist-toolbar">
+        <span id="watchlistCountLabel">0 selected</span>
+        <button class="btn btn-ghost" onclick="clearWatchlist()">Clear All</button>
+      </div>
+      <div class="watchlist-list" id="watchlistList"></div>
+    </div>
+  </div>
 
   <footer class="site-footer">
     <div class="site-footer-inner">
@@ -95,6 +122,31 @@
     function copyRoomCode() {
       const code = document.getElementById('roomCodeDisplay').textContent;
       navigator.clipboard.writeText(code).then(() => showToast('Room code copied!', 'success'));
+    }
+    function copyInviteLink() {
+      const link = window.getLobbyInviteLink ? window.getLobbyInviteLink() : '';
+      if (!link) {
+        showToast('Invite link unavailable.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(link).then(() => showToast('Invite link copied!', 'success'));
+    }
+    function copyPrivateInviteLink() {
+      const link = window.getLobbyInviteLink ? window.getLobbyInviteLink(true) : '';
+      if (!link) {
+        showToast('Private invite unavailable.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(link).then(() => showToast('Private invite copied!', 'success'));
+    }
+    function shareInviteWhatsApp() {
+      const link = window.getLobbyInviteLink ? window.getLobbyInviteLink() : '';
+      if (!link) {
+        showToast('Invite link unavailable.', 'error');
+        return;
+      }
+      const text = encodeURIComponent(`Join my IPL Auction room: ${link}`);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
     }
     function leaveRoom() {
       if (confirm('Leave this auction room?')) {

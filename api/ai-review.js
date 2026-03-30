@@ -204,11 +204,24 @@ function metricLeaders(scored) {
   };
 }
 
-function buildPositionReason(score, idx, scored) {
-  if (idx === 0) return `Leads the table with the strongest overall combination (Overall ${score.overall}/10).`;
+function buildPositionReason(score, idx) {
+  if (idx === 0) {
+    return `Most complete squad profile overall with strong phase coverage (Overall ${score.overall}/10).`;
+  }
 
-  const gapFromAbove = (scored[idx - 1].score.overall - score.overall).toFixed(1);
-  return `At #${idx + 1}, it is ${gapFromAbove}/10 behind the team above in overall score.`;
+  if (score.balance >= 8.5) {
+    return 'Strongly balanced XI profile with reliable role distribution across departments.';
+  }
+
+  if (score.bowlingDepth >= score.battingDepth + 1) {
+    return 'Bowling-heavy structure gives control in middle/death overs but batting depth is thinner.';
+  }
+
+  if (score.battingDepth >= score.bowlingDepth + 1) {
+    return 'Batting-heavy structure provides strong run-base, but bowling support is relatively lighter.';
+  }
+
+  return 'Competitive all-round composition, but one or two role slots still look less settled.';
 }
 
 function buildCompositionReason(team, score, leaders) {
@@ -227,7 +240,8 @@ function buildCompositionReason(team, score, leaders) {
   if (score.buckets.spin === 0) return 'Weak point: no frontline spinner for middle-overs control.';
   if (score.buckets.fast === 0) return 'Weak point: no specialist pace option for powerplay/death phases.';
 
-  return `Squad mix is decent with ${score.buckets.bats} batters, ${score.buckets.bowl} bowlers and ${score.buckets.ar} all-rounders.`;
+  const roleMix = `${score.buckets.bats} batters, ${score.buckets.bowl} bowlers, ${score.buckets.ar} all-rounders, ${score.buckets.wk} wicket-keeper(s)`;
+  return `Role mix snapshot: ${roleMix}.`;
 }
 
 function buildRuleBasedReview(teams) {
@@ -255,7 +269,7 @@ function buildRuleBasedReview(teams) {
 
   const rankingLines = scored.map(({ team, score }, idx) => {
     const reasons = [
-      buildPositionReason(score, idx, scored),
+      buildPositionReason(score, idx),
       `${buildCompositionReason(team, score, leaders)} (Balance ${score.balance}/10, Bowling ${score.bowlingDepth}/10, Batting ${score.battingDepth}/10)`
     ];
 

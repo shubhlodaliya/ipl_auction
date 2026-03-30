@@ -251,6 +251,7 @@ function renderBidDisplay(data, player = null) {
   const quickBid25 = document.getElementById('quickBid25');
   const quickBid50 = document.getElementById('quickBid50');
   const quickBid100 = document.getElementById('quickBid100');
+  const baseBidBtn = document.getElementById('baseBidBtn');
   const withdrawBtn = document.getElementById('withdrawBtn');
   const withdrawnTeamsWrap = document.getElementById('withdrawnTeamsWrap');
   const withdrawnTeamsList = document.getElementById('withdrawnTeamsList');
@@ -272,9 +273,16 @@ function renderBidDisplay(data, player = null) {
     const canSkipPool = !!currentPool?.poolId;
     const affordableJumps = bidJumps.filter(j => myTeam && (myTeam.purse >= data.currentBid + j));
     const canAffordAny = affordableJumps.length > 0;
+    const canAffordBase = !!(myTeam && myTeam.purse >= data.currentBid);
     const isLeading = data.highestBidder === myTeamId;
     const squadFull = myTeam && myTeam.squad && myTeam.squad.length >= roomConfig.maxSquadSize;
     const canTryBid = !paused && !withdrawn && !isLeading && !squadFull;
+    const canBaseBid = canTryBid && !data.highestBidder && canAffordBase;
+
+    if (baseBidBtn) {
+      baseBidBtn.disabled = !canBaseBid;
+      baseBidBtn.textContent = data.highestBidder ? 'Base Bid Locked' : `Bid at Base ${formatPrice(data.currentBid)}`;
+    }
 
     const quickButtons = {
       25: quickBid25,
@@ -348,6 +356,10 @@ function renderBidDisplay(data, player = null) {
     else if (squadFull) { warnEl.textContent = '⚠️ Your squad is full!'; warnEl.style.display = 'block'; }
     else { warnEl.style.display = 'none'; warnEl.style.color = 'var(--red)'; }
   } else {
+    if (baseBidBtn) {
+      baseBidBtn.disabled = true;
+      baseBidBtn.textContent = 'Bid at Base Price';
+    }
     if (quickBid25) { quickBid25.disabled = true; quickBid25.style.display = ''; }
     if (quickBid50) { quickBid50.disabled = true; quickBid50.style.display = ''; }
     if (quickBid100) { quickBid100.disabled = true; quickBid100.style.display = ''; }
@@ -414,7 +426,7 @@ function updateTimerDisplay(secondsLeft, total) {
 }
 
 // ---- PLACE BID ----
-async function placeBid(selectedJump = null) {
+async function placeBid(selectedJump = null, useBaseBid = false) {
   if (!currentAuctionData || currentAuctionData.status !== 'bidding') return;
   if (paused) {
     showToast('Auction is paused.', 'error');
@@ -425,14 +437,22 @@ async function placeBid(selectedJump = null) {
   if (!currentPlayer) return;
 
   const allowedJumps = getBidJumpOptions(currentPlayer.base_price_lakh);
-  const jump = selectedJump && allowedJumps.includes(selectedJump) ? selectedJump : allowedJumps[0];
-  const nextBid = currentAuctionData.currentBid + jump;
+  const isBaseBid = !!useBaseBid;
+  const jump = isBaseBid
+    ? 0
+    : (selectedJump && allowedJumps.includes(selectedJump) ? selectedJump : allowedJumps[0]);
+  const nextBid = isBaseBid ? currentAuctionData.currentBid : (currentAuctionData.currentBid + jump);
   const myTeam = teamsData[myTeamId];
   if (currentAuctionData.withdrawnTeams && currentAuctionData.withdrawnTeams[myTeamId]) {
     showToast('You withdrew for this player.', 'error');
     return;
   }
   if (!myTeam) return;
+
+  if (isBaseBid && currentAuctionData.highestBidder) {
+    showToast('Base bid is available only before first bid.', 'error');
+    return;
+  }
 
   const mySquadCount = (myTeam.squad || []).length;
   if (mySquadCount >= roomConfig.maxSquadSize) {
@@ -455,9 +475,15 @@ async function placeBid(selectedJump = null) {
       if (!auction || auction.status !== 'bidding') return; // abort
       const txnPlayer = playerMap[auction.playerId];
       if (!txnPlayer) return;
-      const txnAllowedJumps = getBidJumpOptions(txnPlayer.base_price_lakh);
-      if (!txnAllowedJumps.includes(jump)) return;
-      const txnNextBid = auction.currentBid + jump;
+
+      if (isBaseBid) {
+        if (auction.highestBidder) return;
+      } else {
+        const txnAllowedJumps = getBidJumpOptions(txnPlayer.base_price_lakh);
+        if (!txnAllowedJumps.includes(jump)) return;
+      }
+
+      const txnNextBid = isBaseBid ? auction.currentBid : (auction.currentBid + jump);
       if (txnNextBid !== nextBid) return; // stale UI value, abort and let client refresh
       if (auction.withdrawnTeams && auction.withdrawnTeams[myTeamId]) return;
       auction.currentBid = txnNextBid;

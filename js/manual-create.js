@@ -411,11 +411,11 @@ async function getSignedUploadParams(payload) {
   return json;
 }
 
-async function uploadFileToCloudinary(file, signPayload) {
+async function uploadFileToCloudinary(fileOrSource, signPayload) {
   const signed = await getSignedUploadParams(signPayload);
   const form = new FormData();
 
-  form.append('file', file);
+  form.append('file', fileOrSource);
   form.append('api_key', signed.apiKey);
   form.append('timestamp', String(signed.timestamp));
   form.append('signature', signed.signature);
@@ -448,12 +448,28 @@ async function uploadManualAssets(roomCode, teams, players) {
   }
 
   for (const player of players) {
-    if (!player.photoFile) continue;
-    player.photo_url = await uploadFileToCloudinary(player.photoFile, {
+    if (player.photoFile) {
+      player.photo_url = await uploadFileToCloudinary(player.photoFile, {
+        roomCode,
+        entityType: 'player',
+        entityId: player.id,
+        fileName: player.photoFile.name || 'photo'
+      });
+      continue;
+    }
+
+    const source = String(player.photo_url || '').trim();
+    if (!source) continue;
+
+    const isRemoteUrl = /^https?:\/\//i.test(source);
+    const isDataUrl = /^data:image\//i.test(source);
+    if (!isRemoteUrl && !isDataUrl) continue;
+
+    player.photo_url = await uploadFileToCloudinary(source, {
       roomCode,
       entityType: 'player',
       entityId: player.id,
-      fileName: player.photoFile.name || 'photo'
+      fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
     });
   }
 }

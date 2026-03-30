@@ -35,7 +35,13 @@ function getBidIncrement(currentBid) {
   return 50;
 }
 
-function getBidJumpOptions(basePriceLakh) {
+function getBidJumpOptions(basePriceLakh, customOptions = null) {
+  if (Array.isArray(customOptions) && customOptions.length) {
+    const clean = customOptions
+      .map(Number)
+      .filter(x => Number.isFinite(x) && x > 0);
+    if (clean.length) return [...new Set(clean)].sort((a, b) => a - b);
+  }
   if ([150, 200].includes(basePriceLakh)) return [50, 100];
   if ([50, 75, 100].includes(basePriceLakh)) return [25, 50, 100];
   return [25, 50, 100];

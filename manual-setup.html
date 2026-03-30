@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual Auction Setup</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">🏏 Manual Auction Setup</div>
+    <button class="btn btn-ghost" onclick="window.location.href='index.html'">Back</button>
+  </header>
+
+  <main class="results-layout" style="max-width:1000px;">
+    <div class="glass" style="padding:1.2rem;display:grid;gap:1rem;">
+      <h2 class="display" style="font-size:1.5rem;">Create Fully Manual Auction</h2>
+      <p style="color:var(--text-sec);font-size:0.88rem;">Team logos and player photos are uploaded to Cloudinary automatically.</p>
+
+      <div class="manual-grid-two">
+        <div class="form-group">
+          <label class="form-label">Host Name</label>
+          <input class="form-input" id="hostName" type="text" maxlength="24" placeholder="Enter host name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Invite Passcode (optional)</label>
+          <input class="form-input" id="invitePasscode" type="text" maxlength="20" placeholder="Optional room passcode" />
+        </div>
+      </div>
+
+      <div class="manual-grid-four">
+        <div class="form-group">
+          <label class="form-label">Purse Per Team (Lakh)</label>
+          <input class="form-input" id="budgetLakh" type="number" min="100" step="5" value="2000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Players Per Team</label>
+          <input class="form-input" id="maxSquadSize" type="number" min="1" step="1" value="25" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bid Timer (seconds)</label>
+          <input class="form-input" id="timerSeconds" type="number" min="5" step="1" value="30" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bid Buttons (Lakh, comma)</label>
+          <input class="form-input" id="bidOptions" type="text" value="25,50,100" placeholder="e.g. 10,25,50" />
+        </div>
+      </div>
+
+      <section class="manual-section">
+        <div class="manual-section-head">
+          <h3>Teams</h3>
+          <button class="btn btn-secondary" onclick="addTeamRow()">+ Add Team</button>
+        </div>
+        <div id="manualTeamsList" class="manual-list"></div>
+      </section>
+
+      <section class="manual-section">
+        <div class="manual-section-head">
+          <h3>Players</h3>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input class="form-input" id="bulkBasePrice" type="number" min="1" step="1" style="max-width:180px;" placeholder="Base Lakh" />
+            <button class="btn btn-secondary" onclick="applyBasePriceToAll()">Apply Base To All</button>
+            <button class="btn btn-secondary" onclick="addPlayerRow()">+ Add Player</button>
+          </div>
+        </div>
+        <div id="manualPlayersList" class="manual-list"></div>
+      </section>
+
+      <div class="manual-grid-two">
+        <div class="form-group">
+          <label class="form-label">Host Team</label>
+          <select class="form-input" id="hostTeamSelect"></select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="createManualRoomBtn" onclick="createManualRoom()">Create Manual Auction Room</button>
+      <p id="manualSetupError" style="display:none;color:var(--red);font-size:0.85rem;"></p>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/manual-create.js"></script>
+  <script>
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 2200);
+    }
+  </script>
+</body>
+</html>

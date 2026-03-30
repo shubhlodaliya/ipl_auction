@@ -80,8 +80,11 @@ async function fetchRoomTeams(code) {
   }
 
   const takenTeams = Object.keys(room.teams || {});
+  const sourceTeams = room.config?.auctionType === 'manual'
+    ? Object.values(room.manualTeams || {})
+    : IPL_TEAMS;
 
-  grid.innerHTML = IPL_TEAMS.map(t => {
+  grid.innerHTML = sourceTeams.map(t => {
     const taken = takenTeams.includes(t.id);
     return `
       <div class="team-option ${taken ? 'taken' : ''}" id="join-team-${t.id}"
@@ -203,7 +206,15 @@ async function joinRoom() {
     const existing = room.teams && room.teams[teamId];
     if (existing) { showError(errEl, 'That team is already taken! Pick another.'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
 
-    const team = getTeam(teamId);
+    const team = room.config?.auctionType === 'manual'
+      ? (room.manualTeams && room.manualTeams[teamId])
+      : getTeam(teamId);
+    if (!team) {
+      showError(errEl, 'Selected team is invalid for this room.');
+      btn.disabled = false;
+      btn.textContent = '🚀 Join Auction';
+      return;
+    }
     await db.ref(`rooms/${code}/teams/${teamId}`).set({
       name: team.name,
       short: team.short,

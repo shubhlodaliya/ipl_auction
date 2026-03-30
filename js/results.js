@@ -45,11 +45,7 @@ async function loadResults() {
   }
 
   try {
-    // Load all data
-    const [roomSnap, playersData] = await Promise.all([
-      db.ref(`rooms/${roomCode}`).get(),
-      loadPlayers()
-    ]);
+    const roomSnap = await db.ref(`rooms/${roomCode}`).get();
 
     if (!roomSnap.exists()) {
       document.getElementById('loadingScreen').innerHTML = `<p style="color:var(--red)">Room data not found.</p>`;
@@ -57,6 +53,11 @@ async function loadResults() {
     }
 
     const room = roomSnap.val();
+    const isManualAuction = room.config?.auctionType === 'manual';
+    const playersData = isManualAuction ? (room.manualPlayers || []) : await loadPlayers();
+    const roomTeamCatalog = isManualAuction
+      ? (room.manualTeams || {})
+      : Object.fromEntries(IPL_TEAMS.map(t => [t.id, t]));
     const playerMap = {};
     playersData.forEach(p => {
       playerMap[p.id] = p;
@@ -108,7 +109,7 @@ async function loadResults() {
     });
 
     document.getElementById('resultsGrid').innerHTML = sortedTeams.map(([tId, team], idx) => {
-      const t = getTeam(tId);
+      const t = roomTeamCatalog[tId] || getTeam(tId);
       const squad = (teamSquads[tId] || []).sort((a, b) => b.price - a.price);
       const totalSpend = squad.reduce((s, x) => s + x.price, 0);
       const remaining = team.purse;
@@ -148,7 +149,7 @@ async function loadResults() {
                     <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${initials}</div>
                     <div style="flex:1;">
                       <div class="result-player-name">${player.name}</div>
-                      <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country}</div>
+                      <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}</div>
                     </div>
                     <div class="result-player-price">${formatPrice(price)}</div>
                   </div>
@@ -552,13 +553,12 @@ function renderReAuctionSection() {
   const allReady = eligibleTeamIds.every(teamId => !!readyMap[teamId]);
 
   const teamReadyHtml = eligibleTeamIds.map(teamId => {
-    const t = getTeam(teamId);
     const team = teams[teamId];
     const selectedCount = Object.keys(selections[teamId] || {}).filter(pid => (selections[teamId] || {})[pid]).length;
     const ready = !!readyMap[teamId];
     return `
       <div class="reauction-team-chip ${ready ? 'ready' : ''}">
-        <span>${t?.short || team?.short || teamId} · ${team?.ownerName || 'Team'}</span>
+        <span>${team?.short || teamId} · ${team?.ownerName || 'Team'}</span>
         <span>${selectedCount} selected</span>
         <span>${ready ? 'Ready' : 'Pending'}</span>
       </div>

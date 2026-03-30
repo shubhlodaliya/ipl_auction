@@ -13,6 +13,11 @@ let statusListener = null;
 let watchlistListener = null;
 let allPlayers = [];
 let watchlistSet = new Set();
+let roomTeamCatalog = {};
+
+function getRoomTeamMeta(teamId) {
+  return roomTeamCatalog[teamId] || getTeam(teamId);
+}
 
 function buildPlayerQueue(players, mode) {
   if (mode !== 'category') {
@@ -66,14 +71,6 @@ function initLobby() {
   // Show room code
   document.getElementById('roomCodeDisplay').textContent = roomCode;
 
-  // Show my team chip
-  const me = getTeam(myTeamId);
-  if (me) {
-    const chip = document.getElementById('myTeamChip');
-    chip.style.display = 'flex';
-    chip.innerHTML = `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" /> ${me.short}`;
-  }
-
   // Show host or guest panel
   if (isHost) {
     document.getElementById('hostControls').style.display = 'block';
@@ -81,10 +78,26 @@ function initLobby() {
     document.getElementById('guestWaiting').style.display = 'block';
   }
 
-  // Load room config
-  db.ref(`rooms/${roomCode}/config`).get().then(snap => {
+  // Load room data
+  db.ref(`rooms/${roomCode}`).get().then(snap => {
     if (!snap.exists()) { alert('Room not found!'); window.location.href = 'index.html'; return; }
-    roomConfig = snap.val();
+    const room = snap.val();
+    roomConfig = room.config || {};
+    roomTeamCatalog = roomConfig.auctionType === 'manual'
+      ? (room.manualTeams || {})
+      : Object.fromEntries(IPL_TEAMS.map(t => [t.id, t]));
+    allPlayers = roomConfig.auctionType === 'manual'
+      ? (room.manualPlayers || [])
+      : [];
+
+    // Show my team chip
+    const me = getRoomTeamMeta(myTeamId);
+    if (me) {
+      const chip = document.getElementById('myTeamChip');
+      chip.style.display = 'flex';
+      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" />` : ''} ${me.short}`;
+    }
+
     window.getLobbyInviteLink = (includePasscode = false) => buildInviteUrl(roomCode, roomConfig.invitePasscode, includePasscode);
 
     document.getElementById('configInfo').innerHTML = `
@@ -102,19 +115,29 @@ function initLobby() {
       </div>
       <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Order</div>
-        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${roomConfig.auctionMode === 'category' ? 'By Category' : 'Random'}</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${roomConfig.auctionType === 'manual' ? 'Manual' : (roomConfig.auctionMode === 'category' ? 'By Category' : 'Random')}</div>
+      </div>
+      <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Bid Buttons</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${(roomConfig.bidOptions || [25,50,100]).map(v => formatPrice(v)).join(' / ')}</div>
       </div>
     `;
 
     // Show lobby content
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('lobbyContent').style.display = 'block';
-  });
 
-  loadPlayers().then(players => {
-    allPlayers = players || [];
-  }).catch(err => {
-    console.error('Failed to load players for watchlist:', err);
+    db.ref(`rooms/${roomCode}/teams`).get().then(teamSnap => {
+      renderTeamSlots(teamSnap.val() || {});
+    });
+
+    if (roomConfig.auctionType !== 'manual') {
+      loadPlayers().then(players => {
+        allPlayers = players || [];
+      }).catch(err => {
+        console.error('Failed to load players for watchlist:', err);
+      });
+    }
   });
 
   watchlistListener = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).on('value', snap => {
@@ -212,10 +235,12 @@ function renderTeamSlots(teams) {
   const grid = document.getElementById('teamSlotsGrid');
   const joinedIds = Object.keys(teams);
   const count = joinedIds.length;
+  const teamCatalogList = Object.values(roomTeamCatalog || {});
+  const totalTeams = teamCatalogList.length || 10;
 
-  document.getElementById('joinedCount').textContent = `(${count}/10 joined)`;
+  document.getElementById('joinedCount').textContent = `(${count}/${totalTeams} joined)`;
 
-  grid.innerHTML = IPL_TEAMS.map(t => {
+  grid.innerHTML = teamCatalogList.map(t => {
     const joined = teams[t.id];
     const isMe = t.id === myTeamId;
     const teamIsHost = joined && joined.isHost;
@@ -263,7 +288,7 @@ async function joinTeamFromLobby(tId) {
   const snap = await db.ref(`rooms/${roomCode}/teams/${tId}`).get();
   if (snap.exists()) { showToast('Team already taken!', 'error'); return; }
 
-  const team = getTeam(tId);
+  const team = getRoomTeamMeta(tId);
   await db.ref(`rooms/${roomCode}/teams/${tId}`).set({
     name: team.name,
     short: team.short,
@@ -287,11 +312,17 @@ async function startAuction() {
   btn.textContent = 'Starting...';
 
   try {
+    const isManual = roomConfig.auctionType === 'manual';
     const mode = roomConfig.auctionMode || 'random';
 
     // Load all players and build queue
-    const players = await loadPlayers();
-    const { queue, poolByIndex } = buildPlayerQueue(players, mode);
+    const players = isManual
+      ? (allPlayers || [])
+      : await loadPlayers();
+    const built = isManual
+      ? { queue: players.map(p => p.id), poolByIndex: {} }
+      : buildPlayerQueue(players, mode);
+    const { queue, poolByIndex } = built;
     if (!queue.length) throw new Error('No players available for auction queue');
 
     // Write player queue

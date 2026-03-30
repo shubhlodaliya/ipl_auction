@@ -43,7 +43,7 @@ function addTeamRow() {
   syncHostTeamOptions();
 }
 
-function addPlayerRow() {
+function addPlayerRow(prefill = null) {
   playerCounter += 1;
   const rowId = `playerRow_${playerCounter}`;
   const container = document.getElementById('manualPlayersList');
@@ -70,6 +70,151 @@ function addPlayerRow() {
 
   container.appendChild(row);
   syncCustomFieldsToRows();
+
+  if (prefill) {
+    row.querySelector('.p-name').value = prefill.name || '';
+    row.querySelector('.p-age').value = prefill.age || '';
+    row.querySelector('.p-category').value = prefill.category || 'Batsman';
+    row.querySelector('.p-base').value = prefill.base_price_lakh || '';
+    if (prefill.photo_url) row.dataset.photoUrl = prefill.photo_url;
+
+    if (prefill.extraFields) {
+      Object.entries(prefill.extraFields).forEach(([key, value]) => {
+        const input = row.querySelector(`.p-extra[data-extra-key="${key}"]`);
+        if (input) input.value = value;
+      });
+    }
+  }
+}
+
+function normalizeHeader(text) {
+  return String(text || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function normalizeCategory(raw) {
+  const value = String(raw || '').trim().toLowerCase();
+  if (!value) return 'Batsman';
+  if (value.includes('keeper')) return 'Wicket-keeper';
+  if (value.includes('all')) return 'All-rounder';
+  if (value.includes('spin')) return 'Spinner';
+  if (value.includes('fast') || value.includes('pace')) return 'Fast Bowler';
+  if (value.includes('bowl')) return 'Bowler';
+  if (value.includes('bat')) return 'Batsman';
+  return 'Batsman';
+}
+
+function parseNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const num = Number(String(value).replace(/[^0-9.\-]/g, ''));
+  return Number.isFinite(num) ? num : null;
+}
+
+async function importExcelPlayers() {
+  if (typeof XLSX === 'undefined') {
+    showToast('Excel parser failed to load. Refresh and try again.', 'error');
+    return;
+  }
+
+  const fileInput = document.getElementById('excelPlayersFile');
+  const file = fileInput?.files?.[0];
+  if (!file) {
+    showToast('Choose an Excel file first.', 'error');
+    return;
+  }
+
+  const baseFallback = Number(document.getElementById('bulkBasePrice').value || 0);
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+    if (!rows.length) {
+      showToast('Excel file is empty.', 'error');
+      return;
+    }
+
+    const headers = rows[0].map(h => String(h || '').trim());
+    const headerKeys = headers.map(normalizeHeader);
+
+    const findHeaderIndex = (variants) => headerKeys.findIndex(k => variants.includes(k));
+
+    const idxName = findHeaderIndex(['name', 'player_name', 'player']);
+    const idxAge = findHeaderIndex(['age']);
+    const idxCategory = findHeaderIndex(['category', 'role', 'player_role']);
+    const idxBase = findHeaderIndex(['base_price', 'base', 'base_lakh', 'base_price_lakh', 'price']);
+    const idxPhoto = findHeaderIndex(['photo', 'photo_url', 'image', 'image_url', 'avatar']);
+
+    if (idxName === -1) {
+      showToast('Excel must contain Name column.', 'error');
+      return;
+    }
+
+    if (idxBase === -1 && !(baseFallback > 0)) {
+      showToast('No base price column found. Enter default Base Lakh first.', 'error');
+      return;
+    }
+
+    const usedIndexes = new Set([idxName, idxAge, idxCategory, idxBase, idxPhoto].filter(i => i >= 0));
+    const extraColumns = headers
+      .map((label, idx) => ({ label: String(label || '').trim(), idx }))
+      .filter(col => col.label && !usedIndexes.has(col.idx));
+
+    customPlayerFields = extraColumns.map((col, i) => {
+      const key = toFieldKey(col.label) || `field_${i + 1}`;
+      return { key, label: col.label, excelIndex: col.idx };
+    });
+    renderCustomFieldList();
+
+    const importedPlayers = [];
+    for (let i = 1; i < rows.length; i += 1) {
+      const row = rows[i] || [];
+      const name = String(row[idxName] || '').trim();
+      if (!name) continue;
+
+      const age = idxAge >= 0 ? parseNumber(row[idxAge]) : null;
+      const category = idxCategory >= 0 ? normalizeCategory(row[idxCategory]) : 'Batsman';
+      const baseFromExcel = idxBase >= 0 ? parseNumber(row[idxBase]) : null;
+      const basePrice = baseFromExcel && baseFromExcel > 0 ? baseFromExcel : baseFallback;
+      const photoUrl = idxPhoto >= 0 ? String(row[idxPhoto] || '').trim() : '';
+
+      const extraFields = {};
+      customPlayerFields.forEach((f) => {
+        const value = String(row[f.excelIndex] || '').trim();
+        if (value) extraFields[f.key] = value;
+      });
+
+      importedPlayers.push({
+        name,
+        age: age || '',
+        category,
+        base_price_lakh: basePrice,
+        photo_url: photoUrl,
+        extraFields
+      });
+    }
+
+    if (!importedPlayers.length) {
+      showToast('No valid player rows found in Excel.', 'error');
+      return;
+    }
+
+    const container = document.getElementById('manualPlayersList');
+    container.innerHTML = '';
+    playerCounter = 0;
+    importedPlayers.forEach((p) => addPlayerRow(p));
+
+    showToast(`Imported ${importedPlayers.length} players from Excel.`, 'success');
+  } catch (err) {
+    console.error('Excel import failed:', err);
+    showToast('Failed to import Excel file.', 'error');
+  }
 }
 
 function toFieldKey(label) {
@@ -208,6 +353,7 @@ function collectPlayers() {
     const category = row.querySelector('.p-category').value;
     const base = Number(row.querySelector('.p-base').value || 0);
     const photoFile = row.querySelector('.p-photo-file')?.files?.[0] || null;
+    const photoUrl = String(row.dataset.photoUrl || '').trim();
     const extraFields = {};
     row.querySelectorAll('.p-extra[data-extra-key]').forEach((el) => {
       const key = el.dataset.extraKey;
@@ -226,7 +372,8 @@ function collectPlayers() {
       base_price_lakh: base,
       country: 'Manual',
       extraFields,
-      photoFile
+      photoFile,
+      photo_url: photoUrl || null
     };
   }).filter(Boolean);
 }

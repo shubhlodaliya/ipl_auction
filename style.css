@@ -542,6 +542,13 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 1.2rem;
 }
 
+.manual-players-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .manual-list {
   display: flex;
   flex-direction: column;
@@ -2284,6 +2291,9 @@ input[type=range]::-webkit-slider-thumb {
   }
   .manual-custom-field-bar {
     grid-template-columns: 1fr;
+  }
+  .manual-players-actions {
+    width: 100%;
   }
 }
 @media (max-width: 500px) {

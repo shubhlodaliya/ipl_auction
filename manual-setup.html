@@ -58,9 +58,11 @@
       <section class="manual-section">
         <div class="manual-section-head">
           <h3>Players</h3>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <div class="manual-players-actions">
             <input class="form-input" id="bulkBasePrice" type="number" min="1" step="1" style="max-width:180px;" placeholder="Base Lakh" />
             <button class="btn btn-secondary" onclick="applyBasePriceToAll()">Apply Base To All</button>
+            <input class="form-input" id="excelPlayersFile" type="file" accept=".xlsx,.xls,.csv" style="max-width:260px;" />
+            <button class="btn btn-secondary" onclick="importExcelPlayers()">Import Excel Players</button>
             <button class="btn btn-secondary" onclick="addPlayerRow()">+ Add Player</button>
           </div>
         </div>
@@ -90,6 +92,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/manual-create.js"></script>

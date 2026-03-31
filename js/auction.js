@@ -265,6 +265,7 @@ function renderPlayerSpotlight(player) {
       ${extraFieldChips ? `<div class="player-extra-fields">${extraFieldChips}</div>` : ''}
       ${inWatchlist ? '<div class="watchlist-live-pill">⭐ Watchlist Player</div>' : ''}
       <div class="base-price">Base Price: <span>${formatPrice(player.base_price_lakh)}</span></div>
+      <div class="player-bid-team-tile" id="playerBidTeamTile" style="display:none;"></div>
     </div>
   `;
 }
@@ -281,16 +282,37 @@ function renderBidDisplay(data, player = null) {
 
   // Highest bidder chip
   const chipEl = document.getElementById('highestBidderChip');
+  const playerBidTeamTileEl = document.getElementById('playerBidTeamTile');
   if (data.highestBidder) {
     const team = teamsData[data.highestBidder];
     const t = getRoomTeamMeta(data.highestBidder);
+    const accent = t?.primary || '#FFCB30';
     chipEl.style.borderColor = (t?.primary || '#FFD700') + '80';
     chipEl.style.color = t?.primary || 'var(--gold)';
     chipEl.innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${t.short} logo" />` : ''} ${team?.name || data.highestBidder}`;
+
+    if (playerBidTeamTileEl) {
+      playerBidTeamTileEl.style.display = 'block';
+      playerBidTeamTileEl.style.borderColor = accent + '66';
+      playerBidTeamTileEl.style.boxShadow = `0 10px 28px ${accent}22`;
+      playerBidTeamTileEl.innerHTML = `
+        <div class="player-bid-team-label">CURRENT BID TEAM</div>
+        <div class="player-bid-team-name" style="color:${accent};">
+          ${t?.logo ? `<img class="player-bid-team-logo" src="${t.logo}" alt="${t.short} logo" />` : ''}
+          <span>${team?.name || data.highestBidder}</span>
+        </div>
+      `;
+    }
   } else {
     chipEl.style.borderColor = '';
     chipEl.style.color = '';
     chipEl.textContent = 'No bids yet';
+    if (playerBidTeamTileEl) {
+      playerBidTeamTileEl.style.display = 'none';
+      playerBidTeamTileEl.innerHTML = '';
+      playerBidTeamTileEl.style.borderColor = '';
+      playerBidTeamTileEl.style.boxShadow = '';
+    }
   }
 
   // Bid buttons

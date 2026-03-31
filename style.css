@@ -1058,6 +1058,45 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 1.5rem;
 }
 
+.player-bid-team-tile {
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 203, 48, 0.35);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255,203,48,0.14), rgba(29,160,255,0.1));
+  padding: 0.65rem 0.85rem;
+  transition: var(--transition);
+}
+
+.player-bid-team-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #f4dd95;
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+}
+
+.player-bid-team-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.player-bid-team-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  padding: 2px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.07);
+  object-fit: contain;
+  object-position: center;
+}
+
 .watchlist-live-pill {
   margin: 0.2rem 0 0.7rem;
   display: inline-flex;
@@ -2420,6 +2459,7 @@ input[type=range]::-webkit-slider-thumb {
   .badge { font-size: 0.76rem; }
   .base-price { font-size: 0.9rem; }
   .base-price span { font-size: 1.18rem; }
+  .player-bid-team-name { font-size: 1.18rem; }
   .manual-grid-two,
   .manual-grid-four {
     grid-template-columns: 1fr 1fr;
@@ -2514,6 +2554,24 @@ input[type=range]::-webkit-slider-thumb {
   }
   .base-price { font-size: 0.86rem; }
   .base-price span { font-size: 1.05rem; }
+  .player-bid-team-tile {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.58rem;
+    border-radius: 10px;
+  }
+  .player-bid-team-label {
+    font-size: 0.62rem;
+    margin-bottom: 0.2rem;
+  }
+  .player-bid-team-name {
+    font-size: 0.98rem;
+    gap: 0.35rem;
+  }
+  .player-bid-team-logo {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+  }
   .bid-panel { padding: 0.9rem 0.8rem; gap: 0.85rem; }
   .bid-panel > div:first-child {
     border-radius: 12px;

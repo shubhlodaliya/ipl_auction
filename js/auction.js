@@ -1418,8 +1418,8 @@ function initChatPopup() {
   handle.addEventListener('pointerup', releaseDrag);
   handle.addEventListener('pointercancel', releaseDrag);
 
-  // Start closed; user opens it from the topbar Chat button.
-  toggleChatPopup(false);
+  // Mobile/tablet: keep chat visible by default. Desktop starts closed.
+  toggleChatPopup(window.innerWidth <= 1050);
 }
 
 function toggleChatPopup(forceState) {

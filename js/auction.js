@@ -37,6 +37,7 @@ let lastAnnouncedResultKey = '';
 let cleanupRequested = false;
 let magneticPointerEnabled = false;
 let activeMagneticButton = null;
+const avatarBorderVariantClass = 'border-bold';
 
 // ---- Firebase listeners ----
 let listeners = {};
@@ -255,7 +256,7 @@ function renderPlayerSpotlight(player) {
     : initials;
 
   document.getElementById('playerSpotlight').innerHTML = `
-    <div class="player-avatar pulse-ring" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
+    <div class="player-avatar pulse-ring ${avatarBorderVariantClass}" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
       ${avatarInner}
     </div>
     <div class="player-info-card">

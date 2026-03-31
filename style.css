@@ -1030,7 +1030,7 @@ input[type=range]::-webkit-slider-thumb {
   pointer-events: none;
 }
 
-.player-avatar.pulse-ring::before {
+.player-avatar.pulse-ring.border-bold::before {
   inset: -3px;
   border-radius: 31px;
   border: 1px solid rgba(255,203,48,0.35);
@@ -1041,7 +1041,7 @@ input[type=range]::-webkit-slider-thumb {
   animation: pulseRing 2.4s ease-in-out infinite;
 }
 
-.player-avatar.pulse-ring::after {
+.player-avatar.pulse-ring.border-bold::after {
   inset: -4px;
   border-radius: 32px;
   background: conic-gradient(
@@ -1058,6 +1058,23 @@ input[type=range]::-webkit-slider-thumb {
   mask-composite: exclude;
   padding: 1px;
   animation: borderOrbit 4.8s linear infinite;
+}
+
+.player-avatar.pulse-ring.border-clean::before {
+  inset: -2px;
+  border-radius: 30px;
+  border: 1px solid rgba(255,203,48,0.42);
+  box-shadow:
+    0 0 0 1px rgba(255,203,48,0.12),
+    0 0 10px rgba(255,203,48,0.16);
+  animation: cleanRingPulse 2.8s ease-in-out infinite;
+}
+
+.player-avatar.pulse-ring.border-clean::after {
+  inset: -2px;
+  border-radius: 30px;
+  border: 1px solid rgba(255,255,255,0.16);
+  opacity: 0.8;
 }
 
 .player-avatar img {
@@ -2453,6 +2470,16 @@ input[type=range]::-webkit-slider-thumb {
 @keyframes borderOrbit {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+@keyframes cleanRingPulse {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.006);
+  }
 }
 @keyframes bidBump {
   0% { transform: scale(1); }

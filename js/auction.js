@@ -37,6 +37,7 @@ let lastAnnouncedResultKey = '';
 let cleanupRequested = false;
 let magneticPointerEnabled = false;
 let activeMagneticButton = null;
+let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 const avatarBorderVariantClass = 'border-bold';
 
 // ---- Firebase listeners ----
@@ -115,6 +116,7 @@ async function initAuction() {
   document.getElementById('waitingScreen').style.display = 'none';
   document.getElementById('auctionLayout').style.display = 'grid';
   initBidButtonMagneticHover();
+  initChatPopup();
 
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
@@ -1359,6 +1361,83 @@ function speakCallout(text) {
     window.speechSynthesis.speak(utterance);
   } catch (err) {
     console.warn('Voice callout failed:', err);
+  }
+}
+
+function initChatPopup() {
+  const popup = document.getElementById('chatPopup');
+  const handle = document.getElementById('chatPopupDragHandle');
+  if (!popup || !handle || popup.dataset.ready === '1') return;
+
+  popup.dataset.ready = '1';
+
+  handle.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    chatPopupDragState.dragging = true;
+    chatPopupDragState.pointerId = event.pointerId;
+
+    const rect = popup.getBoundingClientRect();
+    chatPopupDragState.offsetX = event.clientX - rect.left;
+    chatPopupDragState.offsetY = event.clientY - rect.top;
+
+    popup.style.left = `${rect.left}px`;
+    popup.style.top = `${rect.top}px`;
+    popup.style.right = 'auto';
+    popup.style.bottom = 'auto';
+    popup.classList.add('dragging');
+
+    handle.setPointerCapture(event.pointerId);
+  });
+
+  handle.addEventListener('pointermove', (event) => {
+    if (!chatPopupDragState.dragging || chatPopupDragState.pointerId !== event.pointerId) return;
+    event.preventDefault();
+
+    const margin = 8;
+    const nextLeftRaw = event.clientX - chatPopupDragState.offsetX;
+    const nextTopRaw = event.clientY - chatPopupDragState.offsetY;
+    const maxLeft = Math.max(margin, window.innerWidth - popup.offsetWidth - margin);
+    const maxTop = Math.max(margin, window.innerHeight - popup.offsetHeight - margin);
+    const nextLeft = Math.min(Math.max(nextLeftRaw, margin), maxLeft);
+    const nextTop = Math.min(Math.max(nextTopRaw, margin), maxTop);
+
+    popup.style.left = `${nextLeft}px`;
+    popup.style.top = `${nextTop}px`;
+  });
+
+  const releaseDrag = (event) => {
+    if (!chatPopupDragState.dragging) return;
+    if (chatPopupDragState.pointerId !== null && event.pointerId !== chatPopupDragState.pointerId) return;
+
+    chatPopupDragState.dragging = false;
+    chatPopupDragState.pointerId = null;
+    popup.classList.remove('dragging');
+    try { handle.releasePointerCapture(event.pointerId); } catch (_) {}
+  };
+
+  handle.addEventListener('pointerup', releaseDrag);
+  handle.addEventListener('pointercancel', releaseDrag);
+
+  // Start closed; user opens it from the topbar Chat button.
+  toggleChatPopup(false);
+}
+
+function toggleChatPopup(forceState) {
+  const popup = document.getElementById('chatPopup');
+  const btn = document.getElementById('chatToggleBtn');
+  if (!popup || !btn) return;
+
+  const shouldOpen = typeof forceState === 'boolean'
+    ? forceState
+    : !popup.classList.contains('open');
+
+  popup.classList.toggle('open', shouldOpen);
+  btn.textContent = shouldOpen ? 'Chat On' : 'Chat';
+  btn.classList.toggle('active', shouldOpen);
+
+  if (shouldOpen) {
+    const messages = document.getElementById('chatMessages');
+    if (messages) messages.scrollTop = messages.scrollHeight;
   }
 }
 

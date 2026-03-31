@@ -56,6 +56,7 @@
             LIVE
           </span>
           <button class="btn btn-ghost" id="soundToggleBtn" onclick="toggleSoundPack()">🔊 Sound On</button>
+          <button class="btn btn-secondary" id="chatToggleBtn" onclick="toggleChatPopup()">Chat</button>
           <div id="hostAuctionControls" style="display:none;align-items:center;gap:0.6rem;">
             <button class="btn btn-secondary" id="pauseBtn" onclick="togglePauseAuction()">Pause</button>
             <button class="btn btn-danger" id="terminateBtn" onclick="terminateAuction()">Terminate</button>
@@ -123,23 +124,30 @@
             <div class="purse-label">My Purse</div>
             <div class="purse-amount" id="myPurseDisplay">—</div>
           </div>
-
-          <div class="chat-panel">
-            <div class="chat-head">
-              <span>Room Chat</span>
-              <span id="chatMuteBadge" class="chat-mute-badge" style="display:none;">Muted by host</span>
-            </div>
-            <div class="chat-messages" id="chatMessages"></div>
-            <div class="chat-input-row">
-              <input id="chatInput" class="chat-input" type="text" placeholder="Type message..." maxlength="140" onkeydown="if(event.key==='Enter'){sendChatMessage();}" />
-              <button class="btn btn-secondary" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
-            </div>
-          </div>
         </div>
 
       </div><!-- end auction-body -->
     </div><!-- end auction-main -->
   </div><!-- end auction-layout -->
+
+  <div class="chat-popup" id="chatPopup">
+    <div class="chat-popup-window">
+      <div class="chat-popup-header" id="chatPopupDragHandle">
+        <div class="chat-popup-title">Room Chat</div>
+        <div class="chat-popup-actions">
+          <span id="chatMuteBadge" class="chat-mute-badge" style="display:none;">Muted by host</span>
+          <button class="btn btn-ghost chat-popup-close" onclick="toggleChatPopup(false)">Close</button>
+        </div>
+      </div>
+      <div class="chat-popup-body">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" class="chat-input" type="text" placeholder="Type message..." maxlength="140" onkeydown="if(event.key==='Enter'){sendChatMessage();}" />
+          <button class="btn btn-secondary" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- SOLD / UNSOLD BANNER -->
   <div class="result-overlay" id="resultOverlay">

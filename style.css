@@ -986,7 +986,7 @@ input[type=range]::-webkit-slider-thumb {
 .player-avatar.pulse-ring::after {
   content: '';
   position: absolute;
-  inset: -10px;
+  inset: -3px;
   border-radius: 31px;
   border: 2px solid var(--gold);
   animation: pulseRing 1.5s ease-in-out infinite;
@@ -1005,7 +1005,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 .player-name {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 3.15rem;
+  font-size: 2.15rem;
   font-weight: 700;
   line-height: 1.1;
   margin-bottom: 0.55rem;
@@ -1021,7 +1021,7 @@ input[type=range]::-webkit-slider-thumb {
 .badge {
   padding: 0.32rem 0.78rem;
   border-radius: 100px;
-  font-size: 2.86rem;
+  font-size: 0.86rem;
   font-weight: 600;
 }
 .badge-role {
@@ -1032,14 +1032,14 @@ input[type=range]::-webkit-slider-thumb {
 .badge-category-Indian { background: rgba(255,121,61,0.15); color: #FF793D; }
 .badge-category-Overseas { background: rgba(29,160,255,0.15); color: var(--blue); }
 .base-price {
-  font-size: 2.08rem;
+  font-size: 1.08rem;
   color: var(--text-sec);
 }
 .base-price span {
   font-weight: 700;
   color: var(--text);
   font-family: 'Rajdhani', sans-serif;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
 }
 
 .watchlist-live-pill {
@@ -1074,7 +1074,7 @@ input[type=range]::-webkit-slider-thumb {
   background: rgba(29,160,255,0.12);
   border: 1px solid rgba(29,160,255,0.28);
   color: #bfe6ff;
-  font-size: 1.82rem;
+  font-size: 0.82rem;
   font-weight: 600;
   padding: 0.3rem 0.65rem;
 }

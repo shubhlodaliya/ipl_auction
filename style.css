@@ -747,7 +747,7 @@ input[type=range]::-webkit-slider-thumb {
    ============================================================ */
 .auction-layout {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 214px 1fr;
   grid-template-rows: 1fr;
   min-height: calc(100vh - 61px);
   gap: 0;
@@ -755,13 +755,15 @@ input[type=range]::-webkit-slider-thumb {
 
 /* Teams Sidebar */
 .teams-sidebar {
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)),
+    var(--surface);
   border-right: 1px solid var(--border);
-  padding: 0.7rem 0.6rem;
+  padding: 0.8rem 0.65rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 .sidebar-title {
   font-size: 0.65rem;
@@ -772,10 +774,10 @@ input[type=range]::-webkit-slider-thumb {
   padding: 0.35rem 0.3rem;
 }
 .sidebar-team {
-  padding: 0.55rem 0.6rem;
-  border-radius: 8px;
+  padding: 0.62rem 0.64rem;
+  border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--card);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
   transition: var(--transition);
   position: relative;
   overflow: hidden;
@@ -863,16 +865,21 @@ input[type=range]::-webkit-slider-thumb {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background:
+    radial-gradient(120% 120% at 0% 100%, rgba(29,160,255,0.08), transparent 52%),
+    radial-gradient(90% 80% at 100% 0%, rgba(255,203,48,0.05), transparent 60%),
+    #050d1f;
 }
 .auction-topbar {
-  padding: 0.7rem 1.2rem;
+  padding: 0.85rem 1.35rem;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--surface);
+  background: rgba(11,18,32,0.72);
+  backdrop-filter: blur(10px);
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 .auction-progress { display: flex; align-items: center; gap: 1rem; }
 .pool-banner-btn {
@@ -910,12 +917,12 @@ input[type=range]::-webkit-slider-thumb {
   white-space: nowrap;
 }
 .progress-text {
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   color: var(--text-sec);
 }
 .progress-bar-wrap {
-  width: 100px;
-  height: 3px;
+  width: 140px;
+  height: 4px;
   background: rgba(255,255,255,0.1);
   border-radius: 4px;
   overflow: hidden;
@@ -953,7 +960,7 @@ input[type=range]::-webkit-slider-thumb {
 .auction-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr 340px;
   gap: 0;
   overflow: hidden;
 }
@@ -964,8 +971,12 @@ input[type=range]::-webkit-slider-thumb {
   grid-template-columns: 300px minmax(0, 1fr);
   align-items: start;
   justify-content: start;
-  padding: 1.4rem;
+  align-content: start;
+  padding: 1.8rem;
   gap: 2rem;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0.018), rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, rgba(3,9,20,0.85), rgba(3,9,20,0.5));
 }
 .player-avatar {
   width: 300px;
@@ -988,7 +999,7 @@ input[type=range]::-webkit-slider-thumb {
   position: absolute;
   inset: -3px;
   border-radius: 31px;
-  border: 2px solid var(--gold);
+  border: 2px solid rgba(255,203,48,0.9);
   animation: pulseRing 1.5s ease-in-out infinite;
 }
 
@@ -1001,7 +1012,12 @@ input[type=range]::-webkit-slider-thumb {
 .player-info-card {
   text-align: left;
   align-self: start;
-  padding-top: 0.2rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(8,14,27,0.62);
+  backdrop-filter: blur(6px);
+  max-width: 520px;
 }
 .player-name {
   font-family: 'Rajdhani', sans-serif;
@@ -1081,18 +1097,21 @@ input[type=range]::-webkit-slider-thumb {
 
 /* Bid Panel */
 .bid-panel {
-  background: var(--surface);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+    rgba(8,16,30,0.95);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 1rem 1.2rem;
-  gap: 1rem;
+  padding: 1.15rem 1rem;
+  gap: 1.05rem;
   border-left: 1px solid var(--border);
   overflow-y: auto;
+  box-shadow: inset 12px 0 30px rgba(0,0,0,0.16);
 }
 .current-bid-label {
-  font-size: 0.65rem;
+  font-size: 0.74rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -1101,7 +1120,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 .current-bid-amount {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
   color: var(--gold);
   text-align: center;
@@ -1115,11 +1134,11 @@ input[type=range]::-webkit-slider-thumb {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.8rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 100px;
   background: var(--gold-dim);
   border: 1px solid var(--gold-glow);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--gold);
   text-align: center;
@@ -1136,8 +1155,8 @@ input[type=range]::-webkit-slider-thumb {
   position: relative;
 }
 .timer-ring-svg {
-  width: 90px;
-  height: 90px;
+  width: 98px;
+  height: 98px;
   transform: rotate(-90deg);
 }
 .timer-ring-bg {
@@ -1159,7 +1178,7 @@ input[type=range]::-webkit-slider-thumb {
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--gold);
   line-height: 1;
@@ -1194,7 +1213,7 @@ input[type=range]::-webkit-slider-thumb {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
 /* Hide legacy single bid button if an old cached HTML still contains it */
@@ -1203,13 +1222,14 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .quick-bid-btn {
-  padding: 0.6rem 0.4rem;
+  min-height: 44px;
+  padding: 0.7rem 0.45rem;
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, #FFCB30, #FF9D00);
   border: 1px solid rgba(255, 203, 48, 0.55);
   color: #060B18;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   transition: var(--transition);
@@ -1218,7 +1238,8 @@ input[type=range]::-webkit-slider-thumb {
 
 .base-bid-btn {
   width: 100%;
-  padding: 0.65rem 0.5rem;
+  min-height: 48px;
+  padding: 0.8rem 0.6rem;
   margin-bottom: 0.1rem;
 }
 
@@ -1238,12 +1259,13 @@ input[type=range]::-webkit-slider-thumb {
 
 .withdraw-btn {
   width: 100%;
-  padding: 0.6rem;
+  min-height: 44px;
+  padding: 0.72rem;
   border-radius: var(--radius-sm);
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
   color: var(--text-sec);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 600;
   transition: var(--transition);
 }
@@ -1302,12 +1324,13 @@ input[type=range]::-webkit-slider-thumb {
 
 .pass-btn {
   width: 100%;
-  padding: 0.5rem;
+  min-height: 40px;
+  padding: 0.56rem;
   border-radius: var(--radius-sm);
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-sec);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 600;
   transition: var(--transition);
 }
@@ -1320,12 +1343,13 @@ input[type=range]::-webkit-slider-thumb {
 
 .skip-pool-btn {
   width: 100%;
-  padding: 0.5rem;
+  min-height: 40px;
+  padding: 0.56rem;
   border-radius: var(--radius-sm);
   background: rgba(29,160,255,0.08);
   border: 1px solid rgba(29,160,255,0.28);
   color: #8ed2ff;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 600;
   transition: var(--transition);
 }
@@ -1337,7 +1361,7 @@ input[type=range]::-webkit-slider-thumb {
 .skip-pool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .no-purse-warning {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--red);
   text-align: center;
   display: none;
@@ -1351,7 +1375,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .purse-label {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--text-dim);
@@ -1360,15 +1384,16 @@ input[type=range]::-webkit-slider-thumb {
 
 .purse-amount {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 1.2rem;
+  font-size: 1.45rem;
   font-weight: 700;
   color: var(--green);
 }
 
 .chat-panel {
   width: 100%;
-  border-top: 1px solid var(--border);
-  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 0.2rem;
+  padding-top: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -1396,7 +1421,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .chat-messages {
-  max-height: 120px;
+  max-height: 150px;
   min-height: 100px;
   overflow-y: auto;
   border: 1px solid var(--border);
@@ -2332,7 +2357,7 @@ input[type=range]::-webkit-slider-thumb {
    ============================================================ */
 @media (max-width: 1200px) {
   .auction-layout { grid-template-columns: 150px 1fr; }
-  .auction-body { grid-template-columns: 1fr 280px; }
+  .auction-body { grid-template-columns: 1fr 310px; }
   .player-spotlight { grid-template-columns: 220px minmax(0, 1fr); gap: 1.2rem; padding: 1.1rem; }
   .player-avatar { width: 220px; height: 250px; border-radius: 22px; }
   .player-avatar.pulse-ring::after { inset: -2px; border-radius: 24px; }
@@ -2355,8 +2380,8 @@ input[type=range]::-webkit-slider-thumb {
   .chat-messages { max-height: 190px; }
   .player-spotlight {
     grid-template-columns: 220px minmax(0, 1fr);
-    gap: 1.1rem;
-    padding: 1.5rem;
+    gap: 1rem;
+    padding: 1.25rem;
   }
   .player-avatar {
     width: 220px;
@@ -2366,6 +2391,9 @@ input[type=range]::-webkit-slider-thumb {
   .player-avatar.pulse-ring::after {
     inset: -2px;
     border-radius: 26px;
+  }
+  .player-info-card {
+    padding: 0.7rem 0.8rem;
   }
   .player-name { font-size: 1.5rem; }
   .badge { font-size: 0.76rem; }
@@ -2390,7 +2418,7 @@ input[type=range]::-webkit-slider-thumb {
   .header { padding: 0.8rem 1rem; }
   .auction-layout { grid-template-columns: 1fr; }
   .auction-body { grid-template-columns: 1fr; grid-template-rows: auto auto; }
-  .player-spotlight { border-right: none; border-bottom: 1px solid var(--border); }
+  .player-spotlight { border-right: none; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); }
   .bid-panel { border-left: none; border-top: 1px solid var(--border); }
   .team-grid { grid-template-columns: repeat(5, 1fr); gap: 0.3rem; }
   .lobby-teams-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2436,7 +2464,7 @@ input[type=range]::-webkit-slider-thumb {
   .player-spotlight {
     grid-template-columns: 130px minmax(0, 1fr);
     gap: 0.85rem;
-    padding: 1rem;
+    padding: 0.9rem;
   }
   .player-avatar {
     width: 130px;
@@ -2449,16 +2477,23 @@ input[type=range]::-webkit-slider-thumb {
     border-radius: 17px;
   }
   .player-name {
-    font-size: 1.45rem;
+    font-size: 1.28rem;
   }
   .player-badges {
     gap: 0.4rem;
     margin-bottom: 0.7rem;
   }
   .badge {
-    font-size: 0.72rem;
-    padding: 0.24rem 0.55rem;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.46rem;
   }
+  .player-info-card {
+    padding: 0.5rem 0.55rem;
+    border-radius: 10px;
+  }
+  .base-price { font-size: 0.86rem; }
+  .base-price span { font-size: 1.05rem; }
+  .bid-panel { padding: 0.9rem 0.8rem; gap: 0.85rem; }
   .current-bid-amount { font-size: 2rem; }
   .timer-ring-svg { width: 70px; height: 70px; }
 }

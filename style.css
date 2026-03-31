@@ -953,7 +953,7 @@ input[type=range]::-webkit-slider-thumb {
 .auction-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 280px 1fr 300px;
+  grid-template-columns: 1fr 300px;
   gap: 0;
   overflow: hidden;
 }
@@ -2332,7 +2332,7 @@ input[type=range]::-webkit-slider-thumb {
    ============================================================ */
 @media (max-width: 1200px) {
   .auction-layout { grid-template-columns: 150px 1fr; }
-  .auction-body { grid-template-columns: 250px 1fr 280px; }
+  .auction-body { grid-template-columns: 1fr 280px; }
   .player-spotlight { grid-template-columns: 220px minmax(0, 1fr); gap: 1rem; padding: 1.1rem; }
   .player-avatar { width: 220px; height: 250px; border-radius: 22px; }
   .player-avatar.pulse-ring::after { border-radius: 28px; }

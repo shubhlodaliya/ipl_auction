@@ -958,16 +958,16 @@ input[type=range]::-webkit-slider-thumb {
 
 /* Player Spotlight */
 .player-spotlight {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  align-items: start;
+  justify-content: start;
   padding: 2rem;
-  gap: 1.5rem;
+  gap: 1.6rem;
 }
 .player-avatar {
-  width: 220px;
-  height: 220px;
+  width: 300px;
+  height: 340px;
   border-radius: 28px;
   display: flex;
   align-items: center;
@@ -997,7 +997,9 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: inherit;
 }
 .player-info-card {
-  text-align: center;
+  text-align: left;
+  align-self: start;
+  padding-top: 0.2rem;
 }
 .player-name {
   font-family: 'Rajdhani', sans-serif;
@@ -1009,7 +1011,7 @@ input[type=range]::-webkit-slider-thumb {
 .player-badges {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.6rem;
   flex-wrap: wrap;
   margin-bottom: 1rem;
@@ -1039,7 +1041,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .watchlist-live-pill {
-  margin: 0.2rem auto 0.55rem;
+  margin: 0.2rem 0 0.55rem;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -1056,9 +1058,14 @@ input[type=range]::-webkit-slider-thumb {
 .player-extra-fields {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.4rem;
   margin: 0.15rem 0 0.6rem;
+}
+
+.player-spotlight .state-loading {
+  grid-column: 1 / -1;
+  justify-self: center;
 }
 
 .badge-extra-field {
@@ -2304,9 +2311,14 @@ input[type=range]::-webkit-slider-thumb {
   .team-grid { grid-template-columns: repeat(5, 1fr); }
   .pool-banner-meta { display: none; }
   .chat-messages { max-height: 190px; }
+  .player-spotlight {
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 1.1rem;
+    padding: 1.5rem;
+  }
   .player-avatar {
-    width: 180px;
-    height: 180px;
+    width: 220px;
+    height: 250px;
     border-radius: 24px;
   }
   .player-avatar.pulse-ring::after {
@@ -2370,12 +2382,29 @@ input[type=range]::-webkit-slider-thumb {
   .manual-player-row > * {
     flex: 1 1 100%;
   }
+  .player-spotlight {
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 0.85rem;
+    padding: 1rem;
+  }
   .player-avatar {
-    width: 150px;
-    height: 150px;
-    border-radius: 20px;
+    width: 130px;
+    height: 160px;
+    border-radius: 16px;
+    border-width: 3px;
   }
   .player-avatar.pulse-ring::after {
-    border-radius: 26px;
+    border-radius: 22px;
+  }
+  .player-name {
+    font-size: 1.45rem;
+  }
+  .player-badges {
+    gap: 0.4rem;
+    margin-bottom: 0.7rem;
+  }
+  .badge {
+    font-size: 0.72rem;
+    padding: 0.24rem 0.55rem;
   }
 }

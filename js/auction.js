@@ -287,9 +287,11 @@ function renderBidDisplay(data, player = null) {
     const team = teamsData[data.highestBidder];
     const t = getRoomTeamMeta(data.highestBidder);
     const accent = t?.primary || '#FFCB30';
-    chipEl.style.borderColor = (t?.primary || '#FFD700') + '80';
-    chipEl.style.color = t?.primary || 'var(--gold)';
-    chipEl.innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${t.short} logo" />` : ''} ${team?.name || data.highestBidder}`;
+    if (chipEl) {
+      chipEl.style.borderColor = (t?.primary || '#FFD700') + '80';
+      chipEl.style.color = t?.primary || 'var(--gold)';
+      chipEl.innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${t.short} logo" />` : ''} ${team?.name || data.highestBidder}`;
+    }
 
     if (playerBidTeamTileEl) {
       playerBidTeamTileEl.style.display = 'block';
@@ -304,9 +306,11 @@ function renderBidDisplay(data, player = null) {
       `;
     }
   } else {
-    chipEl.style.borderColor = '';
-    chipEl.style.color = '';
-    chipEl.textContent = 'No bids yet';
+    if (chipEl) {
+      chipEl.style.borderColor = '';
+      chipEl.style.color = '';
+      chipEl.textContent = 'No bids yet';
+    }
     if (playerBidTeamTileEl) {
       playerBidTeamTileEl.style.display = 'none';
       playerBidTeamTileEl.innerHTML = '';
@@ -324,6 +328,7 @@ function renderBidDisplay(data, player = null) {
   const passBtn = document.getElementById('passBtn');
   const skipPoolBtn = document.getElementById('skipPoolBtn');
   const warnEl = document.getElementById('noPurseWarn');
+  const bidPanelEl = document.querySelector('.bid-panel');
 
   if (data.status === 'bidding') {
     const bidJumps = getBidJumpOptions(resolvedPlayer.base_price_lakh, roomConfig.bidOptions);
@@ -412,6 +417,8 @@ function renderBidDisplay(data, player = null) {
     else if (isLeading) { warnEl.textContent = '✓ You are the leading bidder'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--green)'; }
     else if (squadFull) { warnEl.textContent = '⚠️ Your squad is full!'; warnEl.style.display = 'block'; }
     else { warnEl.style.display = 'none'; warnEl.style.color = 'var(--red)'; }
+
+    replayBidPanelMotion(bidPanelEl);
   } else {
     if (baseBidBtn) {
       baseBidBtn.disabled = true;
@@ -427,7 +434,16 @@ function renderBidDisplay(data, player = null) {
     skipPoolBtn.disabled = true;
     skipPoolBtn.textContent = 'Skip Current Pool';
     warnEl.style.display = 'none';
+
+    if (bidPanelEl) bidPanelEl.classList.remove('motion-stagger');
   }
+}
+
+function replayBidPanelMotion(panelEl) {
+  if (!panelEl) return;
+  panelEl.classList.remove('motion-stagger');
+  void panelEl.offsetWidth;
+  panelEl.classList.add('motion-stagger');
 }
 
 // ---- TIMER ----

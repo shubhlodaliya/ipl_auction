@@ -35,6 +35,8 @@ let soundEnabled = true;
 let lastTimerSoundSecond = -1;
 let lastAnnouncedResultKey = '';
 let cleanupRequested = false;
+let magneticPointerEnabled = false;
+let activeMagneticButton = null;
 
 // ---- Firebase listeners ----
 let listeners = {};
@@ -111,6 +113,7 @@ async function initAuction() {
   // Show auction UI
   document.getElementById('waitingScreen').style.display = 'none';
   document.getElementById('auctionLayout').style.display = 'grid';
+  initBidButtonMagneticHover();
 
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
@@ -441,9 +444,73 @@ function renderBidDisplay(data, player = null) {
 
 function replayBidPanelMotion(panelEl) {
   if (!panelEl) return;
+  if (activeMagneticButton) {
+    resetMagneticButton(activeMagneticButton);
+    activeMagneticButton = null;
+  }
   panelEl.classList.remove('motion-stagger');
   void panelEl.offsetWidth;
   panelEl.classList.add('motion-stagger');
+}
+
+function initBidButtonMagneticHover() {
+  if (magneticPointerEnabled) return;
+  const canUseHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!canUseHover) return;
+
+  const panel = document.querySelector('.bid-panel');
+  if (!panel) return;
+
+  magneticPointerEnabled = true;
+
+  panel.addEventListener('pointermove', (event) => {
+    const btn = event.target.closest('.quick-bid-btn, .base-bid-btn');
+    if (!btn || btn.disabled) {
+      if (activeMagneticButton) {
+        resetMagneticButton(activeMagneticButton);
+        activeMagneticButton = null;
+      }
+      return;
+    }
+
+    if (activeMagneticButton && activeMagneticButton !== btn) {
+      resetMagneticButton(activeMagneticButton);
+    }
+    activeMagneticButton = btn;
+
+    const rect = btn.getBoundingClientRect();
+    const relX = event.clientX - rect.left;
+    const relY = event.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const dx = clamp((relX - centerX) * 0.08, -4, 4);
+    const dy = clamp((relY - centerY) * 0.12, -3, 3);
+
+    btn.style.setProperty('--mag-x', `${dx}px`);
+    btn.style.setProperty('--mag-y', `${dy}px`);
+    btn.style.setProperty('--glow-x', `${(relX / rect.width) * 100}%`);
+    btn.style.setProperty('--glow-y', `${(relY / rect.height) * 100}%`);
+    btn.classList.add('magnetic-active');
+  });
+
+  panel.addEventListener('pointerleave', () => {
+    if (!activeMagneticButton) return;
+    resetMagneticButton(activeMagneticButton);
+    activeMagneticButton = null;
+  });
+}
+
+function resetMagneticButton(btn) {
+  if (!btn) return;
+  btn.classList.remove('magnetic-active');
+  btn.style.setProperty('--mag-x', '0px');
+  btn.style.setProperty('--mag-y', '0px');
+  btn.style.setProperty('--glow-x', '50%');
+  btn.style.setProperty('--glow-y', '50%');
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 // ---- TIMER ----

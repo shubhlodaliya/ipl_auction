@@ -1295,6 +1295,13 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .quick-bid-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  --mag-x: 0px;
+  --mag-y: 0px;
+  --glow-x: 50%;
+  --glow-y: 50%;
   min-height: 44px;
   padding: 0.7rem 0.45rem;
   border-radius: var(--radius-sm);
@@ -1307,6 +1314,26 @@ input[type=range]::-webkit-slider-thumb {
   letter-spacing: 0.5px;
   transition: var(--transition);
   box-shadow: 0 8px 22px rgba(4,10,20,0.32);
+}
+
+.quick-bid-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(255,255,255,0.24), transparent 56%);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.quick-bid-btn.magnetic-active:not(:disabled) {
+  transform: translate3d(var(--mag-x), var(--mag-y), 0) translateY(-1px);
+  border-color: rgba(153, 198, 255, 0.85);
+}
+
+.quick-bid-btn.magnetic-active:not(:disabled)::after {
+  opacity: 1;
 }
 
 .base-bid-btn {
@@ -1341,9 +1368,19 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .base-bid-btn:disabled {
-  background: linear-gradient(135deg, rgba(121, 94, 30, 0.75), rgba(96, 75, 27, 0.75));
-  border: 1px solid rgba(255, 203, 48, 0.35);
-  color: rgba(255, 230, 170, 0.62);
+  background: linear-gradient(135deg, rgba(126, 98, 33, 0.9), rgba(104, 80, 28, 0.9));
+  border: 1px solid rgba(255, 214, 107, 0.48);
+  color: rgba(255, 238, 193, 0.9);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.28);
+  letter-spacing: 0.35px;
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .quick-bid-btn,
+  .base-bid-btn {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.2s ease;
+  }
 }
 
 /* Motion polish: staggered reveal for bidding controls */

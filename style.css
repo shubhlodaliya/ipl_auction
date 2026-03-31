@@ -967,6 +967,7 @@ input[type=range]::-webkit-slider-thumb {
 
 /* Player Spotlight */
 .player-spotlight {
+  position: relative;
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
   align-items: start;
@@ -975,8 +976,35 @@ input[type=range]::-webkit-slider-thumb {
   padding: 1.8rem;
   gap: 2rem;
   background:
-    linear-gradient(120deg, rgba(255,255,255,0.018), rgba(255,255,255,0) 40%),
-    linear-gradient(180deg, rgba(3,9,20,0.85), rgba(3,9,20,0.5));
+    linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0) 38%),
+    radial-gradient(120% 90% at 0% 100%, rgba(29,160,255,0.12), transparent 56%),
+    rgba(8,16,30,0.95);
+  border-right: 1px solid var(--border);
+  box-shadow: inset -14px 0 30px rgba(0,0,0,0.14);
+  overflow: hidden;
+}
+
+.player-spotlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,203,48,0.58), transparent);
+  pointer-events: none;
+}
+
+.player-spotlight::after {
+  content: '';
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  top: -130px;
+  left: -140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,203,48,0.08), rgba(255,203,48,0));
+  pointer-events: none;
 }
 .player-avatar {
   width: 300px;
@@ -1010,13 +1038,16 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: inherit;
 }
 .player-info-card {
+  position: relative;
+  z-index: 1;
   text-align: left;
   align-self: start;
   padding: 1rem 1.1rem;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(8,14,27,0.62);
-  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.11);
+  background: linear-gradient(180deg, rgba(12,24,44,0.7), rgba(9,18,34,0.56));
+  backdrop-filter: blur(8px);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.24);
   max-width: 520px;
 }
 .player-name {
@@ -2545,6 +2576,7 @@ input[type=range]::-webkit-slider-thumb {
   .auction-layout { grid-template-columns: 1fr; }
   .teams-sidebar { display: none; }
   .auction-body { grid-template-columns: 1fr; grid-template-rows: auto auto; }
+  .player-spotlight { border-right: none; }
   .bid-panel { border-left: none; border-top: 1px solid var(--border); }
   .lobby-teams-grid { grid-template-columns: repeat(2, 1fr); }
   .team-grid { grid-template-columns: repeat(5, 1fr); }
@@ -2591,7 +2623,7 @@ input[type=range]::-webkit-slider-thumb {
   .header { padding: 0.8rem 1rem; }
   .auction-layout { grid-template-columns: 1fr; }
   .auction-body { grid-template-columns: 1fr; grid-template-rows: auto auto; }
-  .player-spotlight { border-right: none; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); }
+  .player-spotlight { border-right: none; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0)); box-shadow: none; }
   .bid-panel { border-left: none; border-top: 1px solid var(--border); }
   .team-grid { grid-template-columns: repeat(5, 1fr); gap: 0.3rem; }
   .lobby-teams-grid { grid-template-columns: repeat(2, 1fr); }

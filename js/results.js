@@ -148,20 +148,22 @@ async function loadResults() {
               <div class="result-team-name">${team.name}</div>
               <div class="result-owner-name">👤 ${team.ownerName}</div>
             </div>
-            <div class="result-team-stats">
-              <div>
-                <span class="result-stat-val">${formatPrice(totalSpend)}</span>
-                <span class="result-stat-label">Spent</span>
-              </div>
-              <div>
-                <span class="result-stat-val">${squad.length}</span>
-                <span class="result-stat-label">Players</span>
+            <div class="result-team-actions">
+              <button class="btn btn-ghost result-export-card-btn" onclick="exportTeamPdfById('${tId}')" title="Download ${team.name} PDF" aria-label="Download ${team.name} PDF">
+                <span class="result-export-icon">&#8681;</span>
+                <span class="result-export-text">PDF</span>
+              </button>
+              <div class="result-team-stats">
+                <div>
+                  <span class="result-stat-val">${formatPrice(totalSpend)}</span>
+                  <span class="result-stat-label">Spent</span>
+                </div>
+                <div>
+                  <span class="result-stat-val">${squad.length}</span>
+                  <span class="result-stat-label">Players</span>
+                </div>
               </div>
             </div>
-            <button class="btn btn-ghost result-export-card-btn" onclick="exportTeamPdfById('${tId}')" title="Download ${team.name} PDF" aria-label="Download ${team.name} PDF">
-              <span class="result-export-icon">&#8681;</span>
-              <span class="result-export-text">PDF</span>
-            </button>
           </div>
           <div class="result-squad-list">
             ${squad.length === 0 ? `<div class="result-no-squad">No players purchased</div>` :

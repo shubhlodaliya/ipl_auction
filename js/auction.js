@@ -1373,6 +1373,10 @@ function initChatPopup() {
 
   handle.addEventListener('pointerdown', (event) => {
     if (event.button !== 0) return;
+    
+    // Skip drag if clicking on action buttons like close
+    if (event.target.closest('.chat-popup-actions')) return;
+    
     chatPopupDragState.dragging = true;
     chatPopupDragState.pointerId = event.pointerId;
 

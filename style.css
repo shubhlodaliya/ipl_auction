@@ -2342,6 +2342,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 .result-team-header {
   padding: 1.25rem;
+  padding-right: 5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -2391,7 +2392,10 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 0.85rem;
   line-height: 1;
 }
-.result-team-info { flex: 1; }
+.result-team-info {
+  flex: 1;
+  min-width: 0;
+}
 .result-team-name {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
@@ -2402,17 +2406,35 @@ input[type=range]::-webkit-slider-thumb {
   display: flex;
   gap: 1rem;
   text-align: right;
+  margin-left: auto;
 }
 .result-export-card-btn {
-  padding: 0.38rem 0.56rem;
-  font-size: 0.74rem;
-  min-width: auto;
-  align-self: flex-start;
+  position: absolute;
+  top: 0.95rem;
+  right: 0.9rem;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.06rem;
   border-color: rgba(255,255,255,0.2);
 }
 .result-export-card-btn:hover {
   border-color: rgba(255,203,48,0.5);
   color: #ffe39a;
+}
+.result-export-icon {
+  font-size: 0.86rem;
+  line-height: 1;
+}
+.result-export-text {
+  font-size: 0.62rem;
+  letter-spacing: 0.45px;
+  line-height: 1;
 }
 .result-stat-val {
   font-family: 'Rajdhani', sans-serif;
@@ -2453,11 +2475,14 @@ input[type=range]::-webkit-slider-thumb {
 .result-no-squad { color: var(--text-dim); font-size: 0.85rem; padding: 1rem; text-align: center; }
 
 @media (max-width: 760px) {
-  .result-team-header {
-    flex-wrap: wrap;
-  }
+  .result-team-header { flex-wrap: wrap; }
+  .result-team-header { padding-right: 4.2rem; }
+  .result-team-stats { gap: 0.75rem; }
   .result-export-card-btn {
-    margin-left: auto;
+    width: 46px;
+    height: 46px;
+    top: 0.85rem;
+    right: 0.72rem;
   }
 }
 

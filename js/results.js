@@ -158,7 +158,10 @@ async function loadResults() {
                 <span class="result-stat-label">Players</span>
               </div>
             </div>
-            <button class="btn btn-ghost result-export-card-btn" onclick="exportTeamPdfById('${tId}')" title="Download ${team.name} PDF" aria-label="Download ${team.name} PDF">&#8681; PDF</button>
+            <button class="btn btn-ghost result-export-card-btn" onclick="exportTeamPdfById('${tId}')" title="Download ${team.name} PDF" aria-label="Download ${team.name} PDF">
+              <span class="result-export-icon">&#8681;</span>
+              <span class="result-export-text">PDF</span>
+            </button>
           </div>
           <div class="result-squad-list">
             ${squad.length === 0 ? `<div class="result-no-squad">No players purchased</div>` :

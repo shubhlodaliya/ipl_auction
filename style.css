@@ -2052,15 +2052,6 @@ input[type=range]::-webkit-slider-thumb {
   flex-wrap: wrap;
   margin-bottom: 1.2rem;
 }
-.results-export-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.team-export-select {
-  min-width: 220px;
-  max-width: 42vw;
-}
 .reauction-section {
   margin-bottom: 1.75rem;
   padding: 1rem;
@@ -2412,6 +2403,17 @@ input[type=range]::-webkit-slider-thumb {
   gap: 1rem;
   text-align: right;
 }
+.result-export-card-btn {
+  padding: 0.38rem 0.56rem;
+  font-size: 0.74rem;
+  min-width: auto;
+  align-self: flex-start;
+  border-color: rgba(255,255,255,0.2);
+}
+.result-export-card-btn:hover {
+  border-color: rgba(255,203,48,0.5);
+  color: #ffe39a;
+}
 .result-stat-val {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
@@ -2449,6 +2451,15 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--gold);
 }
 .result-no-squad { color: var(--text-dim); font-size: 0.85rem; padding: 1rem; text-align: center; }
+
+@media (max-width: 760px) {
+  .result-team-header {
+    flex-wrap: wrap;
+  }
+  .result-export-card-btn {
+    margin-left: auto;
+  }
+}
 
 /* ============================================================
    EMPTY / LOADING STATES

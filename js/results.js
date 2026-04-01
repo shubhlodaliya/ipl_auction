@@ -158,6 +158,7 @@ async function loadResults() {
                 <span class="result-stat-label">Players</span>
               </div>
             </div>
+            <button class="btn btn-ghost result-export-card-btn" onclick="exportTeamPdfById('${tId}')" title="Download ${team.name} PDF" aria-label="Download ${team.name} PDF">&#8681; PDF</button>
           </div>
           <div class="result-squad-list">
             ${squad.length === 0 ? `<div class="result-no-squad">No players purchased</div>` :
@@ -954,16 +955,13 @@ function exportResultsPdf() {
   doc.save(`ipl-auction-${safeRoom}-${datePart}.pdf`);
 }
 
-function exportSelectedTeamPdf() {
+function exportTeamPdfById(selectedTeamId) {
   const {
     roomCode,
     sortedTeams,
     teamSquads,
     roomTeamCatalog
   } = resultsExportState;
-
-  const select = document.getElementById('teamExportSelect');
-  const selectedTeamId = select ? select.value : '';
 
   if (!roomCode || !sortedTeams.length) {
     showToast('Results data is not ready yet.', 'error');
@@ -999,6 +997,12 @@ function exportSelectedTeamPdf() {
   doc.save(`ipl-auction-${safeRoom}-${safeTeam}-${datePart}.pdf`);
 }
 
+function exportSelectedTeamPdf() {
+  const select = document.getElementById('teamExportSelect');
+  const selectedTeamId = select ? select.value : '';
+  exportTeamPdfById(selectedTeamId);
+}
+
 window.openAiReviewModal = openAiReviewModal;
 window.closeAiReviewModal = closeAiReviewModal;
 window.generateAiReview = generateAiReview;
@@ -1006,4 +1010,5 @@ window.toggleReAuctionPlayer = toggleReAuctionPlayer;
 window.toggleReAuctionReady = toggleReAuctionReady;
 window.startReAuctionFromResults = startReAuctionFromResults;
 window.exportResultsPdf = exportResultsPdf;
+window.exportTeamPdfById = exportTeamPdfById;
 window.exportSelectedTeamPdf = exportSelectedTeamPdf;

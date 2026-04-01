@@ -37,6 +37,7 @@
 
       <div class="results-actions">
         <button class="btn btn-secondary" onclick="openAiReviewModal()">AI Review</button>
+        <button class="btn btn-primary" onclick="exportResultsPdf()">Export PDF</button>
       </div>
 
       <!-- Re-auction Setup -->
@@ -72,6 +73,8 @@
   <!-- FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/results.js"></script>

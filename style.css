@@ -1361,6 +1361,93 @@ input[type=range]::-webkit-slider-thumb {
   gap: 0.5rem;
 }
 
+.bid-history-wrap {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  padding: 0.55rem;
+}
+
+.bid-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-sec);
+  margin-bottom: 0.45rem;
+}
+
+.bid-history-count {
+  border: 1px solid rgba(255,203,48,0.32);
+  background: rgba(255,203,48,0.1);
+  color: #ffe39a;
+  border-radius: 999px;
+  padding: 0.1rem 0.42rem;
+  min-width: 22px;
+  text-align: center;
+}
+
+.bid-history-list {
+  max-height: 148px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.bid-history-item {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  padding: 0.34rem 0.42rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.bid-history-item.latest {
+  border-color: rgba(255,203,48,0.38);
+  background: rgba(255,203,48,0.08);
+}
+
+.bid-history-left,
+.bid-history-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.bid-history-team {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: #d8e7ff;
+}
+
+.bid-history-jump,
+.bid-history-time {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+.bid-history-price {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--gold);
+}
+
+.bid-history-empty {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 0.6rem 0.45rem;
+}
+
 /* Hide legacy single bid button if an old cached HTML still contains it */
 .bid-panel .bid-btn {
   display: none !important;
@@ -1462,7 +1549,8 @@ input[type=range]::-webkit-slider-thumb {
 .bid-panel.motion-stagger .pass-btn,
 .bid-panel.motion-stagger .skip-pool-btn,
 .bid-panel.motion-stagger .no-purse-warning,
-.bid-panel.motion-stagger .withdrawn-teams-wrap {
+.bid-panel.motion-stagger .withdrawn-teams-wrap,
+.bid-panel.motion-stagger .bid-history-wrap {
   animation: bidActionReveal 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -1471,11 +1559,12 @@ input[type=range]::-webkit-slider-thumb {
 .bid-panel.motion-stagger .quick-bid-row .quick-bid-btn:nth-child(2) { animation-delay: 0.12s; }
 .bid-panel.motion-stagger .quick-bid-row .quick-bid-btn:nth-child(3) { animation-delay: 0.16s; }
 .bid-panel.motion-stagger .quick-bid-row .quick-bid-btn:nth-child(4) { animation-delay: 0.2s; }
-.bid-panel.motion-stagger .withdraw-btn { animation-delay: 0.24s; }
-.bid-panel.motion-stagger .withdrawn-teams-wrap { animation-delay: 0.28s; }
-.bid-panel.motion-stagger .no-purse-warning { animation-delay: 0.32s; }
-.bid-panel.motion-stagger .pass-btn { animation-delay: 0.36s; }
-.bid-panel.motion-stagger .skip-pool-btn { animation-delay: 0.4s; }
+.bid-panel.motion-stagger .bid-history-wrap { animation-delay: 0.24s; }
+.bid-panel.motion-stagger .withdraw-btn { animation-delay: 0.28s; }
+.bid-panel.motion-stagger .withdrawn-teams-wrap { animation-delay: 0.32s; }
+.bid-panel.motion-stagger .no-purse-warning { animation-delay: 0.36s; }
+.bid-panel.motion-stagger .pass-btn { animation-delay: 0.4s; }
+.bid-panel.motion-stagger .skip-pool-btn { animation-delay: 0.44s; }
 
 .withdraw-btn {
   width: 100%;

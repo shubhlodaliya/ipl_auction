@@ -286,6 +286,8 @@ function renderBidDisplay(data, player = null) {
   void bidEl.offsetWidth; // reflow for animation
   if (data.status === 'bidding') bidEl.classList.add('bumped');
 
+  renderBidHistory(data);
+
   // Highest bidder chip
   const chipEl = document.getElementById('highestBidderChip');
   const playerBidTeamTileEl = document.getElementById('playerBidTeamTile');
@@ -443,6 +445,43 @@ function renderBidDisplay(data, player = null) {
 
     if (bidPanelEl) bidPanelEl.classList.remove('motion-stagger');
   }
+}
+
+function renderBidHistory(data) {
+  const listEl = document.getElementById('bidHistoryList');
+  const countEl = document.getElementById('bidHistoryCount');
+  if (!listEl || !countEl) return;
+
+  const history = Array.isArray(data?.bidHistory) ? data.bidHistory : [];
+  countEl.textContent = String(history.length);
+
+  if (!history.length) {
+    listEl.innerHTML = '<div class="bid-history-empty">No bids yet for this player.</div>';
+    return;
+  }
+
+  const recent = history.slice(-12).reverse();
+  listEl.innerHTML = recent.map((entry, idx) => {
+    const team = teamsData[entry.teamId] || getRoomTeamMeta(entry.teamId) || {};
+    const teamShort = team.short || entry.teamId || 'TEAM';
+    const teamName = team.name || teamShort;
+    const jumpText = entry.isBaseBid ? 'Base Bid' : `+${formatPrice(entry.jump || 0)}`;
+    const bidText = formatPrice(entry.bid || 0);
+    const stamp = entry.ts ? new Date(entry.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--';
+    const latestCls = idx === 0 ? ' latest' : '';
+    return `
+      <div class="bid-history-item${latestCls}">
+        <div class="bid-history-left">
+          <span class="bid-history-team" title="${teamName}">${teamShort}</span>
+          <span class="bid-history-jump">${jumpText}</span>
+        </div>
+        <div class="bid-history-right">
+          <span class="bid-history-price">${bidText}</span>
+          <span class="bid-history-time">${stamp}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function replayBidPanelMotion(panelEl) {
@@ -629,6 +668,17 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
       if (auction.withdrawnTeams && auction.withdrawnTeams[myTeamId]) return;
       auction.currentBid = txnNextBid;
       auction.highestBidder = myTeamId;
+      auction.bidHistory = Array.isArray(auction.bidHistory) ? auction.bidHistory : [];
+      auction.bidHistory.push({
+        teamId: myTeamId,
+        bid: txnNextBid,
+        jump: isBaseBid ? 0 : jump,
+        isBaseBid,
+        ts: Date.now()
+      });
+      if (auction.bidHistory.length > 30) {
+        auction.bidHistory = auction.bidHistory.slice(-30);
+      }
       // Reset timer on each bid
       auction.timerEnd = Date.now() + timerSeconds * 1000;
       return auction;
@@ -787,6 +837,7 @@ async function skipToNextPool() {
     playerId: nextPlayerId,
     currentBid: nextPlayer.base_price_lakh,
     highestBidder: null,
+    bidHistory: [],
     poolId: nextPool?.poolId || null,
     poolLabel: nextPool?.poolLabel || null,
     skipVotes: {},
@@ -888,6 +939,7 @@ async function advanceToNextPlayer() {
     playerId: nextPlayerId,
     currentBid: nextPlayer.base_price_lakh,
     highestBidder: null,
+    bidHistory: [],
     poolId: nextPool?.poolId || null,
     poolLabel: nextPool?.poolLabel || null,
     skipVotes: {},

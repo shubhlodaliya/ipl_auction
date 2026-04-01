@@ -750,6 +750,7 @@ async function startReAuctionFromResults() {
     playerId: firstPlayerId,
     currentBid: firstPlayer.base_price_lakh,
     highestBidder: null,
+    bidHistory: [],
     poolId: null,
     poolLabel: null,
     skipVotes: {},

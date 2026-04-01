@@ -339,6 +339,7 @@ async function startAuction() {
       playerId: firstPlayerId,
       currentBid: firstPlayer.base_price_lakh,
       highestBidder: null,
+      bidHistory: [],
       poolId: firstPool?.poolId || null,
       poolLabel: firstPool?.poolLabel || null,
       skipVotes: {},

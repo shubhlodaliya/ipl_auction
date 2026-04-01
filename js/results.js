@@ -127,6 +127,7 @@ async function loadResults() {
     resultsExportState.unsoldCount = unsoldCount;
     resultsExportState.totalSales = totalSales;
     resultsExportState.roomTeamCatalog = roomTeamCatalog;
+    updateTeamExportSelect(sortedTeams, roomCode);
 
     document.getElementById('resultsGrid').innerHTML = sortedTeams.map(([tId, team], idx) => {
       const t = roomTeamCatalog[tId] || getTeam(tId);
@@ -770,6 +771,149 @@ function showToast(msg, type = '') {
   setTimeout(() => { t.className = 'toast'; }, 2400);
 }
 
+function formatPricePdf(lakh) {
+  return formatPrice(lakh)
+    .replace('₹', 'INR ')
+    .replace('Cr', ' Cr')
+    .replace('L', ' L');
+}
+
+function updateTeamExportSelect(sortedTeams, roomCode) {
+  const select = document.getElementById('teamExportSelect');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Select Team</option>';
+  sortedTeams.forEach(([teamId, team]) => {
+    const option = document.createElement('option');
+    option.value = teamId;
+    option.textContent = `${team.name} (${team.short || teamId.toUpperCase()})`;
+    select.appendChild(option);
+  });
+
+  select.dataset.roomCode = roomCode;
+}
+
+function createPdfDocument() {
+  return new window.jspdf.jsPDF({
+    orientation: 'portrait',
+    unit: 'pt',
+    format: 'a4'
+  });
+}
+
+function renderPdfHeader(doc, title, roomCode, generatedAt) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  doc.setFillColor(8, 20, 44);
+  doc.rect(0, 0, pageWidth, 92, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text(title, 40, 38);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(`Room: ${roomCode}`, 40, 58);
+  doc.text(`Generated: ${generatedAt.toLocaleString()}`, 40, 74);
+}
+
+function appendPdfFooter(doc) {
+  const pageCount = doc.internal.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+    doc.setPage(pageNumber);
+    doc.setTextColor(110, 120, 130);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 40, pageHeight - 18, { align: 'right' });
+  }
+}
+
+function renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSales) {
+  doc.setTextColor(28, 44, 66);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('Auction Summary', 40, 120);
+
+  doc.autoTable({
+    startY: 132,
+    margin: { left: 40, right: 40 },
+    theme: 'grid',
+    head: [['Metric', 'Value']],
+    body: [
+      ['Teams', String(Object.keys(teams).length)],
+      ['Players Sold', String(soldCount)],
+      ['Players Unsold', String(unsoldCount)],
+      ['Total Spend', formatPricePdf(totalSales)]
+    ],
+    styles: { fontSize: 10, cellPadding: 6 },
+    headStyles: { fillColor: [17, 94, 197] }
+  });
+}
+
+function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank) {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const teamSpend = squad.reduce((sum, entry) => sum + entry.price, 0);
+  const purseLeft = team.purse || 0;
+  const t = roomTeamCatalog[teamId] || getTeam(teamId) || {};
+
+  let startY = (doc.lastAutoTable?.finalY || 132) + 16;
+  if (startY > pageHeight - 170) {
+    doc.addPage();
+    startY = 56;
+  }
+
+  const rankPrefix = typeof rank === 'number' ? `${rank}. ` : '';
+  doc.setTextColor(13, 35, 64);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(`${rankPrefix}${team.name} (${team.short || t.short || teamId})`, 40, startY);
+
+  doc.autoTable({
+    startY: startY + 8,
+    margin: { left: 40, right: 40 },
+    theme: 'grid',
+    head: [['Owner', 'Players', 'Spent', 'Purse Left']],
+    body: [[
+      team.ownerName || '-',
+      String(squad.length),
+      formatPricePdf(teamSpend),
+      formatPricePdf(purseLeft)
+    ]],
+    styles: { fontSize: 9.5, cellPadding: 5 },
+    headStyles: { fillColor: [22, 93, 148] }
+  });
+
+  const rows = squad.length
+    ? squad.map(({ player, price }, rowIndex) => [
+        String(rowIndex + 1),
+        player.name || '-',
+        player.role || '-',
+        player.country || 'Manual',
+        formatPricePdf(price)
+      ])
+    : [['-', 'No players purchased', '-', '-', '-']];
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 8,
+    margin: { left: 40, right: 40 },
+    theme: 'striped',
+    head: [['#', 'Player', 'Role', 'Country', 'Price']],
+    body: rows,
+    styles: { fontSize: 9, cellPadding: 5 },
+    headStyles: { fillColor: [10, 87, 142] },
+    columnStyles: {
+      0: { cellWidth: 26 },
+      1: { cellWidth: 195 },
+      2: { cellWidth: 95 },
+      3: { cellWidth: 110 },
+      4: { halign: 'right' }
+    }
+  });
+}
+
 function exportResultsPdf() {
   const {
     roomCode,
@@ -792,119 +936,67 @@ function exportResultsPdf() {
     return;
   }
 
-  const doc = new window.jspdf.jsPDF({
-    orientation: 'portrait',
-    unit: 'pt',
-    format: 'a4'
-  });
-
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const marginX = 40;
-  const rightX = pageWidth - marginX;
+  const doc = createPdfDocument();
   const generatedAt = new Date();
 
-  doc.setFillColor(8, 20, 44);
-  doc.rect(0, 0, pageWidth, 92, 'F');
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('IPL Auction Report', marginX, 38);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(`Room: ${roomCode}`, marginX, 58);
-  doc.text(`Generated: ${generatedAt.toLocaleString()}`, marginX, 74);
-
-  doc.setTextColor(28, 44, 66);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text('Auction Summary', marginX, 120);
-
-  const summaryRows = [
-    ['Teams', String(Object.keys(teams).length)],
-    ['Players Sold', String(soldCount)],
-    ['Players Unsold', String(unsoldCount)],
-    ['Total Spend', formatPrice(totalSales)]
-  ];
-
-  doc.autoTable({
-    startY: 132,
-    margin: { left: marginX, right: marginX },
-    theme: 'grid',
-    head: [['Metric', 'Value']],
-    body: summaryRows,
-    styles: { fontSize: 10, cellPadding: 6 },
-    headStyles: { fillColor: [17, 94, 197] }
-  });
-
-  let cursorY = doc.lastAutoTable.finalY + 18;
+  renderPdfHeader(doc, 'IPL Auction Report', roomCode, generatedAt);
+  renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSales);
 
   sortedTeams.forEach(([teamId, team], index) => {
-    const t = roomTeamCatalog[teamId] || getTeam(teamId) || {};
     const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
-    const teamSpend = squad.reduce((sum, entry) => sum + entry.price, 0);
-    const purseLeft = team.purse || 0;
-
-    if (cursorY > 700) {
-      doc.addPage();
-      cursorY = 56;
-    }
-
-    doc.setTextColor(13, 35, 64);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.text(`${index + 1}. ${team.name} (${team.short || teamId})`, marginX, cursorY);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Owner: ${team.ownerName || '-'}`, marginX, cursorY + 14);
-    doc.text(`Players: ${squad.length}`, marginX + 210, cursorY + 14);
-    doc.text(`Spent: ${formatPrice(teamSpend)}`, marginX + 300, cursorY + 14);
-    doc.text(`Purse Left: ${formatPrice(purseLeft)}`, rightX - 120, cursorY + 14, { align: 'left' });
-
-    const rows = squad.length
-      ? squad.map(({ player, price }, rowIndex) => [
-          String(rowIndex + 1),
-          player.name || '-',
-          player.role || '-',
-          player.country || 'Manual',
-          formatPrice(price)
-        ])
-      : [['-', 'No players purchased', '-', '-', '-']];
-
-    doc.autoTable({
-      startY: cursorY + 22,
-      margin: { left: marginX, right: marginX },
-      theme: 'striped',
-      head: [['#', 'Player', 'Role', 'Country', 'Price']],
-      body: rows,
-      styles: { fontSize: 9, cellPadding: 5 },
-      headStyles: { fillColor: [10, 87, 142] },
-      columnStyles: {
-        0: { cellWidth: 26 },
-        1: { cellWidth: 180 },
-        2: { cellWidth: 95 },
-        3: { cellWidth: 105 },
-        4: { halign: 'right' }
-      }
-    });
-
-    cursorY = doc.lastAutoTable.finalY + 20;
+    renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, index + 1);
   });
 
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
-    doc.setPage(pageNumber);
-    doc.setTextColor(110, 120, 130);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(`Page ${pageNumber} of ${pageCount}`, rightX, 822, { align: 'right' });
-  }
+  appendPdfFooter(doc);
 
   const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
   const datePart = generatedAt.toISOString().slice(0, 10);
   doc.save(`ipl-auction-${safeRoom}-${datePart}.pdf`);
+}
+
+function exportSelectedTeamPdf() {
+  const {
+    roomCode,
+    sortedTeams,
+    teamSquads,
+    roomTeamCatalog
+  } = resultsExportState;
+
+  const select = document.getElementById('teamExportSelect');
+  const selectedTeamId = select ? select.value : '';
+
+  if (!roomCode || !sortedTeams.length) {
+    showToast('Results data is not ready yet.', 'error');
+    return;
+  }
+  if (!selectedTeamId) {
+    showToast('Please select a team first.', 'error');
+    return;
+  }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    showToast('PDF library failed to load. Please retry.', 'error');
+    return;
+  }
+
+  const selectedEntry = sortedTeams.find(([teamId]) => teamId === selectedTeamId);
+  if (!selectedEntry) {
+    showToast('Selected team not found.', 'error');
+    return;
+  }
+
+  const [teamId, team] = selectedEntry;
+  const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
+  const doc = createPdfDocument();
+  const generatedAt = new Date();
+
+  renderPdfHeader(doc, `${team.name} - Team Report`, roomCode, generatedAt);
+  renderTeamSection(doc, teamId, team, squad, roomTeamCatalog);
+  appendPdfFooter(doc);
+
+  const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
+  const safeTeam = String(team.short || teamId).replace(/[^a-zA-Z0-9-_]/g, '_');
+  const datePart = generatedAt.toISOString().slice(0, 10);
+  doc.save(`ipl-auction-${safeRoom}-${safeTeam}-${datePart}.pdf`);
 }
 
 window.openAiReviewModal = openAiReviewModal;
@@ -914,3 +1006,4 @@ window.toggleReAuctionPlayer = toggleReAuctionPlayer;
 window.toggleReAuctionReady = toggleReAuctionReady;
 window.startReAuctionFromResults = startReAuctionFromResults;
 window.exportResultsPdf = exportResultsPdf;
+window.exportSelectedTeamPdf = exportSelectedTeamPdf;

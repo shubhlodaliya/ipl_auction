@@ -1033,6 +1033,7 @@ input[type=range]::-webkit-slider-thumb {
   content: '';
   position: absolute;
   pointer-events: none;
+  border-radius: inherit;
 }
 
 .player-avatar.pulse-ring.border-bold::before {
@@ -1043,26 +1044,22 @@ input[type=range]::-webkit-slider-thumb {
     0 0 0 1px rgba(255,203,48,0.16),
     0 0 22px rgba(255,203,48,0.24),
     inset 0 0 14px rgba(255,203,48,0.12);
-  animation: pulseRing 2.4s ease-in-out infinite;
+  animation: pulseRing 2.8s ease-in-out infinite;
 }
 
 .player-avatar.pulse-ring.border-bold::after {
-  inset: -4px;
-  border-radius: 32px;
-  background: conic-gradient(
-    from 0deg,
-    rgba(255,203,48,0) 0deg,
-    rgba(255,203,48,0.95) 38deg,
-    rgba(255,203,48,0.22) 72deg,
-    rgba(255,203,48,0) 118deg,
-    rgba(255,203,48,0) 360deg
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0) 18%,
+    rgba(255,255,255,0.22) 36%,
+    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0) 68%
   );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  padding: 1px;
-  animation: borderOrbit 4.8s linear infinite;
+  background-size: 220% 220%;
+  mix-blend-mode: screen;
+  opacity: 0.58;
+  animation: avatarSheen 6s ease-in-out infinite;
 }
 
 .player-avatar.pulse-ring.border-clean::before {
@@ -1076,10 +1073,9 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .player-avatar.pulse-ring.border-clean::after {
-  inset: -2px;
-  border-radius: 30px;
-  border: 1px solid rgba(255,255,255,0.16);
-  opacity: 0.8;
+  inset: 0;
+  border: 1px solid rgba(255,255,255,0.12);
+  opacity: 0.7;
 }
 
 .player-avatar img {
@@ -2506,19 +2502,25 @@ input[type=range]::-webkit-slider-thumb {
 }
 @keyframes pulseRing {
   0%, 100% {
-    opacity: 0.72;
+    opacity: 0.76;
     transform: scale(1);
-    filter: saturate(1);
+    filter: saturate(1.02);
   }
   50% {
-    opacity: 1;
-    transform: scale(1.01);
-    filter: saturate(1.16);
+    opacity: 0.98;
+    transform: scale(1.008);
+    filter: saturate(1.1);
   }
 }
-@keyframes borderOrbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes avatarSheen {
+  0%, 100% {
+    background-position: 0% 50%;
+    opacity: 0.45;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 0.7;
+  }
 }
 @keyframes cleanRingPulse {
   0%, 100% {

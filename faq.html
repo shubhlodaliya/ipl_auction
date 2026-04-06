@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ - IPL Auction Platform - Common Questions & Answers</title>
+  <meta name="description" content="Frequently asked questions about IPL Auction platform. Get answers about room creation, bidding, player management, settings, technical support, and auction strategies." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944" crossorigin="anonymous"></script>
+  <style>
+    .faq-wrapper { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .faq-title { color: var(--primary); font-size: 2.2rem; margin-bottom: 1.5rem; text-align: center; }
+    .faq-subtitle { color: var(--text-sec); font-size: 1rem; text-align: center; margin-bottom: 2rem; }
+    .faq-section { margin-bottom: 2.5rem; }
+    .faq-section-title { font-size: 1.5rem; color: var(--primary); margin-bottom: 1.5rem; border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; }
+    .faq-item { margin-bottom: 1.5rem; background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary); cursor: pointer; transition: all 0.3s; }
+    .faq-item:hover { background: rgba(59, 130, 246, 0.15); transform: translateX(4px); }
+    .faq-question { font-weight: 600; font-size: 1.1rem; color: var(--primary); margin-bottom: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+    .faq-toggle { font-size: 1.3rem; transition: transform 0.3s; }
+    .faq-question.active .faq-toggle { transform: rotate(180deg); }
+    .faq-answer { color: var(--text-main); line-height: 1.8; display: none; }
+    .faq-answer.active { display: block; }
+    .faq-answer p { margin-bottom: 0.8rem; }
+    .faq-answer ul { margin: 0.8rem 0; padding-left: 1.5rem; }
+    .faq-answer li { margin: 0.5rem 0; }
+    .faq-answer strong { color: var(--primary); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a class="logo" href="index.html">🏏 IPL Auction</a>
+    <a class="btn btn-ghost" href="index.html">Home</a>
+  </header>
+
+  <main class="faq-wrapper">
+    <h1 class="faq-title">Frequently Asked Questions</h1>
+    <p class="faq-subtitle">Find answers to common questions about IPL Auction platform, room creation, bidding, and strategies.</p>
+
+    <!-- GETTING STARTED SECTION -->
+    <section class="faq-section">
+      <h2 class="faq-section-title">🚀 Getting Started</h2>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Do I need to create an account or sign up?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>No! Our platform requires <strong>zero registration</strong>. You can immediately start creating auction rooms without any sign-up process. Just visit the home page, fill in your details, and create your room. This approach makes it fast and easy for casual users and friends to jump into auctions instantly.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Is the platform free to use?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p><strong>Yes, completely free!</strong> There are no subscription fees, no premium tiers, and no hidden charges. You can create unlimited auction rooms, invite unlimited friends, and host as many auctions as you want without paying anything.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I create multiple auction rooms simultaneously?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Yes! You can create multiple auction rooms at the same time. Each room has its own unique 6-character code. You can host several auctions in parallel with different groups of friends. Each auction operates independently with separate budgets, players, and results.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>How many teams can participate in one auction?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>You can have up to <strong>8 teams</strong> per auction room, mirroring the official IPL format. This includes the host team plus up to 7 other teams that join. If you want to run auctions with more than 8 teams, you can create a second room and split participants between them.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>How do I invite friends to join my auction?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>There are multiple ways to invite friends:</p>
+          <ul>
+            <li><strong>Share Room Code:</strong> Copy the 6-character room code and share via message/call. Friends enter it on the home page's "Join Auction" panel.</li>
+            <li><strong>Copy Invite Link:</strong> Generate a shareable link and send via WhatsApp, Telegram, email, or any messaging platform.</li>
+            <li><strong>Share on WhatsApp:</strong> Get a pre-formatted WhatsApp message with your room code and send directly to contacts.</li>
+            <li><strong>Password Protection:</strong> Set a private passcode for additional security when sharing with larger groups.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROOM CONFIGURATION SECTION -->
+    <section class="faq-section">
+      <h2 class="faq-section-title">⚙️ Room Configuration & Settings</h2>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What does the "Budget" setting mean?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Budget is the total virtual money each team has to bid on players. Default is ₹2000L (200 million), matching official IPL format. Once a team's budget runs out, they can't bid anymore. Higher budgets mean more flexibility; lower budgets mean tighter constraints and faster auctions. Choose based on your preference for casual vs intense gameplay.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What is the "Squad Size" setting?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Squad size is the maximum number of players each team can buy in the auction. Default is 25 players. Smaller squads (15-18) mean shorter, faster auctions with limited bench strength. Larger squads (25+) allow deeper rosters with more flexibility. Choose based on how long you want the auction to last.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What does "Bid Timer" do?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>The bid timer sets how long each player is available for bidding in seconds. Default is 30 seconds. During this time, teams can make multiple bids on the player. When time expires, the highest bidder wins the player. Shorter timers (10-15s) create fast-paced, intense auctions. Longer timers (45-60s) allow more strategic thinking.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What's the difference between "Random" and "By Category" player order?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p><strong>Random Order:</strong> Players come up in unpredictable sequence. Nobody can prepare in advance. Creates exciting, unpredictable auctions with last-minute surprises.</p>
+          <p><strong>By Category:</strong> All batsmen come first, then bowlers, then all-rounders. Allows strategic planning. You know which types of players are coming next and can prepare bidding strategy accordingly.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I make an auction private or password-protected?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Yes! When creating an auction, you can optionally set a <strong>Passcode</strong>. When someone tries to join your room, they'll need to enter this passcode. This ensures only your invited friends can join. Share the room code and passcode only with people you trust. Passcodes are optional—leave it blank for public auctions.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BIDDING & GAMEPLAY SECTION -->
+    <section class="faq-section">
+      <h2 class="faq-section-title">💰 Bidding & Gameplay</h2>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>How does bidding work during an auction?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Bidding works as follows:</p>
+          <ul>
+            <li>A player is displayed on screen with a starting base price</li>
+            <li>All teams can bid, increasing the price</li>
+            <li>Each team can place multiple bids on the same player</li>
+            <li>Bids must be higher than the previous bid</li>
+            <li>When the timer runs out, the highest bidder wins the player</li>
+            <li>The winning team's budget is deducted by the final bid amount</li>
+            <li>The process repeats for the next player</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I see other teams' budgets and squad composition during the auction?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Yes! During the auction, you can see:</p>
+          <ul>
+            <li>Each team's remaining available budget</li>
+            <li>Number of players each team has acquired</li>
+            <li>Current highest bid on the active player</li>
+            <li>Which team made the last bid</li>
+            <li>Remaining time on the bid timer</li>
+          </ul>
+          <p>This information helps you make informed decisions about whether to continue bidding or yield.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What happens if I run out of budget?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Once your team's budget reaches zero, you can no longer bid on players. You'll be locked out of remaining auction rounds. Other teams continue bidding until all players are sold or the maximum squad size is reached per team. Running out of budget early is a strategic risk—manage it carefully!</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I bid on a player my team doesn't need?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Yes, though it's not strategically wise. Sometimes players bid on players they don't need to:</p>
+          <ul>
+            <li><strong>Block competitors:</strong> Drive up prices so rivals spend more budget</li>
+            <li><strong>Test strategy:</strong> Experiment with bidding tactics</li>
+            <li><strong>Fun factor:</strong> Create excitement and unpredictability</li>
+          </ul>
+          <p>However, wasting budget on unwanted players is risky. You might miss crucial players you actually need later!</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Is it possible to edit a bid I've already placed?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>No, bids are final once placed. You cannot edit or retract a bid. Each bid incrementally increases the player's price. This is why it's important to think before bidding—make sure you really want the player at that price point!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAYERS & WATCHLIST SECTION -->
+    <section class="faq-section">
+      <h2 class="faq-section-title">⭐ Players & Watchlist</h2>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Which IPL players are available in the auction?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Our platform includes a comprehensive database of real IPL players from all franchises. This includes:</p>
+          <ul>
+            <li>Star batsmen and bowlers from all teams</li>
+            <li>All-rounders with batting and bowling ability</li>
+            <li>Wicket-keepers</li>
+            <li>Emerging talents and junior players</li>
+            <li>International stars in the IPL</li>
+            <li>Domestic Indian players</li>
+          </ul>
+          <p>The player database represents the full IPL player ecosystem across all teams and matches official IPL records.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What is the Watchlist feature?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>The Watchlist helps you track players you want to acquire. Before the auction starts:</p>
+          <ul>
+            <li>Click the star icon to add players to your watchlist</li>
+            <li>During the auction, you'll get highlighted alerts when watched players come up for bidding</li>
+            <li>This prevents you from missing your target players in the rush</li>
+            <li>You can manage and clear your watchlist anytime</li>
+          </ul>
+          <p>Essential tool for strategic auction planning!</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I filter or search for specific players?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>You can browse through the full player list and identify players you're interested in. Before the auction starts, use the platform's player browsing interface to find and watchlist specific players. During the auction, keep an eye on the watchlist alerts for when your target players come up.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What player information is available?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>For each player, you can typically view:</p>
+          <ul>
+            <li>Player name and jersey number</li>
+            <li>Current IPL team</li>
+            <li>Playing role (batsman, bowler, all-rounder, wicket-keeper)</li>
+            <li>Nationality (Indian or international)</li>
+            <li>Recent performance stats</li>
+            <li>Base bid price for the auction</li>
+          </ul>
+          <p>Use this info to make informed bidding decisions!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TECHNICAL SECTION -->
+    <section class="faq-section">
+      <h2 class="faq-section-title">🔧 Technical Questions</h2>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What devices and browsers are supported?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>IPL Auction platform is <strong>fully responsive</strong> and works on:</p>
+          <ul>
+            <li><strong>Browsers:</strong> Chrome, Firefox, Safari, Edge, and all modern browsers</li>
+            <li><strong>Devices:</strong> Desktop computers, laptops, tablets, smartphones</li>
+            <li><strong>Operating Systems:</strong> Windows, macOS, Linux, iOS, Android</li>
+          </ul>
+          <p>As long as you have internet access and a modern browser, you can participate in auctions!</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Do I need to install any software or app?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>No installation required! IPL Auction is a <strong>web-based platform</strong>. Simply visit the website in your browser and start playing immediately. No software downloads, no app installations, no complicated setup. Works instantly in any modern web browser.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Is my data and auction information secure?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Yes! We prioritize security and privacy:</p>
+          <ul>
+            <li>Data is stored securely with encryption</li>
+            <li>Room codes and passcodes protect unauthorized access</li>
+            <li>We don't require personal information beyond your name and team choice</li>
+            <li>No tracking or data selling to third parties</li>
+            <li>Auctions remain private within your room</li>
+          </ul>
+          <p>See our Privacy Policy for complete details.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What should I do if the platform isn't working properly?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Try these troubleshooting steps:</p>
+          <ul>
+            <li><strong>Refresh the page:</strong> Press Ctrl+R (or Cmd+R on Mac)</li>
+            <li><strong>Clear browser cache:</strong> Clear cookies and cached data in browser settings</li>
+            <li><strong>Try a different browser:</strong> Test in Chrome, Firefox, or Safari</li>
+            <li><strong>Check internet connection:</strong> Ensure stable, fast internet</li>
+            <li><strong>Contact support:</strong> Email us at shubhlodaliya@gmail.com with details about the issue</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Is there any latency or delay in real-time bidding?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>The platform uses <strong>real-time database technology</strong> to synchronize bids across all players in milliseconds. Latency is minimal and imperceptible to users. All participants see bids and updates almost instantly, ensuring fair and transparent gameplay with no favoritism.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STRATEGY & TIPS SECTION -->
+    <section class="faq-section">
+      <h2 class="faq-section-title">🎯 Strategy & Tips</h2>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What's a good budget allocation strategy?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>A balanced approach typically works best:</p>
+          <ul>
+            <li><strong>40% (~₹800L):</strong> Premium star players (captains, match-winners)</li>
+            <li><strong>35% (~₹700L):</strong> Mid-tier quality players (consistent performers)</li>
+            <li><strong>15% (~₹300L):</strong> Support players (role specialists, bench strength)</li>
+            <li><strong>10% (~₹200L):</strong> Reserve fund (emergencies, last-minute pickups)</li>
+          </ul>
+          <p>This prevents overspending on superstars while ensuring squad depth and flexibility.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>How can I win the auction?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Success requires multiple factors:</p>
+          <ul>
+            <li><strong>Smart planning:</strong> Know which players you want before auction starts</li>
+            <li><strong>Budget discipline:</strong> Don't overspend early; maintain flexibility</li>
+            <li><strong>Market awareness:</strong> Track average prices and adjust strategy</li>
+            <li><strong>Selective bidding:</strong> Bid on fewer players but win at good prices</li>
+            <li><strong>Analysis:</strong> Evaluate player form and team needs thoroughly</li>
+            <li><strong>Boldness:</strong> Take calculated risks and capitalize on opportunities</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Should I bid aggressively or conservatively?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Both approaches have merits:</p>
+          <p><strong>Aggressive Strategy:</strong> Bid high early to secure star players. Risk: runs out of budget; misses late-stage opportunities.</p>
+          <p><strong>Conservative Strategy:</strong> Bid selectively and preserve budget. Advantage: flexibility; can exploit late opportunities.</p>
+          <p><strong>Hybrid Approach (Recommended):</strong> Bid aggressively on 2-3 must-have players, then switch to conservative bidding. Balances quality with flexibility.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What are the most valuable player roles typically?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Value depends on auction dynamics, but generally:</p>
+          <ul>
+            <li><strong>All-rounders:</strong> Highest value (batting + bowling = dual utility)</li>
+            <li><strong>Star opening batsmen:</strong> High value (consistent run machines)</li>
+            <li><strong>Death-over bowlers:</strong> High value (crucial in T20 finishes)</li>
+            <li><strong>Wicket-keepers:</strong> Medium value (specific slots, but essential)</li>
+            <li><strong>Support players:</strong> Lower value (replaceable bench options)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>How do I analyze if a bid price is fair?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Use these methods to evaluate player value:</p>
+          <ul>
+            <li><strong>Compare similar players:</strong> What did comparable players fetch?</li>
+            <li><strong>Track average prices:</strong> Monitor prices across the auction</li>
+            <li><strong>Player form:</strong> Recent performance (last 5-10 matches, recent tournaments)</li>
+            <li><strong>Team needs:</strong> Does your team urgently need this position?</li>
+            <li><strong>Alternative availability:</strong> How many similar players remain unsold?</li>
+            <li><strong>Bid momentum:</strong> Is price inflating due to competition or value?</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- GENERAL SECTION -->
+    <section class="faq-section">
+      <h2 class="faq-section-title">❓ General</h2>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I access past auction results?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Yes! After an auction completes, you can view detailed results including:</p>
+          <ul>
+            <li>Final squad composition for each team</li>
+            <li>Total budget spent per team</li>
+            <li>Price paid for each player</li>
+            <li>Bidding history and statistics</li>
+          </ul>
+          <p>Use these results to analyze your strategy and learn for future auctions.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I replay or simulate an auction?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Yes! You can create new auctions anytime with similar or different settings. Simulate various scenarios to test strategies. Run multiple auctions with the same players and settings to experiment with different approaches and learn what works best.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Who should I contact for support or feedback?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>We'd love to hear from you! Contact us at:</p>
+          <ul>
+            <li><strong>Email:</strong> shubhlodaliya@gmail.com</li>
+            <li><strong>Phone:</strong> +91 7622010224 or +91 9106848980</li>
+            <li><strong>Feedback:</strong> Use our contact form (Contact page) to share suggestions</li>
+          </ul>
+          <p>We actively listen to user feedback and use it to improve the platform continuously.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>What's the difference between public and private auctions?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p><strong>Public Auction (No Passcode):</strong> Anyone with the room code can join. Good for open gaming groups or casual play.</p>
+          <p><strong>Private Auction (With Passcode):</strong> Only people with both the room code AND passcode can join. Better for exclusive friend groups or competitive leagues.</p>
+          <p>Choose based on your preference for who you want to play with!</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Is there a maximum time limit for auctions?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>No strict time limit, but typical auctions take:</p>
+          <ul>
+            <li><strong>Quick auctions:</strong> 15-20 players, 30-second timer = 20-30 minutes</li>
+            <li><strong>Standard auctions:</strong> 25 players, 30-second timer = 45-60 minutes</li>
+            <li><strong>Extended auctions:</strong> 25+ players, 45-second timer = 60-90 minutes</li>
+          </ul>
+          <p>Plan accordingly based on your auction settings and participant availability.</p>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleAnswer(this)">
+        <div class="faq-question">
+          <span>Can I organize tournaments or leagues using this platform?</span>
+          <span class="faq-toggle">▼</span>
+        </div>
+        <div class="faq-answer">
+          <p>Absolutely! Many users organize:</p>
+          <ul>
+            <li><strong>Fantasy cricket leagues:</strong> Run multiple auctions for league structure</li>
+            <li><strong>Tournaments:</strong> Back-to-back auctions with different configurations</li>
+            <li><strong>Competitive events:</strong> Compare results across auctions and track standings</li>
+            <li><strong>Training programs:</strong> Educational sessions to teach auction strategy</li>
+          </ul>
+          <p>The platform is flexible enough for various competition formats and league structures!</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>© 2026 IPL Auction</span>
+      <nav class="site-footer-links" aria-label="Legal and contact links">
+        <a href="about.html">About</a>
+        <a href="guide.html">Guide</a>
+        <a href="faq.html">FAQ</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    function toggleAnswer(element) {
+      const question = element.querySelector('.faq-question');
+      const answer = element.querySelector('.faq-answer');
+      question.classList.toggle('active');
+      answer.classList.toggle('active');
+    }
+
+    // Close other answers when opening a new one
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.faq-item')) {
+        const currentItem = e.target.closest('.faq-item');
+        document.querySelectorAll('.faq-item').forEach(item => {
+          if (item !== currentItem) {
+            item.querySelector('.faq-question').classList.remove('active');
+            item.querySelector('.faq-answer').classList.remove('active');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

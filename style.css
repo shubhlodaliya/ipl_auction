@@ -1865,6 +1865,86 @@ input[type=range]::-webkit-slider-thumb {
   gap: 0.42rem;
 }
 
+.chat-voice-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  padding: 0.4rem;
+}
+
+.chat-voice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-sec);
+  margin-bottom: 0.35rem;
+}
+
+.chat-voice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.voice-row {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  padding: 0.26rem 0.38rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.voice-row.mine {
+  border-color: rgba(255,203,48,0.32);
+  background: rgba(255,203,48,0.09);
+}
+
+.voice-row-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.voice-team {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 0.7rem;
+}
+
+.voice-owner {
+  color: var(--text-sec);
+  font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+.voice-live-pill {
+  border: 1px solid rgba(0,196,140,0.34);
+  border-radius: 999px;
+  padding: 0.08rem 0.34rem;
+  color: #67e9c6;
+  font-size: 0.62rem;
+}
+
+.voice-host-btn {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-sec);
+  border-radius: 999px;
+  padding: 0.14rem 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
 .chat-input {
   width: 100%;
   border: 1px solid var(--border);

@@ -37,6 +37,7 @@ let lastAnnouncedResultKey = '';
 let cleanupRequested = false;
 let magneticPointerEnabled = false;
 let activeMagneticButton = null;
+let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 const avatarBorderVariantClass = 'border-bold';
 
@@ -355,6 +356,11 @@ function renderBidDisplay(data, player = null) {
     const canAffordBase = !!(myTeam && myTeam.purse >= data.currentBid);
     const isLeading = data.highestBidder === myTeamId;
     const squadFull = myTeam && myTeam.squad && myTeam.squad.length >= roomConfig.maxSquadSize;
+
+    if (squadFull) {
+      autoWithdrawFromCurrentPlayerIfNeeded(data);
+    }
+
     const canTryBid = !paused && !withdrawn && !isLeading && !squadFull;
     const canBaseBid = canTryBid && !data.highestBidder && canAffordBase;
 
@@ -400,6 +406,9 @@ function renderBidDisplay(data, player = null) {
     if (data.highestBidder) {
       passBtn.disabled = true;
       passBtn.textContent = 'Skip Closed After First Bid';
+    } else if (squadFull) {
+      passBtn.disabled = true;
+      passBtn.textContent = 'Squad Full';
     } else if (skipVoted) {
       passBtn.disabled = true;
       passBtn.textContent = `Skip Voted (${skipCount}/${totalTeams})`;
@@ -411,6 +420,9 @@ function renderBidDisplay(data, player = null) {
     if (!canSkipPool) {
       skipPoolBtn.disabled = true;
       skipPoolBtn.textContent = 'Skip Pool (Category Only)';
+    } else if (squadFull) {
+      skipPoolBtn.disabled = true;
+      skipPoolBtn.textContent = 'Squad Full';
     } else if (poolSkipVoted) {
       skipPoolBtn.disabled = true;
       skipPoolBtn.textContent = `Pool Skip Voted (${poolSkipCount}/${totalTeams})`;
@@ -420,10 +432,10 @@ function renderBidDisplay(data, player = null) {
     }
 
     if (paused) { warnEl.textContent = '⏸️ Auction is paused by host'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--orange)'; }
+    else if (squadFull) { warnEl.textContent = '✅ Your squad is complete. Bidding is disabled.'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--green)'; }
     else if (withdrawn) { warnEl.textContent = '⏭️ You withdrew for this player'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--text-sec)'; }
     else if (!canAffordAny) { warnEl.textContent = '⚠️ Not enough purse for available bid jumps!'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--red)'; }
     else if (isLeading) { warnEl.textContent = '✓ You are the leading bidder'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--green)'; }
-    else if (squadFull) { warnEl.textContent = '⚠️ Your squad is full!'; warnEl.style.display = 'block'; }
     else { warnEl.style.display = 'none'; warnEl.style.color = 'var(--red)'; }
 
     replayBidPanelMotion(bidPanelEl);
@@ -444,6 +456,33 @@ function renderBidDisplay(data, player = null) {
     warnEl.style.display = 'none';
 
     if (bidPanelEl) bidPanelEl.classList.remove('motion-stagger');
+  }
+}
+
+async function autoWithdrawFromCurrentPlayerIfNeeded(data) {
+  if (!data || data.status !== 'bidding') return;
+  if (!data.playerId) return;
+  if (data.highestBidder === myTeamId) return;
+  if (data.withdrawnTeams && data.withdrawnTeams[myTeamId]) return;
+  if (autoWithdrawInFlightForPlayerId === data.playerId) return;
+
+  autoWithdrawInFlightForPlayerId = data.playerId;
+  try {
+    await db.ref(`rooms/${roomCode}/currentAuction`).transaction(auction => {
+      if (!auction || auction.status !== 'bidding') return;
+      if (auction.playerId !== data.playerId) return;
+      if (auction.highestBidder === myTeamId) return;
+      auction.withdrawnTeams = auction.withdrawnTeams || {};
+      if (auction.withdrawnTeams[myTeamId]) return;
+      auction.withdrawnTeams[myTeamId] = true;
+      return auction;
+    });
+  } catch (err) {
+    console.error('Auto-withdraw failed:', err);
+  } finally {
+    if (autoWithdrawInFlightForPlayerId === data.playerId) {
+      autoWithdrawInFlightForPlayerId = null;
+    }
   }
 }
 
@@ -553,6 +592,13 @@ function resetMagneticButton(btn) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function leaveAuction() {
+  const confirmed = window.confirm('Leave this auction screen? You can join again later with the same room code.');
+  if (!confirmed) return;
+  clearSession();
+  window.location.href = 'index.html';
 }
 
 // ---- TIMER ----
@@ -692,6 +738,12 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
 async function passPlayer() {
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
+  const myTeam = teamsData[myTeamId];
+  if (myTeam && (myTeam.squad || []).length >= roomConfig.maxSquadSize) {
+    showToast('Your squad is complete. Skip is disabled.', 'error');
+    return;
+  }
+
   if (currentAuctionData.highestBidder) {
     showToast('Skip is only available before the first bid.', 'error');
     return;
@@ -712,6 +764,12 @@ async function passPlayer() {
 
 async function skipCurrentPool() {
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
+
+  const myTeam = teamsData[myTeamId];
+  if (myTeam && (myTeam.squad || []).length >= roomConfig.maxSquadSize) {
+    showToast('Your squad is complete. Pool skip is disabled.', 'error');
+    return;
+  }
 
   const currentPool = getCurrentPoolMeta();
   if (!currentPool?.poolId) {
@@ -735,6 +793,13 @@ async function skipCurrentPool() {
 
 async function withdrawFromPlayer() {
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
+
+  const myTeam = teamsData[myTeamId];
+  if (myTeam && (myTeam.squad || []).length >= roomConfig.maxSquadSize) {
+    showToast('Your squad is complete. No manual action needed.', 'error');
+    return;
+  }
+
   if (currentAuctionData.highestBidder === myTeamId) {
     showToast('Leading bidder cannot withdraw.', 'error');
     return;
@@ -769,6 +834,19 @@ async function hostEvaluateFastPath(data) {
   }
 
   if (!data.highestBidder) {
+    const eligibleTeams = Object.entries(teamsData).filter(([teamId, team]) => {
+      if (data.withdrawnTeams && data.withdrawnTeams[teamId]) return false;
+      const squadCount = (team.squad || []).length;
+      if (squadCount >= roomConfig.maxSquadSize) return false;
+      return (team.purse || 0) >= data.currentBid;
+    });
+
+    if (eligibleTeams.length === 0) {
+      processingRound = true;
+      await processAsUnsold();
+      return;
+    }
+
     if (totalTeams > 0 && (skipCount >= totalTeams || withdrawnCount >= totalTeams)) {
       processingRound = true;
       await processAsUnsold();

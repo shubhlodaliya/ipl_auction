@@ -13,14 +13,15 @@ const reAuctionState = {
   listeners: {}
 };
 
-const aiReviewState = {
+const playing11State = {
   roomCode: null,
   session: null,
-  maxSquadSize: 0,
-  teamSquads: {},
-  teams: {},
-  latest: null,
-  loading: false
+  myTeamId: null,
+  mySquad: [],
+  playing11: [],
+  captain: null,
+  vice_captain: null,
+  wicket_keeper: null
 };
 
 const resultsExportState = {
@@ -36,7 +37,6 @@ const resultsExportState = {
 
 window.addEventListener('DOMContentLoaded', loadResults);
 window.addEventListener('beforeunload', cleanupReAuctionListeners);
-window.addEventListener('beforeunload', cleanupAiReviewListeners);
 
 async function loadResults() {
   // Try to get roomCode from session, or from URL param
@@ -193,7 +193,7 @@ async function loadResults() {
       `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams`;
 
     setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers);
-    setupAiReview(roomCode, room, session, teamSquads);
+    setupPlaying11(roomCode, session, teams, teamSquads);
 
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('resultsContent').style.display = 'block';
@@ -205,18 +205,227 @@ async function loadResults() {
   }
 }
 
-function setupAiReview(roomCode, room, session, teamSquads) {
-  aiReviewState.roomCode = roomCode;
-  aiReviewState.session = session || null;
-  aiReviewState.maxSquadSize = room.config?.maxSquadSize || 0;
-  aiReviewState.teamSquads = teamSquads || {};
-  aiReviewState.teams = room.teams || {};
-  aiReviewState.latest = null;
-  renderAiReviewOutput();
+// ============================================================
+// PLAYING 11 SETUP
+// ============================================================
+
+function setupPlaying11(roomCode, session, teams, teamSquads) {
+  if (!session || !session.teamId) return;
+
+  playing11State.roomCode = roomCode;
+  playing11State.session = session;
+  playing11State.myTeamId = session.teamId;
+  playing11State.mySquad = (teamSquads[session.teamId] || []).map(x => ({
+    player: x.player,
+    price: x.price
+  }));
+  
+  loadPlaying11FromFirebase();
 }
 
-function cleanupAiReviewListeners() {
-  // No active listeners for backend-only AI flow.
+async function loadPlaying11FromFirebase() {
+  const { roomCode, myTeamId } = playing11State;
+  if (!roomCode || !myTeamId) return;
+
+  try {
+    const snap = await db.ref(`rooms/${roomCode}/playing11/${myTeamId}`).get();
+    if (snap.exists()) {
+      const data = snap.val();
+      playing11State.playing11 = data.playing11 || [];
+      playing11State.captain = data.captain || null;
+      playing11State.vice_captain = data.vice_captain || null;
+      playing11State.wicket_keeper = data.wicket_keeper || null;
+    }
+  } catch (err) {
+    console.error('Failed to load Playing 11:', err);
+  }
+}
+
+function openPlaying11Modal() {
+  const overlay = document.getElementById('playing11ModalOverlay');
+  if (!overlay) return;
+  overlay.classList.add('visible');
+  renderPlaying11Modal();
+}
+
+function closePlaying11Modal() {
+  const overlay = document.getElementById('playing11ModalOverlay');
+  if (overlay) overlay.classList.remove('visible');
+}
+
+function renderPlaying11Modal() {
+  const content = document.getElementById('playing11ModalContent');
+  if (!content) return;
+
+  const { mySquad, playing11, captain, vice_captain, wicket_keeper } = playing11State;
+
+  if (!mySquad.length) {
+    content.innerHTML = `
+      <div class="state-empty">
+        <p>No squad data available for Playing 11 selection.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Categorize players by role
+  const roles = {};
+  mySquad.forEach(entry => {
+    const role = entry.player.role || 'Other';
+    if (!roles[role]) roles[role] = [];
+    roles[role].push(entry);
+  });
+
+  // Sort each role category alphabetically
+  Object.keys(roles).forEach(role => {
+    roles[role].sort((a, b) => a.player.name.localeCompare(b.player.name));
+  });
+
+  const playerSelectHtml = Object.entries(roles).map(([role, players]) => `
+    <div class="playing11-role-section">
+      <div class="playing11-role-label">${role}</div>
+      ${players.map(entry => `
+        <label class="playing11-player-row ${playing11.includes(entry.player.id) ? 'selected' : ''}">
+          <input type="checkbox" 
+            ${playing11.includes(entry.player.id) ? 'checked' : ''}
+            onchange="togglePlaying11Player('${entry.player.id}')" />
+          <span class="playing11-player-name">${entry.player.name}</span>
+          <span class="playing11-player-role">${role}</span>
+        </label>
+      `).join('')}
+    </div>
+  `).join('');
+
+  const captainSelectHtml = `
+    <select id="captainSelect" onchange="selectCaptain()" class="playing11-select">
+      <option value="">Select Captain</option>
+      ${playing11.map(pid => {
+        const entry = mySquad.find(e => e.player.id === pid);
+        return entry ? `<option value="${pid}" ${captain === pid ? 'selected' : ''}>${entry.player.name}</option>` : '';
+      }).join('')}
+    </select>
+  `;
+
+  const vcSelectHtml = `
+    <select id="viceCaptainSelect" onchange="selectViceCaptain()" class="playing11-select">
+      <option value="">Select Vice-Captain</option>
+      ${playing11.map(pid => {
+        const entry = mySquad.find(e => e.player.id === pid);
+        return entry ? `<option value="${pid}" ${vice_captain === pid ? 'selected' : ''}>${entry.player.name}</option>` : '';
+      }).join('')}
+    </select>
+  `;
+
+  const wkSelectHtml = `
+    <select id="wicketKeeperSelect" onchange="selectWicketKeeper()" class="playing11-select">
+      <option value="">Select Wicket-Keeper</option>
+      ${playing11.map(pid => {
+        const entry = mySquad.find(e => e.player.id === pid);
+        return entry ? `<option value="${pid}" ${wicket_keeper === pid ? 'selected' : ''}>${entry.player.name}</option>` : '';
+      }).join('')}
+    </select>
+  `;
+
+  content.innerHTML = `
+    <div class="playing11-container">
+      <div class="playing11-selection-section">
+        <h4>Select 11 Players</h4>
+        <div class="playing11-count">Selected: <strong>${playing11.length}/11</strong></div>
+        <div class="playing11-player-list">
+          ${playerSelectHtml}
+        </div>
+      </div>
+
+      <div class="playing11-roles-section">
+        <h4>Designate Key Roles</h4>
+        
+        <div class="playing11-role-group">
+          <label class="playing11-label">⭐ Captain</label>
+          ${captainSelectHtml}
+        </div>
+
+        <div class="playing11-role-group">
+          <label class="playing11-label">👤 Vice-Captain</label>
+          ${vcSelectHtml}
+        </div>
+
+        <div class="playing11-role-group">
+          <label class="playing11-label">🥅 Wicket-Keeper</label>
+          ${wkSelectHtml}
+        </div>
+      </div>
+
+      <div class="playing11-actions">
+        <button class="btn btn-secondary" onclick="closePlaying11Modal()">Cancel</button>
+        <button class="btn btn-primary" onclick="savePlaying11()" ${playing11.length !== 11 ? 'disabled' : ''}>Save Playing 11</button>
+      </div>
+    </div>
+  `;
+}
+
+function togglePlaying11Player(playerId) {
+  const idx = playing11State.playing11.indexOf(playerId);
+  if (idx === -1) {
+    if (playing11State.playing11.length < 11) {
+      playing11State.playing11.push(playerId);
+    }
+  } else {
+    playing11State.playing11.splice(idx, 1);
+    // Clear captain/vc/wk if player is removed
+    if (playing11State.captain === playerId) playing11State.captain = null;
+    if (playing11State.vice_captain === playerId) playing11State.vice_captain = null;
+    if (playing11State.wicket_keeper === playerId) playing11State.wicket_keeper = null;
+  }
+  renderPlaying11Modal();
+}
+
+function selectCaptain() {
+  const select = document.getElementById('captainSelect');
+  if (select) playing11State.captain = select.value || null;
+}
+
+function selectViceCaptain() {
+  const select = document.getElementById('viceCaptainSelect');
+  if (select) playing11State.vice_captain = select.value || null;
+}
+
+function selectWicketKeeper() {
+  const select = document.getElementById('wicketKeeperSelect');
+  if (select) playing11State.wicket_keeper = select.value || null;
+}
+
+async function savePlaying11() {
+  const { roomCode, myTeamId, playing11, captain, vice_captain, wicket_keeper } = playing11State;
+
+  if (!roomCode || !myTeamId) {
+    showToast('Team information missing.', 'error');
+    return;
+  }
+
+  if (playing11.length !== 11) {
+    showToast('Please select exactly 11 players.', 'error');
+    return;
+  }
+
+  if (!captain || !vice_captain || !wicket_keeper) {
+    showToast('Please designate Captain, Vice-Captain, and Wicket-Keeper.', 'error');
+    return;
+  }
+
+  try {
+    await db.ref(`rooms/${roomCode}/playing11/${myTeamId}`).set({
+      playing11,
+      captain,
+      vice_captain,
+      wicket_keeper,
+      savedAt: Date.now()
+    });
+    showToast('Playing 11 saved successfully!', 'success');
+    closePlaying11Modal();
+  } catch (err) {
+    console.error('Error saving Playing 11:', err);
+    showToast('Failed to save Playing 11.', 'error');
+  }
 }
 
 function normalizeQueue(queue) {
@@ -272,265 +481,6 @@ function cleanupReAuctionListeners() {
   if (listeners.reAuction) db.ref(`rooms/${roomCode}/reAuction`).off('value', listeners.reAuction);
   if (listeners.status) db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
   reAuctionState.listeners = {};
-}
-
-function openAiReviewModal() {
-  const overlay = document.getElementById('aiReviewModalOverlay');
-  if (overlay) overlay.classList.add('visible');
-  generateAiReview();
-}
-
-function closeAiReviewModal() {
-  const overlay = document.getElementById('aiReviewModalOverlay');
-  if (overlay) overlay.classList.remove('visible');
-}
-
-function buildAiReviewPayload() {
-  const { teams, teamSquads, maxSquadSize, roomCode } = aiReviewState;
-
-  const teamData = Object.entries(teams).map(([teamId, team]) => {
-    const squad = (teamSquads[teamId] || []).map(x => ({
-      name: x.player.name,
-      role: x.player.role,
-      country: x.player.country,
-      priceLakh: x.price
-    }));
-
-    return {
-      teamId,
-      name: team.name,
-      short: team.short,
-      ownerName: team.ownerName,
-      purseLakh: team.purse || 0,
-      squadCount: (team.squad || []).length,
-      maxSquadSize,
-      squad
-    };
-  });
-
-  return {
-    roomCode,
-    teams: teamData
-  };
-}
-
-async function generateAiReview() {
-  if (aiReviewState.loading) return;
-  aiReviewState.loading = true;
-  const payload = buildAiReviewPayload();
-
-  try {
-    const output = document.getElementById('aiReviewOutput');
-    if (output) output.innerHTML = buildAiLoadingSkeleton();
-
-    const resp = await fetch('/api/ai-review', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const json = await resp.json();
-    const content = json?.text;
-
-    if (!resp.ok || !content) {
-      const errMsg = json?.error || 'AI response failed.';
-      throw new Error(errMsg);
-    }
-
-    aiReviewState.latest = {
-      text: content,
-      model: json?.model || 'backend-model',
-      generatedAt: Date.now(),
-      generatedBy: aiReviewState.session?.teamId || 'viewer'
-    };
-
-    renderAiReviewOutput();
-    showToast('AI review generated.', 'success');
-  } catch (err) {
-    console.error(err);
-    aiReviewState.latest = null;
-    renderAiReviewOutput();
-    showToast(err.message || 'Failed to generate AI review.', 'error');
-  } finally {
-    aiReviewState.loading = false;
-  }
-}
-
-function renderAiReviewOutput() {
-  const output = document.getElementById('aiReviewOutput');
-  if (!output) return;
-
-  const latest = aiReviewState.latest;
-  if (!latest) {
-    output.innerHTML = `
-      <div class="ai-review-card fade-in">
-        <div class="ai-review-empty-title">AI Review</div>
-        <p class="ai-review-empty-copy">Open this review to auto-generate team ranking and suggestions.</p>
-      </div>
-    `;
-    return;
-  }
-
-  output.innerHTML = renderAiReviewHtml(latest.text || 'No review text.');
-}
-
-function renderAiReviewHtml(text) {
-  const sections = parseAiSections(text);
-  if (!sections.length) {
-    return `
-      <div class="ai-review-card fade-in">
-        <p class="ai-review-paragraph">${escapeHtml(text || 'No review available.')}</p>
-      </div>
-    `;
-  }
-
-  return sections.map((section, idx) => `
-    <section class="ai-review-card ai-review-section fade-in" style="animation-delay:${idx * 0.05}s">
-      <h4>${escapeHtml(section.title)}</h4>
-      ${renderAiSectionBlocks(section.title, section.lines)}
-    </section>
-  `).join('');
-}
-
-function parseAiSections(text) {
-  const lines = String(text || '').split('\n').map(line => line.trim());
-  const sections = [];
-  let current = null;
-
-  lines.forEach((line) => {
-    if (!line) {
-      if (current) current.lines.push('');
-      return;
-    }
-
-    const headingMatch = line.match(/^(\d+)\)\s*(.+)$/);
-    if (headingMatch) {
-      if (current) sections.push(current);
-      current = { title: headingMatch[2], lines: [] };
-      return;
-    }
-
-    if (!current) current = { title: 'Review', lines: [] };
-    current.lines.push(line);
-  });
-
-  if (current) sections.push(current);
-  return sections;
-}
-
-function renderAiSectionBlocks(title, lines) {
-  if (/team\s+rankings/i.test(title || '')) {
-    const rankingHtml = renderAiRankingCards(lines);
-    if (rankingHtml) return rankingHtml;
-  }
-
-  let html = '';
-  let bulletBuffer = [];
-  let numberedBuffer = [];
-
-  function flushBullets() {
-    if (!bulletBuffer.length) return;
-    html += `<ul class="ai-review-list">${bulletBuffer.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
-    bulletBuffer = [];
-  }
-
-  function flushNumbered() {
-    if (!numberedBuffer.length) return;
-    html += `<ol class="ai-review-numbered">${numberedBuffer.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ol>`;
-    numberedBuffer = [];
-  }
-
-  lines.forEach((line) => {
-    if (!line) {
-      flushBullets();
-      flushNumbered();
-      return;
-    }
-
-    if (/^-\s+/.test(line)) {
-      flushNumbered();
-      bulletBuffer.push(line.replace(/^-\s+/, ''));
-      return;
-    }
-
-    if (/^\d+\.\s+/.test(line)) {
-      flushBullets();
-      numberedBuffer.push(line.replace(/^\d+\.\s+/, ''));
-      return;
-    }
-
-    flushBullets();
-    flushNumbered();
-    html += `<p class="ai-review-paragraph">${escapeHtml(line)}</p>`;
-  });
-
-  flushBullets();
-  flushNumbered();
-  return html;
-}
-
-function renderAiRankingCards(lines) {
-  const rankPattern = /^(\d+)\.\s+(.+?)\s*[\-–]\s*Overall\s*([0-9.]+\/10)$/i;
-  const cards = [];
-  let current = null;
-
-  lines.forEach((line) => {
-    if (!line) return;
-
-    const rankMatch = line.match(rankPattern);
-    if (rankMatch) {
-      if (current) cards.push(current);
-      current = {
-        rank: rankMatch[1],
-        teamName: rankMatch[2],
-        score: rankMatch[3],
-        reasons: []
-      };
-      return;
-    }
-
-    const cleanLine = line.replace(/^[-•]\s*/, '').trim();
-    if (current && cleanLine) {
-      current.reasons.push(cleanLine);
-    }
-  });
-
-  if (current) cards.push(current);
-  if (!cards.length) return '';
-
-  return `
-    <div class="ai-ranking-grid">
-      ${cards.map((card, idx) => `
-        <details class="ai-rank-card">
-          <summary>
-            <span class="ai-rank-badge">#${escapeHtml(card.rank)}</span>
-            <span class="ai-rank-team">${escapeHtml(card.teamName)}</span>
-            <span class="ai-rank-score">${escapeHtml(card.score)}</span>
-          </summary>
-          <div class="ai-rank-reasons">
-            ${card.reasons.length
-              ? `<ul class="ai-review-list">${card.reasons.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}</ul>`
-              : `<p class="ai-review-paragraph">No details available for this rank.</p>`}
-          </div>
-        </details>
-      `).join('')}
-    </div>
-  `;
-}
-
-function buildAiLoadingSkeleton() {
-  return `
-    <div class="ai-review-card ai-review-loading">
-      <div class="ai-skel-line w-40"></div>
-      <div class="ai-skel-line w-90"></div>
-      <div class="ai-skel-line w-85"></div>
-      <div class="ai-skel-line w-70"></div>
-      <div class="ai-skel-line w-92"></div>
-      <div class="ai-skel-line w-66"></div>
-    </div>
-  `;
 }
 
 function escapeHtml(str) {
@@ -860,7 +810,7 @@ function renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSale
   });
 }
 
-function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank) {
+function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, playing11Data, playerMap) {
   const pageHeight = doc.internal.pageSize.getHeight();
   const teamSpend = squad.reduce((sum, entry) => sum + entry.price, 0);
   const purseLeft = team.purse || 0;
@@ -919,9 +869,56 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank) {
       4: { halign: 'right' }
     }
   });
+
+  // Add Playing 11 section if available
+  if (playing11Data && playing11Data.playing11 && playing11Data.playing11.length === 11) {
+    startY = doc.lastAutoTable.finalY + 14;
+    if (startY > pageHeight - 150) {
+      doc.addPage();
+      startY = 56;
+    }
+
+    doc.setTextColor(13, 35, 64);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Best Playing 11', 40, startY);
+
+    const playing11Players = playing11Data.playing11.map(pid => {
+      const entry = squad.find(e => e.player.id === pid);
+      if (!entry) return null;
+      const player = entry.player;
+      let designation = '';
+      if (pid === playing11Data.captain) designation = ' (C)';
+      else if (pid === playing11Data.vice_captain) designation = ' (VC)';
+      else if (pid === playing11Data.wicket_keeper) designation = ' (WK)';
+
+      return [
+        player.name + designation,
+        player.role || '-',
+        player.country || 'Manual',
+        formatPricePdf(entry.price)
+      ];
+    }).filter(Boolean);
+
+    doc.autoTable({
+      startY: startY + 6,
+      margin: { left: 40, right: 40 },
+      theme: 'striped',
+      head: [['Player', 'Role', 'Country', 'Price']],
+      body: playing11Players,
+      styles: { fontSize: 9, cellPadding: 5 },
+      headStyles: { fillColor: [34, 139, 34] },
+      columnStyles: {
+        0: { cellWidth: 205 },
+        1: { cellWidth: 95 },
+        2: { cellWidth: 110 },
+        3: { halign: 'right' }
+      }
+    });
+  }
 }
 
-function exportResultsPdf() {
+async function exportResultsPdf() {
   const {
     roomCode,
     teams,
@@ -949,10 +946,23 @@ function exportResultsPdf() {
   renderPdfHeader(doc, 'IPL Auction Report', roomCode, generatedAt);
   renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSales);
 
-  sortedTeams.forEach(([teamId, team], index) => {
+  for (let i = 0; i < sortedTeams.length; i++) {
+    const [teamId, team] = sortedTeams[i];
     const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
-    renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, index + 1);
-  });
+    
+    // Load Playing 11 data for this team
+    let playing11Data = null;
+    try {
+      const snap = await db.ref(`rooms/${roomCode}/playing11/${teamId}`).get();
+      if (snap.exists()) {
+        playing11Data = snap.val();
+      }
+    } catch (err) {
+      console.error(`Failed to load Playing 11 for team ${teamId}:`, err);
+    }
+    
+    renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, i + 1, playing11Data);
+  }
 
   appendPdfFooter(doc);
 
@@ -961,7 +971,7 @@ function exportResultsPdf() {
   doc.save(`ipl-auction-${safeRoom}-${datePart}.pdf`);
 }
 
-function exportTeamPdfById(selectedTeamId) {
+async function exportTeamPdfById(selectedTeamId) {
   const {
     roomCode,
     sortedTeams,
@@ -993,8 +1003,19 @@ function exportTeamPdfById(selectedTeamId) {
   const doc = createPdfDocument();
   const generatedAt = new Date();
 
+  // Load Playing 11 data for this team
+  let playing11Data = null;
+  try {
+    const snap = await db.ref(`rooms/${roomCode}/playing11/${teamId}`).get();
+    if (snap.exists()) {
+      playing11Data = snap.val();
+    }
+  } catch (err) {
+    console.error(`Failed to load Playing 11 for team ${teamId}:`, err);
+  }
+
   renderPdfHeader(doc, `${team.name} - Team Report`, roomCode, generatedAt);
-  renderTeamSection(doc, teamId, team, squad, roomTeamCatalog);
+  renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, null, playing11Data);
   appendPdfFooter(doc);
 
   const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
@@ -1009,9 +1030,13 @@ function exportSelectedTeamPdf() {
   exportTeamPdfById(selectedTeamId);
 }
 
-window.openAiReviewModal = openAiReviewModal;
-window.closeAiReviewModal = closeAiReviewModal;
-window.generateAiReview = generateAiReview;
+window.openPlaying11Modal = openPlaying11Modal;
+window.closePlaying11Modal = closePlaying11Modal;
+window.togglePlaying11Player = togglePlaying11Player;
+window.selectCaptain = selectCaptain;
+window.selectViceCaptain = selectViceCaptain;
+window.selectWicketKeeper = selectWicketKeeper;
+window.savePlaying11 = savePlaying11;
 window.toggleReAuctionPlayer = toggleReAuctionPlayer;
 window.toggleReAuctionReady = toggleReAuctionReady;
 window.startReAuctionFromResults = startReAuctionFromResults;

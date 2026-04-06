@@ -36,7 +36,7 @@
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;" id="summaryStats"></div>
 
       <div class="results-actions">
-        <button class="btn btn-secondary" onclick="openAiReviewModal()">AI Review</button>
+        <button class="btn btn-secondary" onclick="openPlaying11Modal()">My Playing 11</button>
         <button class="btn btn-primary" onclick="exportResultsPdf()">Export All Teams PDF</button>
       </div>
 
@@ -81,14 +81,15 @@
 
   <div class="toast" id="toast"></div>
 
-  <div class="team-modal-overlay" id="aiReviewModalOverlay" onclick="closeAiReviewModal()">
-    <div class="team-modal ai-review-modal" onclick="event.stopPropagation()">
+  <!-- Playing 11 Modal -->
+  <div class="team-modal-overlay" id="playing11ModalOverlay" onclick="closePlaying11Modal()">
+    <div class="team-modal playing11-modal" onclick="event.stopPropagation()">
       <div class="team-modal-header">
-        <h3>AI Team Review</h3>
-        <button class="btn btn-ghost" onclick="closeAiReviewModal()">Close</button>
+        <h3>Select Your Best Playing 11</h3>
+        <button class="btn btn-ghost" onclick="closePlaying11Modal()">Close</button>
       </div>
-      <div class="team-modal-content">
-        <div class="ai-review-output ai-review-rich" id="aiReviewOutput"></div>
+      <div class="team-modal-content" id="playing11ModalContent">
+        <!-- Content rendered by JS -->
       </div>
     </div>
   </div>

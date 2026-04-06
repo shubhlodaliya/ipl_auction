@@ -47,6 +47,7 @@ let activeMagneticButton = null;
 let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 const avatarBorderVariantClass = 'border-bold';
+const voiceFeatureEnabled = false;
 const voiceRtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -207,46 +208,48 @@ async function initAuction() {
     updateChatMuteState();
   });
 
-  listeners.voiceParticipants = db.ref(`rooms/${roomCode}/voice/participants`).on('value', snap => {
-    voiceParticipants = snap.val() || {};
-    renderVoiceParticipants();
-    syncVoicePeers();
-  });
+  if (voiceFeatureEnabled) {
+    listeners.voiceParticipants = db.ref(`rooms/${roomCode}/voice/participants`).on('value', snap => {
+      voiceParticipants = snap.val() || {};
+      renderVoiceParticipants();
+      syncVoicePeers();
+    });
 
-  listeners.voiceHostMutedMap = db.ref(`rooms/${roomCode}/voice/muted`).on('value', snap => {
-    voiceHostMutedMap = snap.val() || {};
-    renderVoiceParticipants();
-  });
+    listeners.voiceHostMutedMap = db.ref(`rooms/${roomCode}/voice/muted`).on('value', snap => {
+      voiceHostMutedMap = snap.val() || {};
+      renderVoiceParticipants();
+    });
 
-  listeners.voiceHostMuted = db.ref(`rooms/${roomCode}/voice/muted/${myTeamId}`).on('value', snap => {
-    isVoiceHostMuted = !!snap.val();
-    applyLocalVoiceTrackState();
+    listeners.voiceHostMuted = db.ref(`rooms/${roomCode}/voice/muted/${myTeamId}`).on('value', snap => {
+      isVoiceHostMuted = !!snap.val();
+      applyLocalVoiceTrackState();
+      updateVoiceControls();
+      const badge = document.getElementById('voiceStatusBadge');
+      if (badge) badge.style.display = isVoiceHostMuted ? 'inline-flex' : 'none';
+      if (isVoiceHostMuted) {
+        showToast('Host muted your voice.', 'error');
+      }
+    });
+
+    listeners.voiceSignals = db.ref(`rooms/${roomCode}/voice/signals/${myTeamId}`).on('child_added', async snap => {
+      try {
+        const payload = snap.val() || {};
+        await handleVoiceSignalPayload(payload);
+      } catch (err) {
+        console.error('Voice signal handling failed:', err);
+      } finally {
+        snap.ref.remove().catch(() => {});
+      }
+    });
+
     updateVoiceControls();
-    const badge = document.getElementById('voiceStatusBadge');
-    if (badge) badge.style.display = isVoiceHostMuted ? 'inline-flex' : 'none';
-    if (isVoiceHostMuted) {
-      showToast('Host muted your voice.', 'error');
-    }
-  });
-
-  listeners.voiceSignals = db.ref(`rooms/${roomCode}/voice/signals/${myTeamId}`).on('child_added', async snap => {
-    try {
-      const payload = snap.val() || {};
-      await handleVoiceSignalPayload(payload);
-    } catch (err) {
-      console.error('Voice signal handling failed:', err);
-    } finally {
-      snap.ref.remove().catch(() => {});
-    }
-  });
-
-  updateVoiceControls();
-  renderVoiceParticipants();
+    renderVoiceParticipants();
+  }
 
   // Listen to room status (finished → results)
   listeners.status = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
     if (snap.val() === 'finished') {
-      leaveVoiceChat();
+      if (voiceFeatureEnabled) leaveVoiceChat();
       requestCloudinaryCleanup();
       setTimeout(() => { window.location.href = 'results.html'; }, 2000);
     }
@@ -1606,6 +1609,7 @@ function speakCallout(text) {
 }
 
 function isWebRtcSupported() {
+  if (!voiceFeatureEnabled) return false;
   return !!(
     window.isSecureContext &&
     window.RTCPeerConnection &&
@@ -2180,7 +2184,7 @@ function hideResultBanner() {
 
 // ---- CLEANUP ----
 window.addEventListener('beforeunload', () => {
-  leaveVoiceChat();
+  if (voiceFeatureEnabled) leaveVoiceChat();
   clearInterval(timerInterval);
   db.ref(`rooms/${roomCode}/teams`).off('value', listeners.teams);
   db.ref(`rooms/${roomCode}/soldPlayers`).off('value', listeners.soldPlayers);
@@ -2192,8 +2196,10 @@ window.addEventListener('beforeunload', () => {
   db.ref(`rooms/${roomCode}/chat/messages`).off('value', listeners.chatMessages);
   db.ref(`rooms/${roomCode}/chat/muted`).off('value', listeners.chatMutedMap);
   db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).off('value', listeners.chatMuted);
-  db.ref(`rooms/${roomCode}/voice/participants`).off('value', listeners.voiceParticipants);
-  db.ref(`rooms/${roomCode}/voice/muted`).off('value', listeners.voiceHostMutedMap);
-  db.ref(`rooms/${roomCode}/voice/muted/${myTeamId}`).off('value', listeners.voiceHostMuted);
-  db.ref(`rooms/${roomCode}/voice/signals/${myTeamId}`).off('child_added', listeners.voiceSignals);
+  if (voiceFeatureEnabled) {
+    db.ref(`rooms/${roomCode}/voice/participants`).off('value', listeners.voiceParticipants);
+    db.ref(`rooms/${roomCode}/voice/muted`).off('value', listeners.voiceHostMutedMap);
+    db.ref(`rooms/${roomCode}/voice/muted/${myTeamId}`).off('value', listeners.voiceHostMuted);
+    db.ref(`rooms/${roomCode}/voice/signals/${myTeamId}`).off('child_added', listeners.voiceSignals);
+  }
 });

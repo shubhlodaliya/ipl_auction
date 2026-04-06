@@ -38,6 +38,8 @@ let voiceJoined = false;
 let voiceMutedSelf = false;
 let localVoiceStream = null;
 let voicePeerState = {};
+let voiceSocket = null;
+let voiceSocketConnected = false;
 let soundEnabled = true;
 let lastTimerSoundSecond = -1;
 let lastAnnouncedResultKey = '';
@@ -209,41 +211,13 @@ async function initAuction() {
   });
 
   if (voiceFeatureEnabled) {
-    listeners.voiceParticipants = db.ref(`rooms/${roomCode}/voice/participants`).on('value', snap => {
-      voiceParticipants = snap.val() || {};
-      renderVoiceParticipants();
-      syncVoicePeers();
-    });
-
-    listeners.voiceHostMutedMap = db.ref(`rooms/${roomCode}/voice/muted`).on('value', snap => {
-      voiceHostMutedMap = snap.val() || {};
-      renderVoiceParticipants();
-    });
-
-    listeners.voiceHostMuted = db.ref(`rooms/${roomCode}/voice/muted/${myTeamId}`).on('value', snap => {
-      isVoiceHostMuted = !!snap.val();
-      applyLocalVoiceTrackState();
-      updateVoiceControls();
-      const badge = document.getElementById('voiceStatusBadge');
-      if (badge) badge.style.display = isVoiceHostMuted ? 'inline-flex' : 'none';
-      if (isVoiceHostMuted) {
-        showToast('Host muted your voice.', 'error');
-      }
-    });
-
-    listeners.voiceSignals = db.ref(`rooms/${roomCode}/voice/signals/${myTeamId}`).on('child_added', async snap => {
-      try {
-        const payload = snap.val() || {};
-        await handleVoiceSignalPayload(payload);
-      } catch (err) {
-        console.error('Voice signal handling failed:', err);
-      } finally {
-        snap.ref.remove().catch(() => {});
-      }
-    });
-
+    initVoiceSocket();
     updateVoiceControls();
     renderVoiceParticipants();
+    // Auto-connect user to room voice chat on auction entry.
+    joinVoiceChat().catch((err) => {
+      console.warn('Auto voice join skipped:', err);
+    });
   }
 
   // Listen to room status (finished → results)
@@ -1618,6 +1592,71 @@ function isWebRtcSupported() {
   );
 }
 
+function initVoiceSocket() {
+  if (!voiceFeatureEnabled) return;
+  if (voiceSocket) return;
+  if (typeof io !== 'function') {
+    console.error('Socket.io client not available.');
+    return;
+  }
+
+  voiceSocket = io({ transports: ['websocket', 'polling'] });
+
+  voiceSocket.on('connect', () => {
+    voiceSocketConnected = true;
+    if (voiceJoined) {
+      const myTeam = teamsData[myTeamId] || getRoomTeamMeta(myTeamId) || {};
+      voiceSocket.emit('voice:join', {
+        roomCode,
+        teamId: myTeamId,
+        ownerName: myTeam.ownerName || playerName || 'Player',
+        short: myTeam.short || myTeamId,
+        isHost: !!isHost
+      });
+    }
+  });
+
+  voiceSocket.on('disconnect', () => {
+    voiceSocketConnected = false;
+    voiceParticipants = {};
+    voiceHostMutedMap = {};
+    isVoiceHostMuted = false;
+    renderVoiceParticipants();
+    updateVoiceControls();
+    syncVoicePeers();
+  });
+
+  voiceSocket.on('voice:state', (payload = {}) => {
+    voiceParticipants = payload.participants || {};
+    voiceHostMutedMap = payload.muted || {};
+    const wasHostMuted = isVoiceHostMuted;
+    isVoiceHostMuted = !!voiceHostMutedMap[myTeamId];
+
+    applyLocalVoiceTrackState();
+    updateVoiceControls();
+    renderVoiceParticipants();
+    syncVoicePeers();
+
+    const badge = document.getElementById('voiceStatusBadge');
+    if (badge) badge.style.display = isVoiceHostMuted ? 'inline-flex' : 'none';
+    if (!wasHostMuted && isVoiceHostMuted) {
+      showToast('Host muted your voice.', 'error');
+    }
+  });
+
+  voiceSocket.on('voice:signal', async (payload = {}) => {
+    try {
+      await handleVoiceSignalPayload(payload);
+    } catch (err) {
+      console.error('Voice signal handling failed:', err);
+    }
+  });
+
+  voiceSocket.on('voice:error', (payload = {}) => {
+    if (payload.message) showToast(payload.message, 'error');
+  });
+}
+
 function updateVoiceControls() {
   const joinBtn = document.getElementById('voiceJoinBtn');
   const muteBtn = document.getElementById('voiceMuteBtn');
@@ -1668,6 +1707,7 @@ async function joinVoiceChat() {
     showToast('Voice chat unsupported. Use latest Chrome/Edge on HTTPS.', 'error');
     return;
   }
+  if (!voiceSocket) initVoiceSocket();
 
   try {
     localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -1675,11 +1715,15 @@ async function joinVoiceChat() {
     voiceMutedSelf = false;
 
     const myTeam = teamsData[myTeamId] || getRoomTeamMeta(myTeamId) || {};
-    await db.ref(`rooms/${roomCode}/voice/participants/${myTeamId}`).set({
-      joinedAt: Date.now(),
-      ownerName: myTeam.ownerName || playerName || 'Player',
-      short: myTeam.short || myTeamId
-    });
+    if (voiceSocket && voiceSocketConnected) {
+      voiceSocket.emit('voice:join', {
+        roomCode,
+        teamId: myTeamId,
+        ownerName: myTeam.ownerName || playerName || 'Player',
+        short: myTeam.short || myTeamId,
+        isHost: !!isHost
+      });
+    }
 
     applyLocalVoiceTrackState();
     updateVoiceControls();
@@ -1707,10 +1751,9 @@ async function joinVoiceChat() {
 }
 
 async function leaveVoiceChat() {
-  if (voiceJoined) {
+  if (voiceJoined && voiceSocket && voiceSocketConnected) {
     try {
-      await db.ref(`rooms/${roomCode}/voice/participants/${myTeamId}`).remove();
-      await db.ref(`rooms/${roomCode}/voice/signals/${myTeamId}`).remove();
+      voiceSocket.emit('voice:leave', { roomCode, teamId: myTeamId });
     } catch (_) {}
   }
 
@@ -1807,9 +1850,10 @@ async function makeVoiceOffer(remoteTeamId) {
 
 async function sendVoiceSignal(targetTeamId, payload) {
   if (!targetTeamId || targetTeamId === myTeamId) return;
-  await db.ref(`rooms/${roomCode}/voice/signals/${targetTeamId}`).push({
-    fromTeamId: myTeamId,
-    at: Date.now(),
+  if (!voiceSocket || !voiceSocketConnected) return;
+  voiceSocket.emit('voice:signal', {
+    roomCode,
+    targetTeamId,
     ...payload
   });
 }
@@ -1946,15 +1990,14 @@ async function toggleVoiceMute() {
 
 async function toggleHostVoiceMute(teamId) {
   if (!isHost || !teamId || teamId === myTeamId) return;
-  const ref = db.ref(`rooms/${roomCode}/voice/muted/${teamId}`);
   try {
-    if (voiceHostMutedMap[teamId]) {
-      await ref.remove();
-      showToast('Voice unmuted for player.', 'success');
-    } else {
-      await ref.set(true);
-      showToast('Voice muted for player.', 'success');
+    if (!voiceSocket || !voiceSocketConnected) {
+      showToast('Voice signaling disconnected.', 'error');
+      return;
     }
+    const muted = !voiceHostMutedMap[teamId];
+    voiceSocket.emit('voice:host-mute', { roomCode, targetTeamId: teamId, muted });
+    showToast(muted ? 'Voice muted for player.' : 'Voice unmuted for player.', 'success');
   } catch (err) {
     console.error('Host voice mute update failed:', err);
     showToast('Failed to update voice mute.', 'error');
@@ -2199,6 +2242,11 @@ function hideResultBanner() {
 // ---- CLEANUP ----
 window.addEventListener('beforeunload', () => {
   if (voiceFeatureEnabled) leaveVoiceChat();
+  if (voiceSocket) {
+    try { voiceSocket.disconnect(); } catch (_) {}
+    voiceSocket = null;
+    voiceSocketConnected = false;
+  }
   clearInterval(timerInterval);
   db.ref(`rooms/${roomCode}/teams`).off('value', listeners.teams);
   db.ref(`rooms/${roomCode}/soldPlayers`).off('value', listeners.soldPlayers);
@@ -2210,10 +2258,4 @@ window.addEventListener('beforeunload', () => {
   db.ref(`rooms/${roomCode}/chat/messages`).off('value', listeners.chatMessages);
   db.ref(`rooms/${roomCode}/chat/muted`).off('value', listeners.chatMutedMap);
   db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).off('value', listeners.chatMuted);
-  if (voiceFeatureEnabled) {
-    db.ref(`rooms/${roomCode}/voice/participants`).off('value', listeners.voiceParticipants);
-    db.ref(`rooms/${roomCode}/voice/muted`).off('value', listeners.voiceHostMutedMap);
-    db.ref(`rooms/${roomCode}/voice/muted/${myTeamId}`).off('value', listeners.voiceHostMuted);
-    db.ref(`rooms/${roomCode}/voice/signals/${myTeamId}`).off('child_added', listeners.voiceSignals);
-  }
 });

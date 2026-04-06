@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "description": "Real-time IPL Player Auction with friends",
   "scripts": {
-    "build": "echo 'Static site ready'"
+    "build": "echo 'Static site ready'",
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "keywords": ["ipl", "auction", "cricket", "Firebase"],
-  "author": "Tilak"
+  "author": "Tilak",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
 }

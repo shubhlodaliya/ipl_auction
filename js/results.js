@@ -907,6 +907,11 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
 
   // Add Playing 11 section if available
   if (playing11Data && playing11Data.playing11 && playing11Data.playing11.length === 11) {
+    const selectedIds = (playing11Data.playing11 || []).map(pid => String(pid));
+    const captainId = playing11Data.captain != null ? String(playing11Data.captain) : null;
+    const viceCaptainId = playing11Data.vice_captain != null ? String(playing11Data.vice_captain) : null;
+    const wicketKeeperId = playing11Data.wicket_keeper != null ? String(playing11Data.wicket_keeper) : null;
+
     startY = doc.lastAutoTable.finalY + 14;
     if (startY > pageHeight - 150) {
       doc.addPage();
@@ -918,14 +923,14 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
     doc.setFontSize(11);
     doc.text('Best Playing 11', 40, startY);
 
-    const playing11Players = playing11Data.playing11.map(pid => {
-      const entry = squad.find(e => e.player.id === pid);
+    const playing11Players = selectedIds.map(pid => {
+      const entry = squad.find(e => String(e.player.id) === pid);
       if (!entry) return null;
       const player = entry.player;
       let designation = '';
-      if (pid === playing11Data.captain) designation = ' (C)';
-      else if (pid === playing11Data.vice_captain) designation = ' (VC)';
-      else if (pid === playing11Data.wicket_keeper) designation = ' (WK)';
+      if (pid === captainId) designation = ' (C)';
+      else if (pid === viceCaptainId) designation = ' (VC)';
+      else if (pid === wicketKeeperId) designation = ' (WK)';
 
       return [
         player.name + designation,
@@ -940,7 +945,7 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
       margin: { left: 40, right: 40 },
       theme: 'striped',
       head: [['Player', 'Role', 'Country', 'Price']],
-      body: playing11Players,
+      body: playing11Players.length ? playing11Players : [['Playing 11 could not be resolved from squad data', '-', '-', '-']],
       styles: { fontSize: 9, cellPadding: 5 },
       headStyles: { fillColor: [34, 139, 34] },
       columnStyles: {

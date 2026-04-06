@@ -111,7 +111,12 @@ io.on('connection', (socket) => {
 
       socket.join(`voice:${roomCode}`);
       socket.data.voice = { roomCode, teamId };
-      emitVoiceState(roomCode);
+      
+      // Immediately send current state to the joining user
+      socket.emit('voice:state', serializeRoom(roomState));
+      
+      // Then broadcast to everyone else in the room
+      socket.to(`voice:${roomCode}`).emit('voice:state', serializeRoom(roomState));
     } catch (err) {
       socket.emit('voice:error', { message: 'Failed to join voice room.' });
     }

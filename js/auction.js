@@ -1626,6 +1626,13 @@ function initVoiceSocket() {
     syncVoicePeers();
   });
 
+  voiceSocket.on('connect_error', (err) => {
+    console.error('Voice socket connect error:', err);
+    voiceSocketConnected = false;
+    renderVoiceParticipants();
+    showToast('Voice server connection failed.', 'error');
+  });
+
   voiceSocket.on('voice:state', (payload = {}) => {
     voiceParticipants = payload.participants || {};
     voiceHostMutedMap = payload.muted || {};
@@ -1968,7 +1975,20 @@ function renderVoiceParticipants() {
   const countEl = document.getElementById('voiceRoomCount');
   if (!listEl) return;
 
-  const participants = Object.entries(voiceParticipants || {}).sort((a, b) => (a[1]?.joinedAt || 0) - (b[1]?.joinedAt || 0));
+  const mergedParticipants = { ...(voiceParticipants || {}) };
+  if (voiceJoined && myTeamId && !mergedParticipants[myTeamId]) {
+    const myTeam = teamsData[myTeamId] || getRoomTeamMeta(myTeamId) || {};
+    mergedParticipants[myTeamId] = {
+      teamId: myTeamId,
+      ownerName: myTeam.ownerName || playerName || 'You',
+      short: myTeam.short || myTeamId,
+      joinedAt: Date.now(),
+      isHost: !!isHost,
+      localOnly: true
+    };
+  }
+
+  const participants = Object.entries(mergedParticipants).sort((a, b) => (a[1]?.joinedAt || 0) - (b[1]?.joinedAt || 0));
   if (countEl) countEl.textContent = `${participants.length} live`;
   if (!participants.length) {
     listEl.innerHTML = '<div class="chat-empty">No one in voice room.</div>';

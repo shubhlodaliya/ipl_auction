@@ -1297,9 +1297,32 @@ function showTeamSquad(teamId) {
 
   document.getElementById('teamModalTitle').innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.name} Squad`;
 
+  const roleOrder = {
+    'Batsman': 1,
+    'Wicket-keeper': 2,
+    'All-rounder': 3,
+    'Fast Bowler': 4,
+    'Spinner': 5,
+    'Bowler': 6
+  };
+
+  const sortedSquadIds = [...squadIds].sort((a, b) => {
+    const pa = playerMap[a];
+    const pb = playerMap[b];
+    if (!pa && !pb) return 0;
+    if (!pa) return 1;
+    if (!pb) return -1;
+
+    const roleA = roleOrder[pa.role] ?? 99;
+    const roleB = roleOrder[pb.role] ?? 99;
+    if (roleA !== roleB) return roleA - roleB;
+
+    return String(pa.name || '').localeCompare(String(pb.name || ''));
+  });
+
   const html = squadIds.length === 0
     ? `<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players bought yet.</p></div>`
-    : squadIds.map(pid => {
+    : sortedSquadIds.map(pid => {
         const p = playerMap[pid];
         if (!p) return '';
         const sold = soldPlayersData[pid];

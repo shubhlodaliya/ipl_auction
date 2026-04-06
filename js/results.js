@@ -22,7 +22,8 @@ const playing11State = {
   captain: null,
   vice_captain: null,
   wicket_keeper: null,
-  selectionScrollTop: 0
+  selectionScrollTop: 0,
+  designationScrollTop: 0
 };
 
 const resultsExportState = {
@@ -387,6 +388,8 @@ function openPlaying11Modal() {
   const overlay = document.getElementById('playing11ModalOverlay');
   if (!overlay) return;
   overlay.classList.add('visible');
+  playing11State.selectionScrollTop = 0;
+  playing11State.designationScrollTop = 0;
   renderPlaying11Modal();
 }
 
@@ -501,6 +504,9 @@ function renderPlaying11Modal() {
         </div>
       </div>
     `;
+
+    const designationList = content.querySelector('.playing11-designation-list');
+    if (designationList) designationList.scrollTop = playing11State.designationScrollTop || 0;
   }
 
   // Add action buttons at the bottom
@@ -544,6 +550,9 @@ function togglePlaying11Player(playerId) {
 
 function setPlayerDesignation(playerId, role) {
   const normalizedId = String(playerId);
+  const designationList = document.querySelector('#playing11ModalContent .playing11-designation-list');
+  if (designationList) playing11State.designationScrollTop = designationList.scrollTop;
+
   // Toggle the designation on/off
   if (role === 'captain') {
     playing11State.captain = playing11State.captain === normalizedId ? null : normalizedId;
@@ -561,6 +570,7 @@ function clearPlaying11Selection() {
   playing11State.vice_captain = null;
   playing11State.wicket_keeper = null;
   playing11State.selectionScrollTop = 0;
+  playing11State.designationScrollTop = 0;
   renderPlaying11Modal();
 }
 

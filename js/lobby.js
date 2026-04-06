@@ -15,6 +15,26 @@ let allPlayers = [];
 let watchlistSet = new Set();
 let roomTeamCatalog = {};
 
+function shufflePoolOrder(items) {
+  const arr = [...items];
+  // Prefer crypto randomness when available for better distribution.
+  if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+      const rand = new Uint32Array(1);
+      window.crypto.getRandomValues(rand);
+      const j = rand[0] % (i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function getRoomTeamMeta(teamId) {
   return roomTeamCatalog[teamId] || getTeam(teamId);
 }
@@ -50,7 +70,7 @@ function buildPlayerQueue(players, mode) {
   const poolByIndex = {};
 
   pools.forEach(pool => {
-    const ids = shuffleArray(players.filter(pool.filter).map(p => p.id));
+    const ids = shufflePoolOrder(players.filter(pool.filter).map(p => p.id));
     const start = queue.length;
     ids.forEach((id, idx) => {
       queue.push(id);

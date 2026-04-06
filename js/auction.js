@@ -1606,7 +1606,12 @@ function speakCallout(text) {
 }
 
 function isWebRtcSupported() {
-  return !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  return !!(
+    window.isSecureContext &&
+    window.RTCPeerConnection &&
+    navigator.mediaDevices &&
+    navigator.mediaDevices.getUserMedia
+  );
 }
 
 function updateVoiceControls() {
@@ -1741,7 +1746,8 @@ function ensureVoicePeer(remoteTeamId) {
     pc,
     remoteStream: null,
     audioEl: null,
-    offerSent: false
+    offerSent: false,
+    pendingCandidates: []
   };
   voicePeerState[remoteTeamId] = state;
 
@@ -1796,7 +1802,6 @@ async function handleVoiceSignalPayload(payload) {
   if (!payload || !voiceJoined) return;
   const fromTeamId = payload.fromTeamId;
   if (!fromTeamId || fromTeamId === myTeamId) return;
-  if (!voiceParticipants[fromTeamId]) return;
 
   const state = ensureVoicePeer(fromTeamId);
   if (!state) return;
@@ -1805,6 +1810,10 @@ async function handleVoiceSignalPayload(payload) {
     const remoteDesc = new RTCSessionDescription(payload.description);
     if (remoteDesc.type === 'offer') {
       await state.pc.setRemoteDescription(remoteDesc);
+      while (state.pendingCandidates.length) {
+        const cand = state.pendingCandidates.shift();
+        await state.pc.addIceCandidate(cand);
+      }
       const answer = await state.pc.createAnswer();
       await state.pc.setLocalDescription(answer);
       await sendVoiceSignal(fromTeamId, { description: state.pc.localDescription });
@@ -1813,13 +1822,22 @@ async function handleVoiceSignalPayload(payload) {
 
     if (remoteDesc.type === 'answer') {
       await state.pc.setRemoteDescription(remoteDesc);
+      while (state.pendingCandidates.length) {
+        const cand = state.pendingCandidates.shift();
+        await state.pc.addIceCandidate(cand);
+      }
       return;
     }
   }
 
   if (payload.candidate) {
+    const ice = new RTCIceCandidate(payload.candidate);
+    if (!state.pc.remoteDescription) {
+      state.pendingCandidates.push(ice);
+      return;
+    }
     try {
-      await state.pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+      await state.pc.addIceCandidate(ice);
     } catch (err) {
       console.warn('Add ICE candidate failed:', err);
     }
@@ -1831,6 +1849,7 @@ function attachRemoteVoiceAudio(remoteTeamId, stream) {
   if (!state) return;
   if (state.audioEl) {
     state.audioEl.srcObject = stream;
+    state.audioEl.play().catch(() => {});
     return;
   }
 
@@ -1842,6 +1861,7 @@ function attachRemoteVoiceAudio(remoteTeamId, stream) {
   audio.style.display = 'none';
   document.body.appendChild(audio);
   state.audioEl = audio;
+  audio.play().catch(() => {});
 }
 
 function detachVoicePeer(remoteTeamId) {

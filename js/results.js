@@ -21,7 +21,8 @@ const playing11State = {
   playing11: [],
   captain: null,
   vice_captain: null,
-  wicket_keeper: null
+  wicket_keeper: null,
+  selectionScrollTop: 0
 };
 
 const resultsExportState = {
@@ -231,10 +232,10 @@ async function loadPlaying11FromFirebase() {
     const snap = await db.ref(`rooms/${roomCode}/playing11/${myTeamId}`).get();
     if (snap.exists()) {
       const data = snap.val();
-      playing11State.playing11 = data.playing11 || [];
-      playing11State.captain = data.captain || null;
-      playing11State.vice_captain = data.vice_captain || null;
-      playing11State.wicket_keeper = data.wicket_keeper || null;
+      playing11State.playing11 = (data.playing11 || []).map(pid => String(pid));
+      playing11State.captain = data.captain != null ? String(data.captain) : null;
+      playing11State.vice_captain = data.vice_captain != null ? String(data.vice_captain) : null;
+      playing11State.wicket_keeper = data.wicket_keeper != null ? String(data.wicket_keeper) : null;
     }
   } catch (err) {
     console.error('Failed to load Playing 11:', err);
@@ -271,15 +272,18 @@ function renderPlaying11Modal() {
   // Check if 11 players are selected
   if (playing11.length < 11) {
     // PLAYER SELECTION STAGE - Show all squad members to select
+    const getTick = (selected) => selected
+      ? '<span class="playing11-select-tick selected" aria-hidden="true">✓</span>'
+      : '<span class="playing11-select-tick" aria-hidden="true"></span>';
+
     const playerList = mySquad.map(entry => `
-      <label class="playing11-player-select-row ${playing11.includes(entry.player.id) ? 'selected' : ''}">
-        <input type="checkbox" 
-          ${playing11.includes(entry.player.id) ? 'checked' : ''}
-          onchange="togglePlaying11Player('${entry.player.id}')" />
+      <button type="button" class="playing11-player-select-row ${playing11.includes(String(entry.player.id)) ? 'selected' : ''}"
+        onclick="togglePlaying11Player('${String(entry.player.id)}')">
+        ${getTick(playing11.includes(String(entry.player.id)))}
         <span class="playing11-player-select-name">${entry.player.name}</span>
         <span class="playing11-player-select-role">${entry.player.role}</span>
         <span class="playing11-player-select-price">${formatPrice(entry.price)}</span>
-      </label>
+      </button>
     `).join('');
 
     content.innerHTML = `
@@ -290,14 +294,17 @@ function renderPlaying11Modal() {
         </div>
       </div>
     `;
+
+    const list = content.querySelector('.playing11-all-players-list');
+    if (list) list.scrollTop = playing11State.selectionScrollTop || 0;
   } else {
     // DESIGNATION STAGE - Show 11 selected players with C/VC/WK buttons
     const selectedPlayers = playing11.map(pid => 
-      mySquad.find(e => e.player.id === pid)
+      mySquad.find(e => String(e.player.id) === String(pid))
     ).filter(Boolean);
 
     const playerDesignationHtml = selectedPlayers.map(entry => {
-      const playerId = entry.player.id;
+      const playerId = String(entry.player.id);
       const isCaptain = captain === playerId;
       const isVC = vice_captain === playerId;
       const isWK = wicket_keeper === playerId;
@@ -340,15 +347,15 @@ function renderPlaying11Modal() {
         <div class="playing11-designation-summary">
           <div class="playing11-summary-item">
             <span>⭐ Captain:</span>
-            <span class="playing11-summary-value">${captain ? mySquad.find(e => e.player.id === captain)?.player.name || 'Not Selected' : 'Not Selected'}</span>
+            <span class="playing11-summary-value">${captain ? mySquad.find(e => String(e.player.id) === String(captain))?.player.name || 'Not Selected' : 'Not Selected'}</span>
           </div>
           <div class="playing11-summary-item">
             <span>👤 Vice-Captain:</span>
-            <span class="playing11-summary-value">${vice_captain ? mySquad.find(e => e.player.id === vice_captain)?.player.name || 'Not Selected' : 'Not Selected'}</span>
+            <span class="playing11-summary-value">${vice_captain ? mySquad.find(e => String(e.player.id) === String(vice_captain))?.player.name || 'Not Selected' : 'Not Selected'}</span>
           </div>
           <div class="playing11-summary-item">
             <span>🥅 Wicket-Keeper:</span>
-            <span class="playing11-summary-value">${wicket_keeper ? mySquad.find(e => e.player.id === wicket_keeper)?.player.name || 'Not Selected' : 'Not Selected'}</span>
+            <span class="playing11-summary-value">${wicket_keeper ? mySquad.find(e => String(e.player.id) === String(wicket_keeper))?.player.name || 'Not Selected' : 'Not Selected'}</span>
           </div>
         </div>
       </div>
@@ -374,30 +381,35 @@ function renderPlaying11Modal() {
 }
 
 function togglePlaying11Player(playerId) {
-  const idx = playing11State.playing11.indexOf(playerId);
+  const normalizedId = String(playerId);
+  const list = document.querySelector('#playing11ModalContent .playing11-all-players-list');
+  if (list) playing11State.selectionScrollTop = list.scrollTop;
+
+  const idx = playing11State.playing11.indexOf(normalizedId);
   if (idx === -1) {
     if (playing11State.playing11.length < 11) {
-      playing11State.playing11.push(playerId);
+      playing11State.playing11.push(normalizedId);
     }
   } else {
     playing11State.playing11.splice(idx, 1);
     // Clear captain/vc/wk if player is removed
-    if (playing11State.captain === playerId) playing11State.captain = null;
-    if (playing11State.vice_captain === playerId) playing11State.vice_captain = null;
-    if (playing11State.wicket_keeper === playerId) playing11State.wicket_keeper = null;
+    if (playing11State.captain === normalizedId) playing11State.captain = null;
+    if (playing11State.vice_captain === normalizedId) playing11State.vice_captain = null;
+    if (playing11State.wicket_keeper === normalizedId) playing11State.wicket_keeper = null;
   }
   renderPlaying11Modal();
 }
 
 
 function setPlayerDesignation(playerId, role) {
+  const normalizedId = String(playerId);
   // Toggle the designation on/off
   if (role === 'captain') {
-    playing11State.captain = playing11State.captain === playerId ? null : playerId;
+    playing11State.captain = playing11State.captain === normalizedId ? null : normalizedId;
   } else if (role === 'vice_captain') {
-    playing11State.vice_captain = playing11State.vice_captain === playerId ? null : playerId;
+    playing11State.vice_captain = playing11State.vice_captain === normalizedId ? null : normalizedId;
   } else if (role === 'wicket_keeper') {
-    playing11State.wicket_keeper = playing11State.wicket_keeper === playerId ? null : playerId;
+    playing11State.wicket_keeper = playing11State.wicket_keeper === normalizedId ? null : normalizedId;
   }
   renderPlaying11Modal();
 }
@@ -407,6 +419,7 @@ function clearPlaying11Selection() {
   playing11State.captain = null;
   playing11State.vice_captain = null;
   playing11State.wicket_keeper = null;
+  playing11State.selectionScrollTop = 0;
   renderPlaying11Modal();
 }
 

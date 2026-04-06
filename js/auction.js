@@ -1187,7 +1187,13 @@ function showCurrentPoolDetails() {
     <span class="pool-summary-total">Total: ${stats.total}</span>
   `;
 
-  const rows = pool.players.map(({ playerId, index }) => {
+  const displayPlayers = [...pool.players].sort((a, b) => {
+    const pa = playerMap[a.playerId];
+    const pb = playerMap[b.playerId];
+    return String(pa?.name || '').localeCompare(String(pb?.name || ''));
+  });
+
+  const rows = displayPlayers.map(({ playerId, index }) => {
     const player = playerMap[playerId];
     if (!player) return '';
     const status = getPoolPlayerStatus(playerId, index);

@@ -2230,136 +2230,206 @@ input[type=range]::-webkit-slider-thumb {
    ============================================================ */
 .playing11-modal {
   width: min(700px, 94vw);
+
+
 }
 
-.playing11-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+/* ============================================================
+  PLAYING 11 MODAL - SELECTION STAGE
+  ============================================================ */
+.playing11-selection-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   padding: 0.5rem 0;
 }
 
-@media (max-width: 768px) {
-  .playing11-container {
-    grid-template-columns: 1fr;
-  }
-}
-
-.playing11-selection-section,
-.playing11-roles-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.playing11-selection-section h4,
-.playing11-roles-section h4 {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1.1rem;
-  color: var(--gold);
-  margin-bottom: 0.2rem;
-}
-
-.playing11-count {
+.playing11-count-badge {
   color: var(--text-sec);
   font-size: 0.85rem;
-  padding: 0.4rem 0.6rem;
-  background: rgba(255,203,48,0.08);
+  padding: 0.6rem 0.8rem;
+  background: rgba(255,203,48,0.12);
+  border: 1px solid rgba(255,203,48,0.25);
   border-radius: var(--radius-sm);
-}
-
-.playing11-player-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  max-height: 350px;
-  overflow-y: auto;
-}
-
-.playing11-role-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  margin-bottom: 0.4rem;
-}
-
-.playing11-role-label {
-  font-size: 0.8rem;
-  color: var(--text-sec);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 0.2rem;
   font-weight: 600;
 }
 
-.playing11-player-row {
+.playing11-all-players-list {
   display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.4rem;
+}
+
+.playing11-player-select-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  gap: 0.8rem;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.6rem;
+  padding: 0.6rem 0.8rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s ease;
-  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  border: 1px solid transparent;
 }
 
-.playing11-player-row:hover {
+.playing11-player-select-row:hover {
   background: rgba(255,203,48,0.08);
+  border-color: rgba(255,203,48,0.15);
 }
 
-.playing11-player-row.selected {
-  background: rgba(255,203,48,0.12);
+.playing11-player-select-row.selected {
+  background: rgba(255,203,48,0.15);
+  border-color: rgba(255,203,48,0.3);
 }
 
-.playing11-player-row input[type=\"checkbox\"] {
+.playing11-player-select-row input[type="checkbox"] {
   width: 18px;
   height: 18px;
   cursor: pointer;
   accent-color: var(--gold);
 }
 
-.playing11-player-name {
-  flex: 1;
+.playing11-player-select-name {
   font-size: 0.95rem;
   color: var(--text);
   font-weight: 500;
 }
 
-.playing11-player-role {
-  font-size: 0.75rem;
+.playing11-player-select-role {
+  font-size: 0.8rem;
   color: var(--text-sec);
-  padding: 0.2rem 0.4rem;
-  background: rgba(255,255,255,0.05);
-  border-radius: 4px;
 }
 
-.playing11-role-group {
+.playing11-player-select-price {
+  font-size: 0.8rem;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ============================================================
+   PLAYING 11 MODAL - DESIGNATION STAGE
+   ============================================================ */
+.playing11-designation-stage {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 1rem;
+  padding: 0.5rem 0;
 }
 
-.playing11-label {
-  font-size: 0.85rem;
+.playing11-designation-info {
+  padding: 0.8rem;
+  background: rgba(255,203,48,0.08);
+  border: 1px solid rgba(255,203,48,0.2);
+  border-radius: var(--radius-sm);
+}
+
+.playing11-designation-info p {
+  font-size: 0.9rem;
+  color: var(--text);
+  margin: 0;
+}
+
+.playing11-designation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 0.4rem;
+}
+
+.playing11-designation-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.playing11-designation-row:hover {
+  background: rgba(255,203,48,0.05);
+  border-color: rgba(255,203,48,0.2);
+}
+
+.playing11-player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.playing11-player-name-des {
+  font-size: 0.95rem;
   color: var(--text);
   font-weight: 600;
 }
 
-.playing11-select {
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  color: var(--text);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
+.playing11-player-role-des {
+  font-size: 0.8rem;
+  color: var(--text-sec);
 }
 
-.playing11-select:hover,
-.playing11-select:focus {
+.playing11-designation-buttons {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.playing11-des-btn {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.playing11-des-btn:hover {
+  background: rgba(255,203,48,0.12);
+  border-color: rgba(255,203,48,0.3);
+  color: var(--gold);
+}
+
+.playing11-des-btn.active {
+  background: linear-gradient(135deg, rgba(255,203,48,0.3), rgba(255,203,48,0.15));
   border-color: var(--gold);
-  outline: none;
+  color: var(--gold);
+  box-shadow: 0 0 8px rgba(255,203,48,0.15);
+}
+
+.playing11-designation-summary {
+  background: rgba(34,139,34,0.08);
+  border: 1px solid rgba(34,139,34,0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.playing11-summary-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.playing11-summary-item span:first-child {
+  color: var(--text-sec);
+  font-weight: 600;
+}
+
+.playing11-summary-value {
+  color: var(--gold);
+  font-weight: 600;
 }
 
 .playing11-actions {
@@ -2376,10 +2446,10 @@ input[type=range]::-webkit-slider-thumb {
 
 @media (max-width: 500px) {
   .playing11-actions {
-    grid-column: auto;
+   flex-direction: column;
   }
   .playing11-actions .btn {
-    flex: auto;
+   width: 100%;
   }
 }
 

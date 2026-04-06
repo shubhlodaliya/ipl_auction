@@ -268,99 +268,109 @@ function renderPlaying11Modal() {
     return;
   }
 
-  // Categorize players by role
-  const roles = {};
-  mySquad.forEach(entry => {
-    const role = entry.player.role || 'Other';
-    if (!roles[role]) roles[role] = [];
-    roles[role].push(entry);
-  });
+  // Check if 11 players are selected
+  if (playing11.length < 11) {
+    // PLAYER SELECTION STAGE - Show all squad members to select
+    const playerList = mySquad.map(entry => `
+      <label class="playing11-player-select-row ${playing11.includes(entry.player.id) ? 'selected' : ''}">
+        <input type="checkbox" 
+          ${playing11.includes(entry.player.id) ? 'checked' : ''}
+          onchange="togglePlaying11Player('${entry.player.id}')" />
+        <span class="playing11-player-select-name">${entry.player.name}</span>
+        <span class="playing11-player-select-role">${entry.player.role}</span>
+        <span class="playing11-player-select-price">${formatPrice(entry.price)}</span>
+      </label>
+    `).join('');
 
-  // Sort each role category alphabetically
-  Object.keys(roles).forEach(role => {
-    roles[role].sort((a, b) => a.player.name.localeCompare(b.player.name));
-  });
-
-  const playerSelectHtml = Object.entries(roles).map(([role, players]) => `
-    <div class="playing11-role-section">
-      <div class="playing11-role-label">${role}</div>
-      ${players.map(entry => `
-        <label class="playing11-player-row ${playing11.includes(entry.player.id) ? 'selected' : ''}">
-          <input type="checkbox" 
-            ${playing11.includes(entry.player.id) ? 'checked' : ''}
-            onchange="togglePlaying11Player('${entry.player.id}')" />
-          <span class="playing11-player-name">${entry.player.name}</span>
-          <span class="playing11-player-role">${role}</span>
-        </label>
-      `).join('')}
-    </div>
-  `).join('');
-
-  const captainSelectHtml = `
-    <select id="captainSelect" onchange="selectCaptain()" class="playing11-select">
-      <option value="">Select Captain</option>
-      ${playing11.map(pid => {
-        const entry = mySquad.find(e => e.player.id === pid);
-        return entry ? `<option value="${pid}" ${captain === pid ? 'selected' : ''}>${entry.player.name}</option>` : '';
-      }).join('')}
-    </select>
-  `;
-
-  const vcSelectHtml = `
-    <select id="viceCaptainSelect" onchange="selectViceCaptain()" class="playing11-select">
-      <option value="">Select Vice-Captain</option>
-      ${playing11.map(pid => {
-        const entry = mySquad.find(e => e.player.id === pid);
-        return entry ? `<option value="${pid}" ${vice_captain === pid ? 'selected' : ''}>${entry.player.name}</option>` : '';
-      }).join('')}
-    </select>
-  `;
-
-  const wkSelectHtml = `
-    <select id="wicketKeeperSelect" onchange="selectWicketKeeper()" class="playing11-select">
-      <option value="">Select Wicket-Keeper</option>
-      ${playing11.map(pid => {
-        const entry = mySquad.find(e => e.player.id === pid);
-        return entry ? `<option value="${pid}" ${wicket_keeper === pid ? 'selected' : ''}>${entry.player.name}</option>` : '';
-      }).join('')}
-    </select>
-  `;
-
-  content.innerHTML = `
-    <div class="playing11-container">
-      <div class="playing11-selection-section">
-        <h4>Select 11 Players</h4>
-        <div class="playing11-count">Selected: <strong>${playing11.length}/11</strong></div>
-        <div class="playing11-player-list">
-          ${playerSelectHtml}
+    content.innerHTML = `
+      <div class="playing11-selection-stage">
+        <div class="playing11-count-badge">Selected: <strong>${playing11.length}/11</strong></div>
+        <div class="playing11-all-players-list">
+          ${playerList}
         </div>
       </div>
+    `;
+  } else {
+    // DESIGNATION STAGE - Show 11 selected players with C/VC/WK buttons
+    const selectedPlayers = playing11.map(pid => 
+      mySquad.find(e => e.player.id === pid)
+    ).filter(Boolean);
 
-      <div class="playing11-roles-section">
-        <h4>Designate Key Roles</h4>
-        
-        <div class="playing11-role-group">
-          <label class="playing11-label">⭐ Captain</label>
-          ${captainSelectHtml}
+    const playerDesignationHtml = selectedPlayers.map(entry => {
+      const playerId = entry.player.id;
+      const isCaptain = captain === playerId;
+      const isVC = vice_captain === playerId;
+      const isWK = wicket_keeper === playerId;
+
+      return `
+        <div class="playing11-designation-row">
+          <div class="playing11-player-info">
+            <span class="playing11-player-name-des">${entry.player.name}</span>
+            <span class="playing11-player-role-des">${entry.player.role}</span>
+          </div>
+          <div class="playing11-designation-buttons">
+            <button class="playing11-des-btn ${isCaptain ? 'active' : ''}" 
+              onclick="setPlayerDesignation('${playerId}', 'captain')" 
+              title="Captain">
+              ⭐ C
+            </button>
+            <button class="playing11-des-btn ${isVC ? 'active' : ''}" 
+              onclick="setPlayerDesignation('${playerId}', 'vice_captain')" 
+              title="Vice-Captain">
+              👤 VC
+            </button>
+            <button class="playing11-des-btn ${isWK ? 'active' : ''}" 
+              onclick="setPlayerDesignation('${playerId}', 'wicket_keeper')" 
+              title="Wicket-Keeper">
+              🥅 WK
+            </button>
+          </div>
         </div>
+      `;
+    }).join('');
 
-        <div class="playing11-role-group">
-          <label class="playing11-label">👤 Vice-Captain</label>
-          ${vcSelectHtml}
+    content.innerHTML = `
+      <div class="playing11-designation-stage">
+        <div class="playing11-designation-info">
+          <p>Select one player each for Captain (C), Vice-Captain (VC), and Wicket-Keeper (WK)</p>
         </div>
-
-        <div class="playing11-role-group">
-          <label class="playing11-label">🥅 Wicket-Keeper</label>
-          ${wkSelectHtml}
+        <div class="playing11-designation-list">
+          ${playerDesignationHtml}
+        </div>
+        <div class="playing11-designation-summary">
+          <div class="playing11-summary-item">
+            <span>⭐ Captain:</span>
+            <span class="playing11-summary-value">${captain ? mySquad.find(e => e.player.id === captain)?.player.name || 'Not Selected' : 'Not Selected'}</span>
+          </div>
+          <div class="playing11-summary-item">
+            <span>👤 Vice-Captain:</span>
+            <span class="playing11-summary-value">${vice_captain ? mySquad.find(e => e.player.id === vice_captain)?.player.name || 'Not Selected' : 'Not Selected'}</span>
+          </div>
+          <div class="playing11-summary-item">
+            <span>🥅 Wicket-Keeper:</span>
+            <span class="playing11-summary-value">${wicket_keeper ? mySquad.find(e => e.player.id === wicket_keeper)?.player.name || 'Not Selected' : 'Not Selected'}</span>
+          </div>
         </div>
       </div>
+    `;
+  }
 
-      <div class="playing11-actions">
+  // Add action buttons at the bottom
+  const allActionsHTML = `
+    <div class="playing11-actions">
+      ${playing11.length < 11 ? `
         <button class="btn btn-secondary" onclick="closePlaying11Modal()">Cancel</button>
-        <button class="btn btn-primary" onclick="savePlaying11()" ${playing11.length !== 11 ? 'disabled' : ''}>Save Playing 11</button>
-      </div>
+        <button class="btn btn-primary" onclick="clearPlaying11Selection()">Clear All</button>
+      ` : `
+        <button class="btn btn-secondary" onclick="resetPlaying11ToSelection()">Back to Selection</button>
+        <button class="btn btn-primary" onclick="savePlaying11()" ${(!captain || !vice_captain || !wicket_keeper) ? 'disabled' : ''}>
+          Save Playing 11
+        </button>
+      `}
     </div>
   `;
+
+  content.innerHTML += allActionsHTML;
 }
 
 function togglePlaying11Player(playerId) {
@@ -379,21 +389,33 @@ function togglePlaying11Player(playerId) {
   renderPlaying11Modal();
 }
 
-function selectCaptain() {
-  const select = document.getElementById('captainSelect');
-  if (select) playing11State.captain = select.value || null;
+
+function setPlayerDesignation(playerId, role) {
+  // Toggle the designation on/off
+  if (role === 'captain') {
+    playing11State.captain = playing11State.captain === playerId ? null : playerId;
+  } else if (role === 'vice_captain') {
+    playing11State.vice_captain = playing11State.vice_captain === playerId ? null : playerId;
+  } else if (role === 'wicket_keeper') {
+    playing11State.wicket_keeper = playing11State.wicket_keeper === playerId ? null : playerId;
+  }
+  renderPlaying11Modal();
 }
 
-function selectViceCaptain() {
-  const select = document.getElementById('viceCaptainSelect');
-  if (select) playing11State.vice_captain = select.value || null;
+function clearPlaying11Selection() {
+  playing11State.playing11 = [];
+  playing11State.captain = null;
+  playing11State.vice_captain = null;
+  playing11State.wicket_keeper = null;
+  renderPlaying11Modal();
 }
 
-function selectWicketKeeper() {
-  const select = document.getElementById('wicketKeeperSelect');
-  if (select) playing11State.wicket_keeper = select.value || null;
+function resetPlaying11ToSelection() {
+  playing11State.captain = null;
+  playing11State.vice_captain = null;
+  playing11State.wicket_keeper = null;
+  renderPlaying11Modal();
 }
-
 async function savePlaying11() {
   const { roomCode, myTeamId, playing11, captain, vice_captain, wicket_keeper } = playing11State;
 
@@ -1033,9 +1055,9 @@ function exportSelectedTeamPdf() {
 window.openPlaying11Modal = openPlaying11Modal;
 window.closePlaying11Modal = closePlaying11Modal;
 window.togglePlaying11Player = togglePlaying11Player;
-window.selectCaptain = selectCaptain;
-window.selectViceCaptain = selectViceCaptain;
-window.selectWicketKeeper = selectWicketKeeper;
+window.setPlayerDesignation = setPlayerDesignation;
+window.clearPlaying11Selection = clearPlaying11Selection;
+window.resetPlaying11ToSelection = resetPlaying11ToSelection;
 window.savePlaying11 = savePlaying11;
 window.toggleReAuctionPlayer = toggleReAuctionPlayer;
 window.toggleReAuctionReady = toggleReAuctionReady;

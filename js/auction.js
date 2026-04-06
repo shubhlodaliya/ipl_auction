@@ -48,6 +48,7 @@ let magneticPointerEnabled = false;
 let activeMagneticButton = null;
 let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
+let serverTimeOffsetMs = 0;
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = true;
 const voiceRtcConfig = {
@@ -62,6 +63,10 @@ let listeners = {};
 
 function getRoomTeamMeta(teamId) {
   return roomTeamCatalog[teamId] || teamsData[teamId] || getTeam(teamId);
+}
+
+function getSyncedNowMs() {
+  return Date.now() + serverTimeOffsetMs;
 }
 
 async function requestCloudinaryCleanup() {
@@ -208,6 +213,11 @@ async function initAuction() {
   listeners.chatMuted = db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).on('value', snap => {
     isChatMuted = !!snap.val();
     updateChatMuteState();
+  });
+
+  listeners.serverTimeOffset = db.ref('.info/serverTimeOffset').on('value', snap => {
+    const offset = Number(snap.val());
+    serverTimeOffsetMs = Number.isFinite(offset) ? offset : 0;
   });
 
   if (voiceFeatureEnabled) {
@@ -634,7 +644,7 @@ function leaveAuction() {
 function timerTick() {
   if (paused) {
     const freezeLeft = currentAuctionData && currentAuctionData.status === 'bidding'
-      ? Math.max(0, Math.ceil((currentAuctionData.timerEnd - Date.now()) / 1000))
+      ? Math.max(0, Math.ceil((currentAuctionData.timerEnd - getSyncedNowMs()) / 1000))
       : timerSeconds;
     updateTimerDisplay(freezeLeft, timerSeconds);
     return;
@@ -645,7 +655,7 @@ function timerTick() {
     return;
   }
 
-  const timeLeft = Math.max(0, Math.ceil((currentAuctionData.timerEnd - Date.now()) / 1000));
+  const timeLeft = Math.max(0, Math.ceil((currentAuctionData.timerEnd - getSyncedNowMs()) / 1000));
   updateTimerDisplay(timeLeft, timerSeconds);
 
   // Host processes round when timer hits 0
@@ -749,13 +759,13 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
         bid: txnNextBid,
         jump: isBaseBid ? 0 : jump,
         isBaseBid,
-        ts: Date.now()
+        ts: getSyncedNowMs()
       });
       if (auction.bidHistory.length > 30) {
         auction.bidHistory = auction.bidHistory.slice(-30);
       }
       // Reset timer on each bid
-      auction.timerEnd = Date.now() + timerSeconds * 1000;
+      auction.timerEnd = getSyncedNowMs() + timerSeconds * 1000;
       return auction;
     });
   } catch (err) {
@@ -950,7 +960,7 @@ async function skipToNextPool() {
     skipVotes: {},
     poolSkipVotes: {},
     withdrawnTeams: {},
-    timerEnd: Date.now() + timerSeconds * 1000,
+    timerEnd: getSyncedNowMs() + timerSeconds * 1000,
     status: 'bidding'
   });
 }
@@ -1052,7 +1062,7 @@ async function advanceToNextPlayer() {
     skipVotes: {},
     poolSkipVotes: {},
     withdrawnTeams: {},
-    timerEnd: Date.now() + timerSeconds * 1000,
+    timerEnd: getSyncedNowMs() + timerSeconds * 1000,
     status: 'bidding'
   });
 }
@@ -1307,7 +1317,7 @@ async function removeTeamFromAuction(targetTeamId) {
         auction.highestBidder = null;
         const currentPlayer = playerMap[auction.playerId];
         if (currentPlayer) auction.currentBid = currentPlayer.base_price_lakh;
-        auction.timerEnd = Date.now() + timerSeconds * 1000;
+        auction.timerEnd = getSyncedNowMs() + timerSeconds * 1000;
       }
 
       return auction;
@@ -1434,12 +1444,12 @@ async function togglePauseAuction() {
 
   const controlRef = db.ref(`rooms/${roomCode}/auctionControl`);
   if (!paused) {
-    await controlRef.update({ paused: true, pausedAt: Date.now(), pausedBy: myTeamId });
+    await controlRef.update({ paused: true, pausedAt: getSyncedNowMs(), pausedBy: myTeamId });
     showToast('Auction paused', 'success');
     return;
   }
 
-  const now = Date.now();
+  const now = getSyncedNowMs();
   const pauseDuration = pausedAt ? (now - pausedAt) : 0;
 
   if (pauseDuration > 0) {
@@ -2304,4 +2314,5 @@ window.addEventListener('beforeunload', () => {
   db.ref(`rooms/${roomCode}/chat/messages`).off('value', listeners.chatMessages);
   db.ref(`rooms/${roomCode}/chat/muted`).off('value', listeners.chatMutedMap);
   db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).off('value', listeners.chatMuted);
+  db.ref('.info/serverTimeOffset').off('value', listeners.serverTimeOffset);
 });

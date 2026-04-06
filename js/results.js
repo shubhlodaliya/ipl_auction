@@ -36,6 +36,147 @@ const resultsExportState = {
   roomTeamCatalog: {}
 };
 
+const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz or ESPN analysts.
+
+I will provide a PDF generated from an IPL auction game.
+The PDF contains multiple teams, and each team already has a section called "Best Playing 11".
+
+Your task is to analyze the Best Playing 11 of every team and rank all teams from strongest to weakest.
+
+Important Rules:
+- DO NOT change the playing XI.
+- Only analyze the players listed in the "Best Playing 11" section for each team.
+- Compare teams against each other and rank them.
+
+------------------------------------------------
+
+STEP 1: Extract Data
+
+From the PDF extract:
+- Team name
+- Best Playing 11 players
+- Player roles (Batsman, Wicket Keeper, All-rounder, Bowler)
+- Captain and Vice Captain
+
+------------------------------------------------
+
+STEP 2: Evaluate Each Team Like a Professional Analyst
+
+Analyze the following aspects:
+
+1) TOP ORDER STRENGTH (Openers + No.3)
+- Ability to dominate powerplay
+- Strike rate in T20 format
+
+2) MIDDLE ORDER STABILITY
+- Ability to rebuild innings
+- Ability to handle pressure situations
+
+3) FINISHING POWER
+- Presence of strong finishers
+- Big hitting ability in last 5 overs
+
+4) BOWLING ATTACK
+Evaluate:
+- Powerplay bowlers
+- Middle overs control
+- Death over specialists
+- Variety (pace + spin)
+
+5) ALL-ROUNDER IMPACT
+Players who contribute significantly in both:
+- Batting
+- Bowling
+
+6) TEAM BALANCE
+Ideal structure:
+- 4-5 batsmen
+- 1-2 wicket keepers
+- 2-3 all-rounders
+- 3-4 bowlers
+
+7) MATCH WINNERS
+Presence of players who can win matches single-handedly.
+
+8) LEADERSHIP
+- Captain experience
+- Tactical ability
+
+------------------------------------------------
+
+STEP 3: Score Each Team
+
+Use the following scoring system:
+
+Batting Strength: 25
+Bowling Attack: 25
+All-Rounders: 20
+Team Balance: 15
+Match Winners: 10
+Leadership: 5
+
+Total Score: 100
+
+------------------------------------------------
+
+STEP 4: Output
+
+First analyze each team.
+
+Example format:
+
+TEAM ANALYSIS
+
+Team: <Team Name>
+
+Best Playing XI:
+1. Player - Role
+2. Player - Role
+...
+
+Strengths:
+- ...
+- ...
+
+Weaknesses:
+- ...
+
+Score Breakdown:
+Batting: /25
+Bowling: /25
+All-rounders: /20
+Balance: /15
+Match Winners: /10
+Leadership: /5
+
+Total Score: /100
+
+------------------------------------------------
+
+STEP 5: FINAL TEAM RANKING
+
+Rank all teams.
+
+Example:
+
+FINAL TEAM RANKING
+
+1) Team Name - Score
+2) Team Name - Score
+3) Team Name - Score
+4) Team Name - Score
+
+------------------------------------------------
+
+STEP 6: FINAL ANALYST VERDICT
+
+Explain like a cricket analyst:
+
+- Why Rank 1 team is the strongest
+- Which team has the best batting
+- Which team has the best bowling attack
+- Which team could be a dark horse`;
+
 window.addEventListener('DOMContentLoaded', loadResults);
 window.addEventListener('beforeunload', cleanupReAuctionListeners);
 
@@ -1070,6 +1211,30 @@ function exportSelectedTeamPdf() {
   exportTeamPdfById(selectedTeamId);
 }
 
+async function copyAnalystPrompt() {
+  try {
+    await navigator.clipboard.writeText(analystPromptTemplate);
+    showToast('Prompt copied. Now upload the All Teams PDF to any AI and paste the prompt.', 'success');
+  } catch (err) {
+    try {
+      const fallback = document.createElement('textarea');
+      fallback.value = analystPromptTemplate;
+      fallback.setAttribute('readonly', '');
+      fallback.style.position = 'fixed';
+      fallback.style.opacity = '0';
+      document.body.appendChild(fallback);
+      fallback.select();
+      document.execCommand('copy');
+      document.body.removeChild(fallback);
+      showToast('Prompt copied. Now upload the All Teams PDF to any AI and paste the prompt.', 'success');
+    } catch (copyErr) {
+      console.error(copyErr);
+      showToast('Copy failed. Please allow clipboard permission and try again.', 'error');
+    }
+    if (err) console.error(err);
+  }
+}
+
 window.openPlaying11Modal = openPlaying11Modal;
 window.closePlaying11Modal = closePlaying11Modal;
 window.togglePlaying11Player = togglePlaying11Player;
@@ -1083,3 +1248,4 @@ window.startReAuctionFromResults = startReAuctionFromResults;
 window.exportResultsPdf = exportResultsPdf;
 window.exportTeamPdfById = exportTeamPdfById;
 window.exportSelectedTeamPdf = exportSelectedTeamPdf;
+window.copyAnalystPrompt = copyAnalystPrompt;

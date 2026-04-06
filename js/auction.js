@@ -47,7 +47,7 @@ let activeMagneticButton = null;
 let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 const avatarBorderVariantClass = 'border-bold';
-const voiceFeatureEnabled = false;
+const voiceFeatureEnabled = true;
 const voiceRtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -1655,13 +1655,17 @@ async function toggleVoiceJoin() {
     showToast('Left voice chat.', 'success');
     return;
   }
+  if (!window.isSecureContext) {
+    showToast('Voice needs HTTPS (or localhost). Open the secure site link.', 'error');
+    return;
+  }
   await joinVoiceChat();
 }
 
 async function joinVoiceChat() {
   if (voiceJoined) return;
   if (!isWebRtcSupported()) {
-    showToast('Voice chat not supported on this browser.', 'error');
+    showToast('Voice chat unsupported. Use latest Chrome/Edge on HTTPS.', 'error');
     return;
   }
 
@@ -1684,7 +1688,15 @@ async function joinVoiceChat() {
     showToast('Voice chat connected.', 'success');
   } catch (err) {
     console.error('Join voice failed:', err);
-    showToast('Microphone permission denied or unavailable.', 'error');
+    if (err && err.name === 'NotAllowedError') {
+      showToast('Microphone permission denied. Allow mic access and try again.', 'error');
+    } else if (err && err.name === 'NotFoundError') {
+      showToast('No microphone device found on this system.', 'error');
+    } else if (err && err.name === 'NotReadableError') {
+      showToast('Microphone is busy in another app. Close it and retry.', 'error');
+    } else {
+      showToast('Unable to access microphone. Please retry.', 'error');
+    }
     voiceJoined = false;
     if (localVoiceStream) {
       localVoiceStream.getTracks().forEach(track => track.stop());
@@ -1883,9 +1895,11 @@ function detachVoicePeer(remoteTeamId) {
 
 function renderVoiceParticipants() {
   const listEl = document.getElementById('voiceParticipantList');
+  const countEl = document.getElementById('voiceRoomCount');
   if (!listEl) return;
 
   const participants = Object.entries(voiceParticipants || {}).sort((a, b) => (a[1]?.joinedAt || 0) - (b[1]?.joinedAt || 0));
+  if (countEl) countEl.textContent = `${participants.length} live`;
   if (!participants.length) {
     listEl.innerHTML = '<div class="chat-empty">No one in voice room.</div>';
     return;

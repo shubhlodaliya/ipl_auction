@@ -1297,43 +1297,76 @@ function showTeamSquad(teamId) {
 
   document.getElementById('teamModalTitle').innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.name} Squad`;
 
-  const roleOrder = {
-    'Batsman': 1,
-    'Wicket-keeper': 2,
-    'All-rounder': 3,
-    'Fast Bowler': 4,
-    'Spinner': 5,
-    'Bowler': 6
-  };
+  const roleSections = [
+    { key: 'Batsman', label: 'Batsman' },
+    { key: 'Wicket-keeper', label: 'Wicket-keeper' },
+    { key: 'All-rounder', label: 'All-rounder' },
+    { key: 'Fast Bowler', label: 'Fast Bowler' },
+    { key: 'Spinner', label: 'Spinner' },
+    { key: 'Bowler', label: 'Bowler' }
+  ];
 
-  const sortedSquadIds = [...squadIds].sort((a, b) => {
-    const pa = playerMap[a];
-    const pb = playerMap[b];
-    if (!pa && !pb) return 0;
-    if (!pa) return 1;
-    if (!pb) return -1;
+  const grouped = roleSections.reduce((acc, section) => {
+    acc[section.key] = [];
+    return acc;
+  }, { Others: [] });
 
-    const roleA = roleOrder[pa.role] ?? 99;
-    const roleB = roleOrder[pb.role] ?? 99;
-    if (roleA !== roleB) return roleA - roleB;
+  function normalizeRole(role) {
+    const token = String(role || '').toLowerCase().replace(/[\s-]+/g, '');
+    if (token === 'batsman') return 'Batsman';
+    if (token === 'wicketkeeper') return 'Wicket-keeper';
+    if (token === 'allrounder') return 'All-rounder';
+    if (token === 'fastbowler') return 'Fast Bowler';
+    if (token === 'spinner') return 'Spinner';
+    if (token === 'bowler') return 'Bowler';
+    return 'Others';
+  }
 
-    return String(pa.name || '').localeCompare(String(pb.name || ''));
-  });
+  for (const pid of squadIds) {
+    const p = playerMap[pid];
+    if (!p) continue;
+    const sectionKey = normalizeRole(p.role);
+    grouped[sectionKey] = grouped[sectionKey] || [];
+    grouped[sectionKey].push(pid);
+  }
+
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a, b) => {
+      const pa = playerMap[a];
+      const pb = playerMap[b];
+      return String(pa?.name || '').localeCompare(String(pb?.name || ''));
+    });
+  }
 
   const html = squadIds.length === 0
     ? `<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players bought yet.</p></div>`
-    : sortedSquadIds.map(pid => {
-        const p = playerMap[pid];
-        if (!p) return '';
-        const sold = soldPlayersData[pid];
-        return `
-          <div class="result-player-row">
-            <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${getPlayerInitials(p.name)}</div>
-            <div style="flex:1;">
-              <div class="result-player-name">${p.name}</div>
-              <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}</div>
+    : [...roleSections, { key: 'Others', label: 'Others' }].map(section => {
+        const sectionPlayers = grouped[section.key] || [];
+        if (!sectionPlayers.length) return '';
+
+        const sectionRows = sectionPlayers.map(pid => {
+          const p = playerMap[pid];
+          if (!p) return '';
+          const sold = soldPlayersData[pid];
+          return `
+            <div class="result-player-row">
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${getPlayerInitials(p.name)}</div>
+              <div style="flex:1;">
+                <div class="result-player-name">${p.name}</div>
+                <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}</div>
+              </div>
+              <div class="result-player-price">${formatPrice(sold ? sold.soldPrice : p.base_price_lakh)}</div>
             </div>
-            <div class="result-player-price">${formatPrice(sold ? sold.soldPrice : p.base_price_lakh)}</div>
+          `;
+        }).join('');
+
+        return `
+          <div style="margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0.55rem;border:1px solid rgba(255,255,255,0.08);border-radius:8px;margin-bottom:0.45rem;background:rgba(255,255,255,0.02);">
+              <span style="font-size:0.78rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.03em;">${section.label}</span>
+              <span style="font-size:0.72rem;color:var(--text-dim);">${sectionPlayers.length} players</span>
+            </div>
+            ${sectionRows}
           </div>
         `;
       }).join('');

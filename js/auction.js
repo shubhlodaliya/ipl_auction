@@ -1683,7 +1683,9 @@ function updateVoiceControls() {
 function applyLocalVoiceTrackState() {
   if (!localVoiceStream) return;
   const shouldEnable = voiceJoined && !voiceMutedSelf && !isVoiceHostMuted;
+  console.log(`[Voice] Applying track state - shouldEnable: ${shouldEnable}, voiceJoined: ${voiceJoined}, voiceMutedSelf: ${voiceMutedSelf}, isVoiceHostMuted: ${isVoiceHostMuted}`);
   for (const track of localVoiceStream.getAudioTracks()) {
+    console.log(`[Voice] Setting track enabled from ${track.enabled} to ${shouldEnable}`);
     track.enabled = shouldEnable;
   }
 }
@@ -1710,12 +1712,16 @@ async function joinVoiceChat() {
   if (!voiceSocket) initVoiceSocket();
 
   try {
+    console.log('[Voice] Requesting microphone access...');
     localVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    console.log('[Voice] Microphone access granted, tracks:', localVoiceStream.getAudioTracks().map(t => `id=${t.id}, enabled=${t.enabled}, readyState=${t.readyState}`));
+    
     voiceJoined = true;
     voiceMutedSelf = false;
 
     const myTeam = teamsData[myTeamId] || getRoomTeamMeta(myTeamId) || {};
     if (voiceSocket && voiceSocketConnected) {
+      console.log('[Voice] Emitting voice:join to server');
       voiceSocket.emit('voice:join', {
         roomCode,
         teamId: myTeamId,
@@ -1723,6 +1729,8 @@ async function joinVoiceChat() {
         short: myTeam.short || myTeamId,
         isHost: !!isHost
       });
+    } else {
+      console.warn('[Voice] Voice socket not connected, will join when connected');
     }
 
     applyLocalVoiceTrackState();
@@ -1806,13 +1814,19 @@ function ensureVoicePeer(remoteTeamId) {
     remoteStream: null,
     audioEl: null,
     offerSent: false,
-    pendingCandidates: []
+    pendingCandidates: [],
+    senders: []
   };
   voicePeerState[remoteTeamId] = state;
 
   if (localVoiceStream) {
+    // Ensure tracks are in the correct enabled state before adding
+    const shouldEnable = voiceJoined && !voiceMutedSelf && !isVoiceHostMuted;
     localVoiceStream.getAudioTracks().forEach(track => {
-      pc.addTrack(track, localVoiceStream);
+      console.log(`[Voice] Adding track to peer ${remoteTeamId}, enabled: ${track.enabled}, shouldEnable: ${shouldEnable}`);
+      track.enabled = shouldEnable;
+      const sender = pc.addTrack(track, localVoiceStream);
+      state.senders.push(sender);
     });
   }
 
@@ -1831,6 +1845,7 @@ function ensureVoicePeer(remoteTeamId) {
 
   pc.onconnectionstatechange = () => {
     const s = pc.connectionState;
+    console.log(`[Voice] Peer ${remoteTeamId} connection state: ${s}`);
     if (s === 'failed' || s === 'closed' || s === 'disconnected') {
       detachVoicePeer(remoteTeamId);
     }
@@ -1843,14 +1858,20 @@ async function makeVoiceOffer(remoteTeamId) {
   const state = ensureVoicePeer(remoteTeamId);
   if (!state) return;
 
+  console.log(`[Voice] Creating offer for peer ${remoteTeamId}`);
   const offer = await state.pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
   await state.pc.setLocalDescription(offer);
+  console.log(`[Voice] Sending offer to peer ${remoteTeamId}`);
   await sendVoiceSignal(remoteTeamId, { description: state.pc.localDescription });
 }
 
 async function sendVoiceSignal(targetTeamId, payload) {
   if (!targetTeamId || targetTeamId === myTeamId) return;
-  if (!voiceSocket || !voiceSocketConnected) return;
+  if (!voiceSocket || !voiceSocketConnected) {
+    console.warn('[Voice] Cannot send signal, socket not connected');
+    return;
+  }
+  console.log(`[Voice] Sending signal to ${targetTeamId}:`, payload.description ? payload.description.type : payload.candidate ? 'ICE candidate' : 'unknown');
   voiceSocket.emit('voice:signal', {
     roomCode,
     targetTeamId,
@@ -1863,12 +1884,15 @@ async function handleVoiceSignalPayload(payload) {
   const fromTeamId = payload.fromTeamId;
   if (!fromTeamId || fromTeamId === myTeamId) return;
 
+  console.log(`[Voice] Received signal from ${fromTeamId}:`, payload.description ? payload.description.type : payload.candidate ? 'ICE candidate' : 'unknown');
+
   const state = ensureVoicePeer(fromTeamId);
   if (!state) return;
 
   if (payload.description) {
     const remoteDesc = new RTCSessionDescription(payload.description);
     if (remoteDesc.type === 'offer') {
+      console.log(`[Voice] Processing offer from ${fromTeamId}`);
       await state.pc.setRemoteDescription(remoteDesc);
       while (state.pendingCandidates.length) {
         const cand = state.pendingCandidates.shift();
@@ -1876,11 +1900,13 @@ async function handleVoiceSignalPayload(payload) {
       }
       const answer = await state.pc.createAnswer();
       await state.pc.setLocalDescription(answer);
+      console.log(`[Voice] Sending answer to ${fromTeamId}`);
       await sendVoiceSignal(fromTeamId, { description: state.pc.localDescription });
       return;
     }
 
     if (remoteDesc.type === 'answer') {
+      console.log(`[Voice] Processing answer from ${fromTeamId}`);
       await state.pc.setRemoteDescription(remoteDesc);
       while (state.pendingCandidates.length) {
         const cand = state.pendingCandidates.shift();

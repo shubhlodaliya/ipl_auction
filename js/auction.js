@@ -31,6 +31,8 @@ let chatMessages = {};
 let chatMutedMap = {};
 let isChatMuted = false;
 let lastChatSentAt = 0;
+let seenChatMessageIds = {};
+let chatEffectsReady = false;
 let voiceParticipants = {};
 let voiceHostMutedMap = {};
 let isVoiceHostMuted = false;
@@ -201,7 +203,9 @@ async function initAuction() {
   });
 
   listeners.chatMessages = db.ref(`rooms/${roomCode}/chat/messages`).limitToLast(80).on('value', snap => {
-    chatMessages = snap.val() || {};
+    const nextMessages = snap.val() || {};
+    handleIncomingQuickChatEffects(nextMessages);
+    chatMessages = nextMessages;
     renderChatMessages();
   });
 
@@ -2217,13 +2221,13 @@ function renderChatMessages() {
 }
 
 async function sendQuickChat(message, sourceBtn = null) {
-  const sent = await sendChatMessage(message);
+  const sent = await sendChatMessage(message, { quick: true });
   if (sent) {
-    animateQuickChatPulse(message, sourceBtn);
+    animateQuickChatPulse(message, sourceBtn, { incoming: false });
   }
 }
 
-async function sendChatMessage(presetText = '') {
+async function sendChatMessage(presetText = '', options = {}) {
   if (isChatMuted) {
     showToast('You are muted by host.', 'error');
     return false;
@@ -2248,6 +2252,7 @@ async function sendChatMessage(presetText = '') {
       senderShort: myTeam.short || myTeamId,
       senderName: myTeam.ownerName || playerName,
       text,
+      quick: !!options.quick,
       at: now
     });
     if (input) input.value = '';
@@ -2259,13 +2264,56 @@ async function sendChatMessage(presetText = '') {
   }
 }
 
-function animateQuickChatPulse(message, sourceBtn = null) {
+function handleIncomingQuickChatEffects(messageMap) {
+  const entries = Object.entries(messageMap || {}).sort((a, b) => (a[1]?.at || 0) - (b[1]?.at || 0));
+
+  if (!chatEffectsReady) {
+    seenChatMessageIds = {};
+    entries.forEach(([id]) => {
+      seenChatMessageIds[id] = true;
+    });
+    chatEffectsReady = true;
+    return;
+  }
+
+  const incomingQuick = [];
+  entries.forEach(([id, msg]) => {
+    if (seenChatMessageIds[id]) return;
+    seenChatMessageIds[id] = true;
+    if (msg?.quick && msg.senderTeamId !== myTeamId && msg.text) {
+      incomingQuick.push(msg);
+    }
+  });
+
+  // Prevent unbounded growth when chat rolls forward.
+  const latestIds = new Set(entries.map(([id]) => id));
+  Object.keys(seenChatMessageIds).forEach((id) => {
+    if (!latestIds.has(id)) delete seenChatMessageIds[id];
+  });
+
+  incomingQuick.slice(-4).forEach((msg, idx) => {
+    setTimeout(() => animateQuickChatPulse(msg.text, null, { incoming: true }), idx * 100);
+  });
+}
+
+function animateQuickChatPulse(message, sourceBtn = null, options = {}) {
   const layer = document.getElementById('quickChatFxLayer');
   if (!layer) return;
+  const isIncoming = !!options.incoming;
 
   const pulse = document.createElement('div');
-  pulse.className = 'quick-chat-fx-bubble';
+  pulse.className = `quick-chat-fx-bubble${isIncoming ? ' incoming' : ''}`;
   pulse.textContent = message;
+
+  const burst = document.createElement('div');
+  burst.className = `quick-chat-fx-burst${isIncoming ? ' incoming' : ''}`;
+
+  for (let i = 0; i < 4; i += 1) {
+    const spark = document.createElement('span');
+    spark.className = 'quick-chat-fx-spark';
+    spark.style.setProperty('--spark-angle', `${(360 / 4) * i}deg`);
+    burst.appendChild(spark);
+  }
 
   const rect = sourceBtn?.getBoundingClientRect?.();
   let x = window.innerWidth / 2;
@@ -2274,14 +2322,26 @@ function animateQuickChatPulse(message, sourceBtn = null) {
   if (rect) {
     x = rect.left + rect.width / 2;
     y = rect.top - 8;
+  } else if (isIncoming) {
+    x = (window.innerWidth / 2) + ((Math.random() * 120) - 60);
+    y = 146;
   }
 
-  pulse.style.left = `${Math.max(40, Math.min(window.innerWidth - 40, x))}px`;
+  const clampedX = Math.max(40, Math.min(window.innerWidth - 40, x));
+  const clampedY = Math.max(80, y);
+
+  pulse.style.left = `${clampedX}px`;
   pulse.style.top = `${Math.max(80, y)}px`;
+  burst.style.left = `${clampedX}px`;
+  burst.style.top = `${clampedY}px`;
+
+  layer.appendChild(burst);
   layer.appendChild(pulse);
 
   const cleanup = () => pulse.remove();
+  const cleanupBurst = () => burst.remove();
   pulse.addEventListener('animationend', cleanup, { once: true });
+  burst.addEventListener('animationend', cleanupBurst, { once: true });
 }
 
 async function toggleMuteTeam(teamId) {

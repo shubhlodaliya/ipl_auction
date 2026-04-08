@@ -60,6 +60,14 @@ function getPlayerInitials(name) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
+function handlePlayerImageError(imgEl, fallbackText = 'NA') {
+  if (!imgEl) return;
+  const parent = imgEl.parentElement;
+  if (!parent) return;
+  try { imgEl.remove(); } catch (_) {}
+  parent.textContent = String(fallbackText || 'NA').slice(0, 2).toUpperCase();
+}
+
 function getRoleColor(role) {
   const map = {
     'Batsman': '#3B82F6',

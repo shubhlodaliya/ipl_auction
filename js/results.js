@@ -22,6 +22,7 @@ const playing11State = {
   captain: null,
   vice_captain: null,
   wicket_keeper: null,
+  stage: 'selection',
   selectionScrollTop: 0,
   designationScrollTop: 0
 };
@@ -391,9 +392,12 @@ async function loadResults() {
                 const color = getRoleColor(player.role);
                 const initials = getPlayerInitials(player.name);
                 const icon = getRoleIcon(player.role);
+                const avatarHtml = player.photo_url
+                  ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
+                  : initials;
                 return `
                   <div class="result-player-row">
-                    <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${initials}</div>
+                    <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
                     <div style="flex:1;">
                       <div class="result-player-name">${player.name}</div>
                       <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}</div>
@@ -465,6 +469,7 @@ function openPlaying11Modal() {
   const overlay = document.getElementById('playing11ModalOverlay');
   if (!overlay) return;
   overlay.classList.add('visible');
+  playing11State.stage = (playing11State.playing11.length === 11) ? 'designation' : 'selection';
   playing11State.selectionScrollTop = 0;
   playing11State.designationScrollTop = 0;
   renderPlaying11Modal();
@@ -490,8 +495,9 @@ function renderPlaying11Modal() {
     return;
   }
 
-  // Check if 11 players are selected
-  if (playing11.length < 11) {
+  const isSelectionStage = playing11State.stage === 'selection' || playing11.length < 11;
+
+  if (isSelectionStage) {
     // PLAYER SELECTION STAGE - Show all squad members to select
     const getTick = (selected) => selected
       ? '<span class="playing11-select-tick selected" aria-hidden="true">✓</span>'
@@ -589,9 +595,12 @@ function renderPlaying11Modal() {
   // Add action buttons at the bottom
   const allActionsHTML = `
     <div class="playing11-actions">
-      ${playing11.length < 11 ? `
+      ${isSelectionStage ? `
         <button class="btn btn-secondary" onclick="closePlaying11Modal()">Cancel</button>
-        <button class="btn btn-primary" onclick="clearPlaying11Selection()">Clear All</button>
+        ${playing11.length === 11
+          ? `<button class="btn btn-primary" onclick="goToDesignationStage()">Continue</button>`
+          : `<button class="btn btn-primary" onclick="clearPlaying11Selection()">Clear All</button>`
+        }
       ` : `
         <button class="btn btn-secondary" onclick="resetPlaying11ToSelection()">Back to Selection</button>
         <button class="btn btn-primary" onclick="savePlaying11()" ${(!captain || !vice_captain || !wicket_keeper) ? 'disabled' : ''}>
@@ -621,6 +630,16 @@ function togglePlaying11Player(playerId) {
     if (playing11State.vice_captain === normalizedId) playing11State.vice_captain = null;
     if (playing11State.wicket_keeper === normalizedId) playing11State.wicket_keeper = null;
   }
+  playing11State.stage = 'selection';
+  renderPlaying11Modal();
+}
+
+function goToDesignationStage() {
+  if (playing11State.playing11.length !== 11) {
+    showToast('Please select exactly 11 players first.', 'error');
+    return;
+  }
+  playing11State.stage = 'designation';
   renderPlaying11Modal();
 }
 
@@ -630,6 +649,7 @@ function setPlayerDesignation(playerId, role) {
   const designationList = document.querySelector('#playing11ModalContent .playing11-designation-list');
   if (designationList) playing11State.designationScrollTop = designationList.scrollTop;
 
+  playing11State.stage = 'designation';
   // Toggle the designation on/off
   if (role === 'captain') {
     playing11State.captain = playing11State.captain === normalizedId ? null : normalizedId;
@@ -646,15 +666,14 @@ function clearPlaying11Selection() {
   playing11State.captain = null;
   playing11State.vice_captain = null;
   playing11State.wicket_keeper = null;
+  playing11State.stage = 'selection';
   playing11State.selectionScrollTop = 0;
   playing11State.designationScrollTop = 0;
   renderPlaying11Modal();
 }
 
 function resetPlaying11ToSelection() {
-  playing11State.captain = null;
-  playing11State.vice_captain = null;
-  playing11State.wicket_keeper = null;
+  playing11State.stage = 'selection';
   renderPlaying11Modal();
 }
 async function savePlaying11() {

@@ -31,6 +31,8 @@ let chatMessages = {};
 let chatMutedMap = {};
 let isChatMuted = false;
 let lastChatSentAt = 0;
+let seenChatMessageIds = {};
+let chatEffectsReady = false;
 let voiceParticipants = {};
 let voiceHostMutedMap = {};
 let isVoiceHostMuted = false;
@@ -201,7 +203,9 @@ async function initAuction() {
   });
 
   listeners.chatMessages = db.ref(`rooms/${roomCode}/chat/messages`).limitToLast(80).on('value', snap => {
-    chatMessages = snap.val() || {};
+    const nextMessages = snap.val() || {};
+    handleIncomingQuickChatEffects(nextMessages);
+    chatMessages = nextMessages;
     renderChatMessages();
   });
 
@@ -293,7 +297,7 @@ function renderPlayerSpotlight(player) {
       return `<span class="badge badge-extra-field">${label}: ${safeVal}</span>`;
     }).join('');
   const avatarInner = player.photo_url
-    ? `<img src="${player.photo_url}" alt="${player.name}" />`
+    ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
     : initials;
 
   document.getElementById('playerSpotlight').innerHTML = `
@@ -1187,7 +1191,13 @@ function showCurrentPoolDetails() {
     <span class="pool-summary-total">Total: ${stats.total}</span>
   `;
 
-  const rows = pool.players.map(({ playerId, index }) => {
+  const displayPlayers = [...pool.players].sort((a, b) => {
+    const pa = playerMap[a.playerId];
+    const pb = playerMap[b.playerId];
+    return String(pa?.name || '').localeCompare(String(pb?.name || ''));
+  });
+
+  const rows = displayPlayers.map(({ playerId, index }) => {
     const player = playerMap[playerId];
     if (!player) return '';
     const status = getPoolPlayerStatus(playerId, index);
@@ -1201,9 +1211,12 @@ function showCurrentPoolDetails() {
     const soldPriceText = status === 'sold' && soldInfo?.soldPrice
       ? formatPrice(soldInfo.soldPrice)
       : '';
+    const avatarHtml = player.photo_url
+      ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
+      : getPlayerInitials(player.name);
     return `
       <div class="pool-player-row">
-        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${getPlayerInitials(player.name)}</div>
+        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${avatarHtml}</div>
         <div style="flex:1;min-width:0;">
           <div class="result-player-name">${player.name}</div>
           <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>
@@ -1390,9 +1403,12 @@ function showTeamSquad(teamId) {
           const p = playerMap[pid];
           if (!p) return '';
           const sold = soldPlayersData[pid];
+          const avatarHtml = p.photo_url
+            ? `<img src="${p.photo_url}" alt="${p.name}" onerror="handlePlayerImageError(this, '${getPlayerInitials(p.name)}')" />`
+            : getPlayerInitials(p.name);
           return `
             <div class="result-player-row">
-              <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${getPlayerInitials(p.name)}</div>
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${avatarHtml}</div>
               <div style="flex:1;">
                 <div class="result-player-name">${p.name}</div>
                 <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}</div>
@@ -2145,9 +2161,11 @@ function updateChatMuteState() {
   const input = document.getElementById('chatInput');
   const sendBtn = document.getElementById('chatSendBtn');
   const badge = document.getElementById('chatMuteBadge');
+  const quickButtons = document.querySelectorAll('.chat-quick-btn');
 
   if (input) input.disabled = isChatMuted;
   if (sendBtn) sendBtn.disabled = isChatMuted;
+  quickButtons.forEach(btn => { btn.disabled = isChatMuted; });
   if (badge) badge.style.display = isChatMuted ? 'inline-flex' : 'none';
 }
 
@@ -2208,21 +2226,27 @@ function renderChatMessages() {
   el.scrollTop = el.scrollHeight;
 }
 
-async function sendChatMessage() {
+async function sendQuickChat(message, sourceBtn = null) {
+  const sent = await sendChatMessage(message, { quick: true });
+  if (sent) {
+    animateQuickChatPulse(message, sourceBtn, { incoming: false });
+  }
+}
+
+async function sendChatMessage(presetText = '', options = {}) {
   if (isChatMuted) {
     showToast('You are muted by host.', 'error');
-    return;
+    return false;
   }
 
   const input = document.getElementById('chatInput');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
+  const text = String(presetText || '').trim() || (input ? input.value.trim() : '');
+  if (!text) return false;
 
   const now = Date.now();
   if (now - lastChatSentAt < 700) {
     showToast('Please slow down.', 'error');
-    return;
+    return false;
   }
   lastChatSentAt = now;
 
@@ -2234,13 +2258,96 @@ async function sendChatMessage() {
       senderShort: myTeam.short || myTeamId,
       senderName: myTeam.ownerName || playerName,
       text,
+      quick: !!options.quick,
       at: now
     });
-    input.value = '';
+    if (input) input.value = '';
+    return true;
   } catch (err) {
     console.error('Send chat failed:', err);
     showToast('Failed to send message.', 'error');
+    return false;
   }
+}
+
+function handleIncomingQuickChatEffects(messageMap) {
+  const entries = Object.entries(messageMap || {}).sort((a, b) => (a[1]?.at || 0) - (b[1]?.at || 0));
+
+  if (!chatEffectsReady) {
+    seenChatMessageIds = {};
+    entries.forEach(([id]) => {
+      seenChatMessageIds[id] = true;
+    });
+    chatEffectsReady = true;
+    return;
+  }
+
+  const incomingQuick = [];
+  entries.forEach(([id, msg]) => {
+    if (seenChatMessageIds[id]) return;
+    seenChatMessageIds[id] = true;
+    if (msg?.quick && msg.senderTeamId !== myTeamId && msg.text) {
+      incomingQuick.push(msg);
+    }
+  });
+
+  // Prevent unbounded growth when chat rolls forward.
+  const latestIds = new Set(entries.map(([id]) => id));
+  Object.keys(seenChatMessageIds).forEach((id) => {
+    if (!latestIds.has(id)) delete seenChatMessageIds[id];
+  });
+
+  incomingQuick.slice(-4).forEach((msg, idx) => {
+    setTimeout(() => animateQuickChatPulse(msg.text, null, { incoming: true }), idx * 220);
+  });
+}
+
+function animateQuickChatPulse(message, sourceBtn = null, options = {}) {
+  const layer = document.getElementById('quickChatFxLayer');
+  if (!layer) return;
+  const isIncoming = !!options.incoming;
+
+  const pulse = document.createElement('div');
+  pulse.className = `quick-chat-fx-bubble${isIncoming ? ' incoming' : ''}`;
+  pulse.textContent = message;
+
+  const burst = document.createElement('div');
+  burst.className = `quick-chat-fx-burst${isIncoming ? ' incoming' : ''}`;
+
+  for (let i = 0; i < 4; i += 1) {
+    const spark = document.createElement('span');
+    spark.className = 'quick-chat-fx-spark';
+    spark.style.setProperty('--spark-angle', `${(360 / 4) * i}deg`);
+    burst.appendChild(spark);
+  }
+
+  const rect = sourceBtn?.getBoundingClientRect?.();
+  let x = window.innerWidth / 2;
+  let y = 116;
+
+  if (rect) {
+    x = rect.left + rect.width / 2;
+    y = rect.top - 8;
+  } else if (isIncoming) {
+    x = (window.innerWidth / 2) + ((Math.random() * 44) - 22);
+    y = 132;
+  }
+
+  const clampedX = Math.max(40, Math.min(window.innerWidth - 40, x));
+  const clampedY = Math.max(80, y);
+
+  pulse.style.left = `${clampedX}px`;
+  pulse.style.top = `${Math.max(80, y)}px`;
+  burst.style.left = `${clampedX}px`;
+  burst.style.top = `${clampedY}px`;
+
+  layer.appendChild(burst);
+  layer.appendChild(pulse);
+
+  const cleanup = () => pulse.remove();
+  const cleanupBurst = () => burst.remove();
+  pulse.addEventListener('animationend', cleanup, { once: true });
+  burst.addEventListener('animationend', cleanupBurst, { once: true });
 }
 
 async function toggleMuteTeam(teamId) {

@@ -42,6 +42,18 @@ function hasFlag(flag) {
   return process.argv.includes(flag);
 }
 
+function parseOnlyPlayersArg(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const tokens = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => normalizeName(s));
+  if (!tokens.length) return null;
+  return new Set(tokens);
+}
+
 function slugifyName(name) {
   return String(name || '')
     .normalize('NFKD')
@@ -352,11 +364,34 @@ async function uploadPlayerImage(localFilePath, folder, slug) {
 
 async function uploadRemotePlayerImage(remoteUrl, folder, slug) {
   const publicId = folder + '/' + slug;
-  await cloudinary.uploader.upload(remoteUrl, {
-    public_id: publicId,
-    overwrite: true,
-    resource_type: 'image'
-  });
+  try {
+    await cloudinary.uploader.upload(remoteUrl, {
+      public_id: publicId,
+      overwrite: true,
+      resource_type: 'image'
+    });
+  } catch (err) {
+    // Some providers block Cloudinary remote-fetch; fallback to client-side fetch + base64 upload.
+    const response = await fetch(remoteUrl, {
+      headers: {
+        'User-Agent': 'ipl-auction-cloudinary-sync/1.0',
+        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'
+      }
+    });
+    if (!response.ok) {
+      throw err;
+    }
+
+    const contentType = String(response.headers.get('content-type') || 'image/jpeg');
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
+
+    await cloudinary.uploader.upload(dataUri, {
+      public_id: publicId,
+      overwrite: true,
+      resource_type: 'image'
+    });
+  }
   return makeTransformedUrl(publicId);
 }
 
@@ -367,8 +402,8 @@ async function main() {
   const cloudName = ensureEnv('CLOUDINARY_CLOUD_NAME');
   const mapOnly = hasFlag('--map-only');
   const sourceMode = String(getArgValue('--source', 'local')).trim().toLowerCase();
-  if (!['local', 'web'].includes(sourceMode)) {
-    throw new Error('Invalid --source value. Use local or web.');
+  if (!['local', 'web', 'current'].includes(sourceMode)) {
+    throw new Error('Invalid --source value. Use local, web, or current.');
   }
   const apiKey = mapOnly ? String(process.env.CLOUDINARY_API_KEY || '').trim() : ensureEnv('CLOUDINARY_API_KEY');
   const apiSecret = mapOnly ? String(process.env.CLOUDINARY_API_SECRET || '').trim() : ensureEnv('CLOUDINARY_API_SECRET');
@@ -377,6 +412,7 @@ async function main() {
   const imagesDirArg = getArgValue('--imagesDir', process.env.PLAYER_IMAGES_DIR || DEFAULT_IMAGES_DIR);
   const preserveExisting = !hasFlag('--refresh-existing');
   const delayMs = Number(getArgValue('--delayMs', '180'));
+  const onlyPlayers = parseOnlyPlayersArg(getArgValue('--only', ''));
 
   const imagesDir = path.isAbsolute(imagesDirArg) ? imagesDirArg : path.join(ROOT, imagesDirArg);
   if (!mapOnly && sourceMode === 'local' && !fs.existsSync(imagesDir)) {
@@ -400,6 +436,10 @@ async function main() {
   const failedUploads = [];
 
   for (const player of players) {
+    if (onlyPlayers && !onlyPlayers.has(normalizeName(player.name))) {
+      continue;
+    }
+
     const slug = slugifyName(player.name);
     const existing = String(player.photo_url || '').trim();
 
@@ -433,6 +473,13 @@ async function main() {
             defaultFallbackCount += 1;
           }
         }
+      } else if (sourceMode === 'current') {
+        const remoteUrl = String(player.photo_url || '').trim();
+        if (!remoteUrl) {
+          missingWeb.push(player.name + ' => empty current photo_url');
+          continue;
+        }
+        photoUrl = await uploadRemotePlayerImage(remoteUrl, folderArg, slug);
       } else {
         const localFilePath = findLocalImage(imagesDir, slug);
         if (!localFilePath) {
@@ -471,6 +518,9 @@ async function main() {
   console.log('Missing local    :', missingLocal.length);
   console.log('Missing web      :', missingWeb.length);
   console.log('Failed uploads   :', failedUploads.length);
+  if (onlyPlayers) {
+    console.log('Only filter size :', onlyPlayers.size);
+  }
 
   if (missingLocal.length > 0) {
     console.log('\nMissing files list:');

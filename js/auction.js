@@ -2151,9 +2151,11 @@ function updateChatMuteState() {
   const input = document.getElementById('chatInput');
   const sendBtn = document.getElementById('chatSendBtn');
   const badge = document.getElementById('chatMuteBadge');
+  const quickButtons = document.querySelectorAll('.chat-quick-btn');
 
   if (input) input.disabled = isChatMuted;
   if (sendBtn) sendBtn.disabled = isChatMuted;
+  quickButtons.forEach(btn => { btn.disabled = isChatMuted; });
   if (badge) badge.style.display = isChatMuted ? 'inline-flex' : 'none';
 }
 
@@ -2214,15 +2216,18 @@ function renderChatMessages() {
   el.scrollTop = el.scrollHeight;
 }
 
-async function sendChatMessage() {
+function sendQuickChat(message) {
+  sendChatMessage(message);
+}
+
+async function sendChatMessage(presetText = '') {
   if (isChatMuted) {
     showToast('You are muted by host.', 'error');
     return;
   }
 
   const input = document.getElementById('chatInput');
-  if (!input) return;
-  const text = input.value.trim();
+  const text = String(presetText || '').trim() || (input ? input.value.trim() : '');
   if (!text) return;
 
   const now = Date.now();
@@ -2242,7 +2247,7 @@ async function sendChatMessage() {
       text,
       at: now
     });
-    input.value = '';
+    if (input) input.value = '';
   } catch (err) {
     console.error('Send chat failed:', err);
     showToast('Failed to send message.', 'error');

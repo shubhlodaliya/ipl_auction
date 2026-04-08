@@ -1865,6 +1865,37 @@ input[type=range]::-webkit-slider-thumb {
   gap: 0.42rem;
 }
 
+.chat-quick-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.chat-quick-btn {
+  border: 1px solid rgba(255,255,255,0.13);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-sec);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.chat-quick-btn:hover:not(:disabled) {
+  border-color: rgba(255,203,48,0.45);
+  background: rgba(255,203,48,0.12);
+  color: #ffe7a2;
+  transform: translateY(-1px);
+}
+
+.chat-quick-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .chat-voice-box {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

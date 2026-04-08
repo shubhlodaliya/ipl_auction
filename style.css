@@ -886,6 +886,32 @@ input[type=range]::-webkit-slider-thumb {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+.auction-controls-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.46rem;
+  min-width: min(760px, 100%);
+}
+
+.auction-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.66rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.quick-chat-toolbar {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 0.32rem 0.42rem;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+}
 .auction-progress { display: flex; align-items: center; gap: 1rem; }
 .pool-banner-btn {
   border: 1px solid rgba(255, 203, 48, 0.35);
@@ -1865,12 +1891,6 @@ input[type=range]::-webkit-slider-thumb {
   gap: 0.42rem;
 }
 
-.chat-quick-row {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
 .chat-quick-btn {
   border: 1px solid rgba(255,255,255,0.13);
   background: rgba(255,255,255,0.05);
@@ -1894,6 +1914,45 @@ input[type=range]::-webkit-slider-thumb {
   opacity: 0.45;
   cursor: not-allowed;
   transform: none;
+}
+
+.quick-chat-fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 170;
+}
+
+.quick-chat-fx-bubble {
+  position: fixed;
+  transform: translate(-50%, 0);
+  border: 1px solid rgba(255,203,48,0.42);
+  background: linear-gradient(135deg, rgba(255,203,48,0.22), rgba(10,20,36,0.9));
+  color: #fff1bc;
+  border-radius: 999px;
+  padding: 0.32rem 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.33), 0 0 0 1px rgba(255,203,48,0.06) inset;
+  animation: quickChatPopFloat 760ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+@keyframes quickChatPopFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.86);
+    filter: blur(1px);
+  }
+  16% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.04);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -32px) scale(0.95);
+  }
 }
 
 .chat-voice-box {
@@ -3119,6 +3178,17 @@ input[type=range]::-webkit-slider-thumb {
     flex: 1;
   }
   .chat-popup .chat-messages { max-height: 190px; }
+  .auction-controls-stack {
+    min-width: 0;
+    width: 100%;
+    align-items: stretch;
+  }
+  .auction-topbar-actions {
+    justify-content: flex-start;
+  }
+  .quick-chat-toolbar {
+    justify-content: flex-start;
+  }
   .player-spotlight {
     grid-template-columns: 220px minmax(0, 1fr);
     gap: 1rem;
@@ -3166,6 +3236,15 @@ input[type=range]::-webkit-slider-thumb {
   .auction-body { grid-template-columns: 1fr; grid-template-rows: auto auto; }
   .teams-sidebar {
     padding: 0.5rem 0.45rem 0.55rem;
+  }
+  .quick-chat-toolbar {
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    scrollbar-width: thin;
+  }
+  .quick-chat-toolbar .chat-quick-btn {
+    flex: 0 0 auto;
   }
   .teams-sidebar .sidebar-title {
     font-size: 0.6rem;

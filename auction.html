@@ -50,20 +50,30 @@
             <span class="pool-banner-meta" id="currentPoolBannerMeta">0 players</span>
           </button>
         </div>
-        <div style="display:flex;align-items:center;gap:1rem;">
-          <span id="auctionStatus"
-            style="font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:100px;background:var(--gold-dim);color:var(--gold);font-weight:600;">
-            LIVE
-          </span>
-          <span id="voiceStatusBadge" class="chat-mute-badge" style="display:none;">Voice muted by host</span>
-          <button class="btn btn-ghost" onclick="leaveAuction()">Leave</button>
-          <button class="btn btn-ghost" id="soundToggleBtn" onclick="toggleSoundPack()">🔊 Sound On</button>
-          <button class="btn btn-ghost" id="voiceJoinBtn" onclick="toggleVoiceJoin()">Join Voice</button>
-          <button class="btn btn-ghost" id="voiceMuteBtn" onclick="toggleVoiceMute()" disabled>Mute</button>
-          <button class="btn btn-secondary" id="chatToggleBtn" onclick="toggleChatPopup()">Chat</button>
-          <div id="hostAuctionControls" style="display:none;align-items:center;gap:0.6rem;">
-            <button class="btn btn-secondary" id="pauseBtn" onclick="togglePauseAuction()">Pause</button>
-            <button class="btn btn-danger" id="terminateBtn" onclick="terminateAuction()">Terminate</button>
+        <div class="auction-controls-stack">
+          <div class="auction-topbar-actions">
+            <span id="auctionStatus"
+              style="font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:100px;background:var(--gold-dim);color:var(--gold);font-weight:600;">
+              LIVE
+            </span>
+            <span id="voiceStatusBadge" class="chat-mute-badge" style="display:none;">Voice muted by host</span>
+            <button class="btn btn-ghost" onclick="leaveAuction()">Leave</button>
+            <button class="btn btn-ghost" id="soundToggleBtn" onclick="toggleSoundPack()">🔊 Sound On</button>
+            <button class="btn btn-ghost" id="voiceJoinBtn" onclick="toggleVoiceJoin()">Join Voice</button>
+            <button class="btn btn-ghost" id="voiceMuteBtn" onclick="toggleVoiceMute()" disabled>Mute</button>
+            <button class="btn btn-secondary" id="chatToggleBtn" onclick="toggleChatPopup()">Chat</button>
+            <div id="hostAuctionControls" style="display:none;align-items:center;gap:0.6rem;">
+              <button class="btn btn-secondary" id="pauseBtn" onclick="togglePauseAuction()">Pause</button>
+              <button class="btn btn-danger" id="terminateBtn" onclick="terminateAuction()">Terminate</button>
+            </div>
+          </div>
+          <div class="quick-chat-toolbar" id="quickChatToolbar">
+            <button type="button" class="chat-quick-btn" data-msg="🔥 Big move!" onclick="sendQuickChat(this.dataset.msg, this)">🔥 Big move!</button>
+            <button type="button" class="chat-quick-btn" data-msg="😂 LOL" onclick="sendQuickChat(this.dataset.msg, this)">😂 LOL</button>
+            <button type="button" class="chat-quick-btn" data-msg="👏 Well played" onclick="sendQuickChat(this.dataset.msg, this)">👏 Well played</button>
+            <button type="button" class="chat-quick-btn" data-msg="💸 Going all in" onclick="sendQuickChat(this.dataset.msg, this)">💸 Going all in</button>
+            <button type="button" class="chat-quick-btn" data-msg="😎 Nice steal" onclick="sendQuickChat(this.dataset.msg, this)">😎 Nice steal</button>
+            <button type="button" class="chat-quick-btn" data-msg="⏱️ Hurry up" onclick="sendQuickChat(this.dataset.msg, this)">⏱️ Hurry up</button>
           </div>
         </div>
       </div>
@@ -162,14 +172,6 @@
           <div class="chat-voice-list" id="voiceParticipantList"></div>
         </div>
         <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-quick-row" id="chatQuickRow">
-          <button type="button" class="chat-quick-btn" data-msg="🔥 Big move!" onclick="sendQuickChat(this.dataset.msg)">🔥 Big move!</button>
-          <button type="button" class="chat-quick-btn" data-msg="😂 LOL" onclick="sendQuickChat(this.dataset.msg)">😂 LOL</button>
-          <button type="button" class="chat-quick-btn" data-msg="👏 Well played" onclick="sendQuickChat(this.dataset.msg)">👏 Well played</button>
-          <button type="button" class="chat-quick-btn" data-msg="💸 Going all in" onclick="sendQuickChat(this.dataset.msg)">💸 Going all in</button>
-          <button type="button" class="chat-quick-btn" data-msg="😎 Nice steal" onclick="sendQuickChat(this.dataset.msg)">😎 Nice steal</button>
-          <button type="button" class="chat-quick-btn" data-msg="⏱️ Hurry up" onclick="sendQuickChat(this.dataset.msg)">⏱️ Hurry up</button>
-        </div>
         <div class="chat-input-row">
           <input id="chatInput" class="chat-input" type="text" placeholder="Type message..." maxlength="140" onkeydown="if(event.key==='Enter'){sendChatMessage();}" />
           <button class="btn btn-secondary" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
@@ -216,6 +218,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="quick-chat-fx-layer" id="quickChatFxLayer" aria-hidden="true"></div>
 
   <footer class="site-footer">
     <div class="site-footer-inner">

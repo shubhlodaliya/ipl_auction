@@ -2216,24 +2216,27 @@ function renderChatMessages() {
   el.scrollTop = el.scrollHeight;
 }
 
-function sendQuickChat(message) {
-  sendChatMessage(message);
+async function sendQuickChat(message, sourceBtn = null) {
+  const sent = await sendChatMessage(message);
+  if (sent) {
+    animateQuickChatPulse(message, sourceBtn);
+  }
 }
 
 async function sendChatMessage(presetText = '') {
   if (isChatMuted) {
     showToast('You are muted by host.', 'error');
-    return;
+    return false;
   }
 
   const input = document.getElementById('chatInput');
   const text = String(presetText || '').trim() || (input ? input.value.trim() : '');
-  if (!text) return;
+  if (!text) return false;
 
   const now = Date.now();
   if (now - lastChatSentAt < 700) {
     showToast('Please slow down.', 'error');
-    return;
+    return false;
   }
   lastChatSentAt = now;
 
@@ -2248,10 +2251,37 @@ async function sendChatMessage(presetText = '') {
       at: now
     });
     if (input) input.value = '';
+    return true;
   } catch (err) {
     console.error('Send chat failed:', err);
     showToast('Failed to send message.', 'error');
+    return false;
   }
+}
+
+function animateQuickChatPulse(message, sourceBtn = null) {
+  const layer = document.getElementById('quickChatFxLayer');
+  if (!layer) return;
+
+  const pulse = document.createElement('div');
+  pulse.className = 'quick-chat-fx-bubble';
+  pulse.textContent = message;
+
+  const rect = sourceBtn?.getBoundingClientRect?.();
+  let x = window.innerWidth / 2;
+  let y = 116;
+
+  if (rect) {
+    x = rect.left + rect.width / 2;
+    y = rect.top - 8;
+  }
+
+  pulse.style.left = `${Math.max(40, Math.min(window.innerWidth - 40, x))}px`;
+  pulse.style.top = `${Math.max(80, y)}px`;
+  layer.appendChild(pulse);
+
+  const cleanup = () => pulse.remove();
+  pulse.addEventListener('animationend', cleanup, { once: true });
 }
 
 async function toggleMuteTeam(teamId) {

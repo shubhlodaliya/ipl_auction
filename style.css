@@ -1942,7 +1942,13 @@ input[type=range]::-webkit-slider-thumb {
   border-color: rgba(86, 205, 255, 0.5);
   background: linear-gradient(135deg, rgba(86,205,255,0.24), rgba(8,24,44,0.9));
   color: #d8f4ff;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.36), 0 0 0 1px rgba(86,205,255,0.11) inset;
+  box-shadow: 0 16px 38px rgba(0,0,0,0.42), 0 0 0 1px rgba(86,205,255,0.18) inset;
+  padding: 0.62rem 1.25rem;
+  font-size: 1.12rem;
+  letter-spacing: 0.25px;
+  max-width: min(78vw, 560px);
+  text-align: center;
+  animation: quickChatPopFloatIncoming 2400ms cubic-bezier(0.17, 0.8, 0.2, 1) forwards;
 }
 
 .quick-chat-fx-burst {
@@ -1968,6 +1974,16 @@ input[type=range]::-webkit-slider-thumb {
 
 .quick-chat-fx-burst.incoming .quick-chat-fx-spark {
   background: rgba(86,205,255,0.95);
+}
+
+.quick-chat-fx-burst.incoming {
+  animation: quickChatBurstIncoming 1120ms ease-out forwards;
+}
+
+.quick-chat-fx-burst.incoming .quick-chat-fx-spark {
+  width: 6px;
+  height: 6px;
+  animation: quickChatSparkIncoming 1120ms ease-out forwards;
 }
 
 @keyframes quickChatPopFloat {
@@ -1998,6 +2014,38 @@ input[type=range]::-webkit-slider-thumb {
   }
 }
 
+@keyframes quickChatPopFloatIncoming {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 14px) scale(0.86);
+    filter: blur(2px);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.04);
+    filter: blur(0);
+  }
+  68% {
+    opacity: 1;
+    transform: translate(-50%, -22px) scale(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -56px) scale(0.96);
+  }
+}
+
+@keyframes quickChatBurstIncoming {
+  0% {
+    opacity: 0.86;
+    transform: translate(-50%, -50%) scale(0.78);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.35);
+  }
+}
+
 @keyframes quickChatSpark {
   0% {
     opacity: 1;
@@ -2006,6 +2054,17 @@ input[type=range]::-webkit-slider-thumb {
   100% {
     opacity: 0;
     transform: rotate(var(--spark-angle)) translateX(28px) scale(0.55);
+  }
+}
+
+@keyframes quickChatSparkIncoming {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--spark-angle)) translateX(1px) scale(1.12);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--spark-angle)) translateX(42px) scale(0.5);
   }
 }
 

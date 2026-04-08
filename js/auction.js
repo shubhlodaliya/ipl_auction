@@ -2292,7 +2292,7 @@ function handleIncomingQuickChatEffects(messageMap) {
   });
 
   incomingQuick.slice(-4).forEach((msg, idx) => {
-    setTimeout(() => animateQuickChatPulse(msg.text, null, { incoming: true }), idx * 100);
+    setTimeout(() => animateQuickChatPulse(msg.text, null, { incoming: true }), idx * 220);
   });
 }
 
@@ -2323,8 +2323,8 @@ function animateQuickChatPulse(message, sourceBtn = null, options = {}) {
     x = rect.left + rect.width / 2;
     y = rect.top - 8;
   } else if (isIncoming) {
-    x = (window.innerWidth / 2) + ((Math.random() * 120) - 60);
-    y = 146;
+    x = (window.innerWidth / 2) + ((Math.random() * 44) - 22);
+    y = 132;
   }
 
   const clampedX = Math.max(40, Math.min(window.innerWidth - 40, x));

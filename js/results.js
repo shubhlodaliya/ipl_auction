@@ -315,9 +315,12 @@ async function loadResults() {
                 const color = getRoleColor(player.role);
                 const initials = getPlayerInitials(player.name);
                 const icon = getRoleIcon(player.role);
+                const avatarHtml = player.photo_url
+                  ? `<img src="${player.photo_url}" alt="${player.name}" />`
+                  : initials;
                 return `
                   <div class="result-player-row">
-                    <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${initials}</div>
+                    <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
                     <div style="flex:1;">
                       <div class="result-player-name">${player.name}</div>
                       <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}</div>

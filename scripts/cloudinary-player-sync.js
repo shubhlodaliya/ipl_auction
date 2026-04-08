@@ -75,7 +75,8 @@ function sleep(ms) {
 async function fetchJson(url) {
   const response = await fetch(url, {
     headers: {
-      'User-Agent': 'ipl-auction-player-image-sync/1.0'
+      'User-Agent': 'ipl-auction-player-image-sync/1.0',
+      'Accept': 'application/json'
     }
   });
   if (!response.ok) {
@@ -84,21 +85,63 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function resolveWikipediaImage(playerName) {
-  const searchQuery = encodeURIComponent(playerName + ' cricketer');
-  const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${searchQuery}&format=json&srlimit=6&origin=*`;
-  const searchJson = await fetchJson(searchUrl);
-  const hits = (searchJson?.query?.search || []).map((item) => item.title).filter(Boolean);
+async function isUrlReachable(url) {
+  if (!url) return false;
+  try {
+    const head = await fetch(url, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'ipl-auction-player-image-sync/1.0' }
+    });
+    if (head.ok) return true;
+  } catch (_) {
+    // Ignore and try GET fallback.
+  }
 
-  for (const title of hits) {
-    try {
-      const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-      const summary = await fetchJson(summaryUrl);
-      const thumb = summary?.thumbnail?.source;
-      if (thumb) return thumb;
-    } catch (_) {
-      // Continue to next title when one page misses summary data.
-    }
+  try {
+    const getResp = await fetch(url, {
+      method: 'GET',
+      headers: { 'User-Agent': 'ipl-auction-player-image-sync/1.0' }
+    });
+    return getResp.ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+function normalizeName(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+async function resolveEspnImage(playerName) {
+  const query = encodeURIComponent(playerName);
+  const searchUrl = `https://site.api.espn.com/apis/search/v2?query=${query}`;
+  const payload = await fetchJson(searchUrl);
+  const playerBlock = (payload?.results || []).find((r) => r?.type === 'player');
+  const candidates = playerBlock?.contents || [];
+  if (!candidates.length) return null;
+
+  const target = normalizeName(playerName);
+  const exact = candidates.find((item) => {
+    const n = normalizeName(item?.displayName || '');
+    return n === target;
+  });
+
+  const ranked = [
+    ...(exact ? [exact] : []),
+    ...candidates.filter((item) => item !== exact && String(item?.description || '').toLowerCase().includes('cricket')),
+    ...candidates.filter((item) => item !== exact && !String(item?.description || '').toLowerCase().includes('cricket'))
+  ];
+
+  for (const candidate of ranked) {
+    const image = candidate?.image?.default || candidate?.image?.defaultDark || '';
+    if (!image) continue;
+    const ok = await isUrlReachable(image);
+    if (ok) return image;
   }
 
   return null;
@@ -197,9 +240,9 @@ async function main() {
       let photoUrl = '';
 
       if (sourceMode === 'web') {
-        const remoteUrl = await resolveWikipediaImage(player.name);
+        const remoteUrl = await resolveEspnImage(player.name);
         if (!remoteUrl) {
-          missingWeb.push(player.name + ' => no image found on Wikipedia search');
+          missingWeb.push(player.name + ' => no ESPN Cricinfo image match');
           continue;
         }
         photoUrl = await uploadRemotePlayerImage(remoteUrl, folderArg, slug);

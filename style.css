@@ -2946,6 +2946,14 @@ input[type=range]::-webkit-slider-thumb {
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.result-player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .result-player-name { flex: 1; font-weight: 500; }
 .result-player-price {

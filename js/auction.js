@@ -1211,9 +1211,12 @@ function showCurrentPoolDetails() {
     const soldPriceText = status === 'sold' && soldInfo?.soldPrice
       ? formatPrice(soldInfo.soldPrice)
       : '';
+    const avatarHtml = player.photo_url
+      ? `<img src="${player.photo_url}" alt="${player.name}" />`
+      : getPlayerInitials(player.name);
     return `
       <div class="pool-player-row">
-        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${getPlayerInitials(player.name)}</div>
+        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${avatarHtml}</div>
         <div style="flex:1;min-width:0;">
           <div class="result-player-name">${player.name}</div>
           <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>
@@ -1400,9 +1403,12 @@ function showTeamSquad(teamId) {
           const p = playerMap[pid];
           if (!p) return '';
           const sold = soldPlayersData[pid];
+          const avatarHtml = p.photo_url
+            ? `<img src="${p.photo_url}" alt="${p.name}" />`
+            : getPlayerInitials(p.name);
           return `
             <div class="result-player-row">
-              <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${getPlayerInitials(p.name)}</div>
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${avatarHtml}</div>
               <div style="flex:1;">
                 <div class="result-player-name">${p.name}</div>
                 <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}</div>

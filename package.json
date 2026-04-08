@@ -9,7 +9,8 @@
     "players:sync-images": "node scripts/cloudinary-player-sync.js",
     "players:refresh-images": "node scripts/cloudinary-player-sync.js --refresh-existing",
     "players:map-cloudinary": "node scripts/cloudinary-player-sync.js --map-only --refresh-existing",
-    "players:sync-web": "node scripts/cloudinary-player-sync.js --source=web --refresh-existing --delayMs=120"
+    "players:sync-web": "node scripts/cloudinary-player-sync.js --source=web --refresh-existing --delayMs=120",
+    "players:sync-espn": "node scripts/cloudinary-player-sync.js --source=web --refresh-existing --delayMs=120"
   },
   "keywords": [
     "ipl",

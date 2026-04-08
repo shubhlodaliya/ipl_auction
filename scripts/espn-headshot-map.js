@@ -164,9 +164,7 @@ async function resolveHeadshot(playerName) {
     try {
       const payload = await fetchSearch(q);
       const image = getHeadshotFromPayload(payload, playerName);
-      if (!image) continue;
-      const ok = await isUrlReachable(image);
-      if (ok) return image;
+      if (image) return image;
     } catch (_) {
       // Continue trying other variants.
     }

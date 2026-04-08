@@ -297,7 +297,7 @@ function renderPlayerSpotlight(player) {
       return `<span class="badge badge-extra-field">${label}: ${safeVal}</span>`;
     }).join('');
   const avatarInner = player.photo_url
-    ? `<img src="${player.photo_url}" alt="${player.name}" />`
+    ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
     : initials;
 
   document.getElementById('playerSpotlight').innerHTML = `
@@ -1212,7 +1212,7 @@ function showCurrentPoolDetails() {
       ? formatPrice(soldInfo.soldPrice)
       : '';
     const avatarHtml = player.photo_url
-      ? `<img src="${player.photo_url}" alt="${player.name}" />`
+      ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
       : getPlayerInitials(player.name);
     return `
       <div class="pool-player-row">
@@ -1404,7 +1404,7 @@ function showTeamSquad(teamId) {
           if (!p) return '';
           const sold = soldPlayersData[pid];
           const avatarHtml = p.photo_url
-            ? `<img src="${p.photo_url}" alt="${p.name}" />`
+            ? `<img src="${p.photo_url}" alt="${p.name}" onerror="handlePlayerImageError(this, '${getPlayerInitials(p.name)}')" />`
             : getPlayerInitials(p.name);
           return `
             <div class="result-player-row">

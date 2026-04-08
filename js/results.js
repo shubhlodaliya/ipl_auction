@@ -316,7 +316,7 @@ async function loadResults() {
                 const initials = getPlayerInitials(player.name);
                 const icon = getRoleIcon(player.role);
                 const avatarHtml = player.photo_url
-                  ? `<img src="${player.photo_url}" alt="${player.name}" />`
+                  ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
                   : initials;
                 return `
                   <div class="result-player-row">

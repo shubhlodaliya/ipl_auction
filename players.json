@@ -267,7 +267,7 @@
     "country": "India",
     "base_price_lakh": 75,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1175496.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775664487/ipl-auction/players/nitish-kumar-reddy.webp"
   },
   {
     "id": 31,
@@ -501,7 +501,7 @@
     "country": "New Zealand",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/379140.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775664564/ipl-auction/players/devon-conway.webp"
   },
   {
     "id": 57,

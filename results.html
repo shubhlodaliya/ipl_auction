@@ -35,6 +35,16 @@
       <!-- Summary Stats -->
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;" id="summaryStats"></div>
 
+      <!-- Team Power Ranking -->
+      <section class="team-power-section glass" id="teamPowerSection" style="display:none;">
+        <div class="team-power-head">
+          <h2>Team Power Rankings</h2>
+          <p>Auto-calculated from Best Playing 11 and bench depth.</p>
+        </div>
+        <div class="team-power-topline" id="teamPowerTopline"></div>
+        <div class="team-power-grid" id="teamPowerGrid"></div>
+      </section>
+
       <div class="results-actions">
         <button class="btn btn-secondary" onclick="openPlaying11Modal()">My Playing 11</button>
         <button class="btn btn-secondary" onclick="copyAnalystPrompt()">Copy Analyst Prompt</button>

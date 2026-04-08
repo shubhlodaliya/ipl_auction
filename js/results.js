@@ -259,6 +259,298 @@ Provide insights similar to Cricbuzz or ESPN expert analysis.`;
 window.addEventListener('DOMContentLoaded', loadResults);
 window.addEventListener('beforeunload', cleanupReAuctionListeners);
 
+function tpNum(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function tpClamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function tpAvg(values) {
+  if (!Array.isArray(values) || values.length === 0) return 0;
+  return values.reduce((sum, v) => sum + tpNum(v), 0) / values.length;
+}
+
+function tpRound(value) {
+  return Number(tpNum(value).toFixed(1));
+}
+
+function normalizeRoleText(role) {
+  return String(role || '').trim().toLowerCase().replace(/[-_]/g, ' ');
+}
+
+function normalizeRoleBucket(role) {
+  const txt = normalizeRoleText(role);
+  if (txt.includes('wicket')) return 'wicketkeeper';
+  if (txt.includes('all')) return 'allrounder';
+  if (txt.includes('bowl') || txt.includes('spin') || txt.includes('fast') || txt.includes('pace')) return 'bowler';
+  return 'batsman';
+}
+
+function getPlayerImpact(player) {
+  return tpNum(player?.t20ImpactRating ?? player?.impactRating ?? 0);
+}
+
+function estimatePlayerRatings(player, soldPriceLakh = 0) {
+  const roleBucket = normalizeRoleBucket(player?.role);
+  const priceSignal = tpClamp(42 + (Math.log10(tpNum(soldPriceLakh) + 12) * 23), 35, 94);
+  const intlBoost = String(player?.country || '').toLowerCase() !== 'india' ? 3.5 : 0;
+
+  const defaultByRole = {
+    batsman: { bat: 76, bowl: 18, exp: 69, impact: 74 },
+    wicketkeeper: { bat: 74, bowl: 14, exp: 67, impact: 73 },
+    allrounder: { bat: 70, bowl: 66, exp: 70, impact: 76 },
+    bowler: { bat: 28, bowl: 77, exp: 68, impact: 72 }
+  };
+
+  const d = defaultByRole[roleBucket] || defaultByRole.batsman;
+  const baseExperience = tpClamp((priceSignal * 0.55) + (d.exp * 0.45) + intlBoost, 35, 95);
+  const battingRating = tpClamp(tpNum(player?.battingRating) || ((priceSignal * 0.62) + (d.bat * 0.38) + (roleBucket === 'bowler' ? -12 : 0)), 20, 98);
+  const bowlingRating = tpClamp(tpNum(player?.bowlingRating) || ((priceSignal * 0.58) + (d.bowl * 0.42) + (roleBucket === 'batsman' ? -10 : 0)), 10, 98);
+  const experienceRating = tpClamp(tpNum(player?.experienceRating) || baseExperience, 25, 98);
+  const t20ImpactRating = tpClamp(tpNum(player?.t20ImpactRating) || ((battingRating * 0.45) + (bowlingRating * 0.25) + (experienceRating * 0.3)), 25, 98);
+
+  return {
+    ...player,
+    roleBucket,
+    battingRating,
+    bowlingRating,
+    experienceRating,
+    t20ImpactRating
+  };
+}
+
+function calculateTopOrderScore(playingXI) {
+  return tpRound(tpAvg((playingXI || []).slice(0, 3).map(p => p.battingRating)));
+}
+
+function calculateMiddleOrderScore(playingXI) {
+  return tpRound(tpAvg((playingXI || []).slice(3, 6).map(p => p.battingRating)));
+}
+
+function calculateFinisherScore(playingXI) {
+  return tpRound(tpAvg((playingXI || []).slice(5, 8).map(p => p.t20ImpactRating)));
+}
+
+function calculateBowlingScore(playingXI) {
+  const attack = (playingXI || []).filter((p) => p.roleBucket === 'bowler' || (p.roleBucket === 'allrounder' && p.bowlingRating >= 55));
+  return tpRound(tpAvg(attack.map(p => p.bowlingRating)));
+}
+
+function calculateAllRounderScore(playingXI) {
+  const allRounders = (playingXI || []).filter((p) => p.roleBucket === 'allrounder');
+  return tpRound(tpAvg(allRounders.map(p => p.t20ImpactRating)));
+}
+
+function calculateTeamBalanceScore(playingXI) {
+  const count = { batsman: 0, wicketkeeper: 0, allrounder: 0, bowler: 0 };
+  (playingXI || []).forEach((p) => {
+    const key = p.roleBucket || 'batsman';
+    count[key] = (count[key] || 0) + 1;
+  });
+
+  const ranges = {
+    batsman: [4, 5],
+    wicketkeeper: [1, 2],
+    allrounder: [2, 3],
+    bowler: [3, 4]
+  };
+
+  const penalty = Object.keys(ranges).reduce((sum, key) => {
+    const [min, max] = ranges[key];
+    const val = count[key] || 0;
+    if (val < min) return sum + (min - val);
+    if (val > max) return sum + (val - max);
+    return sum;
+  }, 0);
+
+  return tpRound(tpClamp(10 - (penalty * 1.5), 0, 10));
+}
+
+function calculateMatchWinnerScore(playingXI) {
+  const elite = (playingXI || []).filter(p => p.t20ImpactRating > 85).length;
+  return tpRound(tpClamp((elite / 4) * 100, 0, 100));
+}
+
+function calculateBenchStrength(benchPlayers) {
+  const bench = Array.isArray(benchPlayers) ? benchPlayers : [];
+  const benchRatings = bench.map((p) => {
+    if (p.roleBucket === 'allrounder') return (p.battingRating * 0.3) + (p.bowlingRating * 0.3) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.2);
+    if (p.roleBucket === 'bowler') return (p.battingRating * 0.15) + (p.bowlingRating * 0.45) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.2);
+    if (p.roleBucket === 'wicketkeeper') return (p.battingRating * 0.4) + (p.bowlingRating * 0.1) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.3);
+    return (p.battingRating * 0.5) + (p.bowlingRating * 0.1) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.2);
+  });
+  return tpRound(tpAvg(benchRatings));
+}
+
+function calculateTeamPowerScore(teamModel) {
+  const TOP_ORDER_SCORE = calculateTopOrderScore(teamModel.playingXI);
+  const MIDDLE_ORDER_SCORE = calculateMiddleOrderScore(teamModel.playingXI);
+  const FINISHER_SCORE = calculateFinisherScore(teamModel.playingXI);
+  const BOWLING_SCORE = calculateBowlingScore(teamModel.playingXI);
+  const ALL_ROUNDER_SCORE = calculateAllRounderScore(teamModel.playingXI);
+  const TEAM_BALANCE_SCORE = calculateTeamBalanceScore(teamModel.playingXI);
+  const MATCH_WINNER_SCORE = calculateMatchWinnerScore(teamModel.playingXI);
+  const BENCH_STRENGTH_SCORE = calculateBenchStrength(teamModel.benchPlayers);
+
+  const battingScore = ((TOP_ORDER_SCORE + MIDDLE_ORDER_SCORE) / 2) * 0.20;
+  const finishingScore = FINISHER_SCORE * 0.10;
+  const bowlingScore = BOWLING_SCORE * 0.25;
+  const allRounderScore = ALL_ROUNDER_SCORE * 0.15;
+  const balanceScore = (TEAM_BALANCE_SCORE * 10) * 0.10;
+  const matchWinnerScore = MATCH_WINNER_SCORE * 0.10;
+  const benchScore = BENCH_STRENGTH_SCORE * 0.10;
+
+  const TEAM_POWER_SCORE = tpRound(tpClamp(
+    battingScore +
+    finishingScore +
+    bowlingScore +
+    allRounderScore +
+    balanceScore +
+    matchWinnerScore +
+    benchScore,
+    0,
+    100
+  ));
+
+  return {
+    teamId: teamModel.teamId,
+    teamName: teamModel.teamName,
+    score: TEAM_POWER_SCORE,
+    metrics: {
+      TOP_ORDER_SCORE,
+      MIDDLE_ORDER_SCORE,
+      FINISHER_SCORE,
+      BOWLING_SCORE,
+      ALL_ROUNDER_SCORE,
+      TEAM_BALANCE_SCORE,
+      MATCH_WINNER_SCORE,
+      BENCH_STRENGTH_SCORE
+    }
+  };
+}
+
+function buildTeamPowerModel(teamId, team, squad, playing11Data) {
+  const squadById = new Map((squad || []).map((entry) => [String(entry.player.id), entry]));
+  let selectedIds = (playing11Data?.playing11 || []).map(pid => String(pid));
+
+  if (selectedIds.length !== 11) {
+    selectedIds = (squad || [])
+      .slice()
+      .sort((a, b) => b.price - a.price)
+      .slice(0, 11)
+      .map((entry) => String(entry.player.id));
+  }
+
+  const playingXI = selectedIds
+    .map((id) => squadById.get(id))
+    .filter(Boolean)
+    .map((entry) => estimatePlayerRatings(entry.player, entry.price));
+
+  const benchPlayers = (squad || [])
+    .filter((entry) => !selectedIds.includes(String(entry.player.id)))
+    .map((entry) => estimatePlayerRatings(entry.player, entry.price));
+
+  return {
+    teamId,
+    teamName: team.name,
+    playingXI,
+    benchPlayers
+  };
+}
+
+function rankTeams(teamModels) {
+  const scored = (teamModels || []).map((model) => calculateTeamPowerScore(model));
+  scored.sort((a, b) => b.score - a.score);
+
+  const rankings = scored.map((entry, idx) => ({
+    rank: idx + 1,
+    teamId: entry.teamId,
+    team: entry.teamName,
+    score: entry.score,
+    metrics: entry.metrics
+  }));
+
+  const bestBattingTeam = scored
+    .slice()
+    .sort((a, b) => ((b.metrics.TOP_ORDER_SCORE + b.metrics.MIDDLE_ORDER_SCORE + b.metrics.FINISHER_SCORE) - (a.metrics.TOP_ORDER_SCORE + a.metrics.MIDDLE_ORDER_SCORE + a.metrics.FINISHER_SCORE)))[0]?.teamName || null;
+
+  const bestBowlingTeam = scored
+    .slice()
+    .sort((a, b) => b.metrics.BOWLING_SCORE - a.metrics.BOWLING_SCORE)[0]?.teamName || null;
+
+  const bestBenchStrength = scored
+    .slice()
+    .sort((a, b) => b.metrics.BENCH_STRENGTH_SCORE - a.metrics.BENCH_STRENGTH_SCORE)[0]?.teamName || null;
+
+  const darkHorsePool = rankings.slice(2);
+  const darkHorseTeam = (darkHorsePool[0] || rankings[1] || rankings[0])?.team || null;
+
+  return {
+    rankings,
+    bestBattingTeam,
+    bestBowlingTeam,
+    bestBenchStrength,
+    darkHorseTeam
+  };
+}
+
+function renderTeamPowerInsights(powerData) {
+  const section = document.getElementById('teamPowerSection');
+  const topline = document.getElementById('teamPowerTopline');
+  const grid = document.getElementById('teamPowerGrid');
+  if (!section || !topline || !grid) return;
+
+  if (!powerData || !Array.isArray(powerData.rankings) || !powerData.rankings.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  topline.innerHTML = `
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">#1 Team</div>
+      <div class="team-power-chip-value">${powerData.rankings[0].team} (${powerData.rankings[0].score})</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Best Batting</div>
+      <div class="team-power-chip-value">${powerData.bestBattingTeam || '-'}</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Best Bowling</div>
+      <div class="team-power-chip-value">${powerData.bestBowlingTeam || '-'}</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Best Bench</div>
+      <div class="team-power-chip-value">${powerData.bestBenchStrength || '-'}</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Dark Horse</div>
+      <div class="team-power-chip-value">${powerData.darkHorseTeam || '-'}</div>
+    </div>
+  `;
+
+  grid.innerHTML = powerData.rankings.map((item) => `
+    <article class="team-power-card fade-in">
+      <div class="team-power-rankline">
+        <span class="team-power-rank">#${item.rank}</span>
+        <span class="team-power-score">${item.score}</span>
+      </div>
+      <div class="team-power-team">${item.team}</div>
+      <div class="team-power-metrics" style="margin-top:0.55rem;">
+        <span>Top Order: <b>${item.metrics.TOP_ORDER_SCORE}</b></span>
+        <span>Middle: <b>${item.metrics.MIDDLE_ORDER_SCORE}</b></span>
+        <span>Finish: <b>${item.metrics.FINISHER_SCORE}</b></span>
+        <span>Bowling: <b>${item.metrics.BOWLING_SCORE}</b></span>
+        <span>All-round: <b>${item.metrics.ALL_ROUNDER_SCORE}</b></span>
+        <span>Bench: <b>${item.metrics.BENCH_STRENGTH_SCORE}</b></span>
+      </div>
+    </article>
+  `).join('');
+}
+
 async function loadResults() {
   // Try to get roomCode from session, or from URL param
   const session = getSession();
@@ -333,12 +625,31 @@ async function loadResults() {
       if (player) teamSquads[sale.teamId].push({ player, price: sale.soldPrice });
     });
 
-    // Sort teams by total spend descending
-    const sortedTeams = Object.entries(teams).sort((a, b) => {
-      const spendA = (teamSquads[a[0]] || []).reduce((s, x) => s + x.price, 0);
-      const spendB = (teamSquads[b[0]] || []).reduce((s, x) => s + x.price, 0);
-      return spendB - spendA;
-    });
+    // Build Team Power Rankings using Playing XI + bench depth.
+    const playing11Snap = await db.ref(`rooms/${roomCode}/playing11`).get();
+    const playing11Map = playing11Snap.exists() ? (playing11Snap.val() || {}) : {};
+    const teamModels = Object.entries(teams).map(([teamId, team]) =>
+      buildTeamPowerModel(teamId, team, teamSquads[teamId] || [], playing11Map[teamId])
+    );
+    const teamPowerData = rankTeams(teamModels);
+    renderTeamPowerInsights(teamPowerData);
+
+    const rankingOrderIds = teamPowerData.rankings.map(r => r.teamId);
+    const rankedSet = new Set(rankingOrderIds);
+    const unranked = Object.entries(teams)
+      .filter(([teamId]) => !rankedSet.has(teamId))
+      .sort((a, b) => {
+        const spendA = (teamSquads[a[0]] || []).reduce((s, x) => s + x.price, 0);
+        const spendB = (teamSquads[b[0]] || []).reduce((s, x) => s + x.price, 0);
+        return spendB - spendA;
+      });
+
+    const sortedTeams = [
+      ...rankingOrderIds.map((teamId) => [teamId, teams[teamId]]),
+      ...unranked
+    ].filter(([, team]) => !!team);
+
+    const teamScoreMap = new Map(teamPowerData.rankings.map((entry) => [entry.teamId, entry.score]));
 
     resultsExportState.roomCode = roomCode;
     resultsExportState.teams = teams;
@@ -383,6 +694,10 @@ async function loadResults() {
                   <span class="result-stat-val">${squad.length}</span>
                   <span class="result-stat-label">Players</span>
                 </div>
+                <div>
+                  <span class="result-stat-val">${teamScoreMap.has(tId) ? teamScoreMap.get(tId) : '-'}</span>
+                  <span class="result-stat-label">Power</span>
+                </div>
               </div>
             </div>
           </div>
@@ -414,7 +729,7 @@ async function loadResults() {
 
     // Update subtitle
     document.getElementById('resultsSub').textContent =
-      `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams`;
+      `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams · #1 ${teamPowerData.rankings[0]?.team || '-'}`;
 
     setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers);
     setupPlaying11(roomCode, session, teams, teamSquads);

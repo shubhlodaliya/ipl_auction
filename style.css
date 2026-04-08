@@ -2424,6 +2424,102 @@ input[type=range]::-webkit-slider-thumb {
   flex-wrap: wrap;
   margin-bottom: 1.2rem;
 }
+
+.team-power-section {
+  margin-bottom: 1.6rem;
+  padding: 1rem;
+  border: 1px solid rgba(29,160,255,0.22);
+  background:
+    radial-gradient(circle at 14% 18%, rgba(29,160,255,0.1), transparent 38%),
+    radial-gradient(circle at 86% 16%, rgba(255,203,48,0.1), transparent 40%),
+    var(--card);
+}
+.team-power-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+.team-power-head h2 {
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--gold);
+  font-size: 1.55rem;
+}
+.team-power-head p {
+  font-size: 0.86rem;
+  color: var(--text-sec);
+}
+.team-power-topline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.95rem;
+}
+.team-power-chip {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  padding: 0.55rem 0.7rem;
+}
+.team-power-chip-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-sec);
+  margin-bottom: 0.15rem;
+}
+.team-power-chip-value {
+  color: var(--text);
+  font-weight: 700;
+}
+.team-power-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.65rem;
+}
+.team-power-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  padding: 0.72rem;
+}
+.team-power-rankline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+.team-power-rank {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--gold);
+}
+.team-power-team {
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.team-power-score {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.35rem;
+  color: var(--blue);
+  font-weight: 700;
+}
+.team-power-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem 0.45rem;
+  font-size: 0.74rem;
+  color: var(--text-sec);
+}
+.team-power-metrics b {
+  color: var(--text);
+  font-weight: 600;
+}
 .reauction-section {
   margin-bottom: 1.75rem;
   padding: 1rem;

@@ -5,11 +5,21 @@
   "scripts": {
     "build": "echo 'Static site ready'",
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "players:sync-images": "node scripts/cloudinary-player-sync.js",
+    "players:refresh-images": "node scripts/cloudinary-player-sync.js --refresh-existing",
+    "players:map-cloudinary": "node scripts/cloudinary-player-sync.js --map-only --refresh-existing",
+    "players:sync-web": "node scripts/cloudinary-player-sync.js --source=web --refresh-existing --delayMs=120"
   },
-  "keywords": ["ipl", "auction", "cricket", "Firebase"],
+  "keywords": [
+    "ipl",
+    "auction",
+    "cricket",
+    "Firebase"
+  ],
   "author": "Tilak",
   "dependencies": {
+    "cloudinary": "^2.9.0",
     "express": "^5.2.1",
     "socket.io": "^4.8.3"
   }

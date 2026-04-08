@@ -38,6 +38,11 @@ const resultsExportState = {
   roomTeamCatalog: {}
 };
 
+const teamPowerUiState = {
+  visible: false,
+  data: null
+};
+
 const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
 
 I will provide a PDF generated from an IPL auction game.
@@ -501,14 +506,19 @@ function renderTeamPowerInsights(powerData) {
   const section = document.getElementById('teamPowerSection');
   const topline = document.getElementById('teamPowerTopline');
   const grid = document.getElementById('teamPowerGrid');
+  const toggleBtn = document.getElementById('teamPowerToggleBtn');
   if (!section || !topline || !grid) return;
 
   if (!powerData || !Array.isArray(powerData.rankings) || !powerData.rankings.length) {
     section.style.display = 'none';
+    if (toggleBtn) {
+      toggleBtn.disabled = true;
+      toggleBtn.textContent = 'Team Power Ranking Unavailable';
+    }
     return;
   }
 
-  section.style.display = 'block';
+  teamPowerUiState.data = powerData;
   topline.innerHTML = `
     <div class="team-power-chip">
       <div class="team-power-chip-label">#1 Team</div>
@@ -549,6 +559,27 @@ function renderTeamPowerInsights(powerData) {
       </div>
     </article>
   `).join('');
+
+  section.style.display = teamPowerUiState.visible ? 'block' : 'none';
+  if (toggleBtn) {
+    toggleBtn.disabled = false;
+    toggleBtn.textContent = teamPowerUiState.visible ? 'Hide Team Power Ranking' : 'Show Team Power Ranking';
+  }
+}
+
+function toggleTeamPowerRankings() {
+  const section = document.getElementById('teamPowerSection');
+  const toggleBtn = document.getElementById('teamPowerToggleBtn');
+
+  if (!section || !toggleBtn) return;
+  if (!teamPowerUiState.data || !Array.isArray(teamPowerUiState.data.rankings) || !teamPowerUiState.data.rankings.length) {
+    showToast('Team Power Ranking is not ready yet.', 'error');
+    return;
+  }
+
+  teamPowerUiState.visible = !teamPowerUiState.visible;
+  section.style.display = teamPowerUiState.visible ? 'block' : 'none';
+  toggleBtn.textContent = teamPowerUiState.visible ? 'Hide Team Power Ranking' : 'Show Team Power Ranking';
 }
 
 async function loadResults() {
@@ -1840,3 +1871,4 @@ window.exportResultsPdf = exportResultsPdf;
 window.exportTeamPdfById = exportTeamPdfById;
 window.exportSelectedTeamPdf = exportSelectedTeamPdf;
 window.copyAnalystPrompt = copyAnalystPrompt;
+window.toggleTeamPowerRankings = toggleTeamPowerRankings;

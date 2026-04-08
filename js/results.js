@@ -37,94 +37,152 @@ const resultsExportState = {
   roomTeamCatalog: {}
 };
 
-const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz or ESPN analysts.
+const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
 
 I will provide a PDF generated from an IPL auction game.
-The PDF contains multiple teams, and each team already has a section called "Best Playing 11".
 
-Your task is to analyze the Best Playing 11 of every team and rank all teams from strongest to weakest.
+The PDF contains multiple teams. Each team has:
+1) A full squad list
+2) A section called "Best Playing 11"
 
-Important Rules:
+Your task is to analyze every team professionally and rank them from strongest to weakest.
+
+IMPORTANT RULES:
 - DO NOT change the playing XI.
-- Only analyze the players listed in the "Best Playing 11" section for each team.
-- Compare teams against each other and rank them.
+- Use the "Best Playing 11" as the main team.
+- Also analyze the remaining squad players as bench strength and backups.
+- Compare teams against each other before ranking.
 
 ------------------------------------------------
 
-STEP 1: Extract Data
+STEP 1: EXTRACT DATA FROM THE PDF
 
-From the PDF extract:
-- Team name
-- Best Playing 11 players
-- Player roles (Batsman, Wicket Keeper, All-rounder, Bowler)
-- Captain and Vice Captain
+For each team extract:
+
+Team Name
+
+BEST PLAYING XI
+- Player Name
+- Role (Batsman / Wicket Keeper / All-rounder / Bowler)
+- Captain
+- Vice Captain
+
+FULL SQUAD
+- All remaining players not included in the playing XI
 
 ------------------------------------------------
 
-STEP 2: Evaluate Each Team Like a Professional Analyst
+STEP 2: PROFESSIONAL TEAM ANALYSIS
 
-Analyze the following aspects:
+Analyze the Best Playing XI first, then evaluate squad depth.
 
-1) TOP ORDER STRENGTH (Openers + No.3)
-- Ability to dominate powerplay
-- Strike rate in T20 format
+Evaluate the following aspects:
+
+1) TOP ORDER STRENGTH
+(Openers + No.3)
+
+Consider:
+- Powerplay dominance
+- T20 strike rate ability
+- Ability to handle swing and pressure
 
 2) MIDDLE ORDER STABILITY
+(No.4 - No.6)
+
+Consider:
 - Ability to rebuild innings
 - Ability to handle pressure situations
+- Rotation of strike
 
 3) FINISHING POWER
-- Presence of strong finishers
-- Big hitting ability in last 5 overs
+(No.6 - No.8)
+
+Consider:
+- Big hitters
+- Death overs acceleration
+- Power hitting ability
 
 4) BOWLING ATTACK
+
 Evaluate:
-- Powerplay bowlers
-- Middle overs control
-- Death over specialists
-- Variety (pace + spin)
+
+Powerplay bowlers
+Middle overs control
+Death over specialists
+Variety (pace + spin)
 
 5) ALL-ROUNDER IMPACT
-Players who contribute significantly in both:
-- Batting
-- Bowling
+
+Evaluate players who contribute significantly in:
+
+Batting
+Bowling
+Match situations
 
 6) TEAM BALANCE
+
 Ideal structure:
-- 4-5 batsmen
-- 1-2 wicket keepers
-- 2-3 all-rounders
-- 3-4 bowlers
+
+4-5 batsmen
+1-2 wicket keepers
+2-3 all-rounders
+3-4 bowlers
+
+Evaluate whether the team composition is balanced.
 
 7) MATCH WINNERS
-Presence of players who can win matches single-handedly.
+
+Identify players capable of winning matches single-handedly.
+
+Examples:
+- Elite finishers
+- Game-changing bowlers
+- Superstar performers
 
 8) LEADERSHIP
-- Captain experience
-- Tactical ability
+
+Evaluate:
+
+Captain's experience
+Tactical decision making
+Calmness under pressure
+
+9) BENCH STRENGTH (NEW)
+
+Analyze the remaining squad players.
+
+Evaluate:
+
+Quality backup batsmen
+Backup bowlers
+Backup wicket-keepers
+Backup all-rounders
+Injury replacements
+Strategic flexibility
+
+Determine whether the team has strong squad depth for a long tournament.
 
 ------------------------------------------------
 
-STEP 3: Score Each Team
+STEP 3: SCORING SYSTEM
 
-Use the following scoring system:
+Score each team using this system:
 
 Batting Strength: 25
 Bowling Attack: 25
 All-Rounders: 20
-Team Balance: 15
-Match Winners: 10
-Leadership: 5
+Team Balance: 10
+Match Winners: 8
+Leadership: 4
+Bench Strength: 8
 
-Total Score: 100
+TOTAL SCORE: 100
 
 ------------------------------------------------
 
-STEP 4: Output
+STEP 4: TEAM ANALYSIS OUTPUT
 
-First analyze each team.
-
-Example format:
+For each team provide analysis in the following format:
 
 TEAM ANALYSIS
 
@@ -133,22 +191,33 @@ Team: <Team Name>
 Best Playing XI:
 1. Player - Role
 2. Player - Role
+3. Player - Role
+...
+
+Bench / Backup Players:
+- Player
+- Player
+- Player
 ...
 
 Strengths:
 - ...
 - ...
+- ...
 
 Weaknesses:
 - ...
+- ...
 
 Score Breakdown:
+
 Batting: /25
 Bowling: /25
 All-rounders: /20
-Balance: /15
-Match Winners: /10
-Leadership: /5
+Balance: /10
+Match Winners: /8
+Leadership: /4
+Bench Strength: /8
 
 Total Score: /100
 
@@ -156,27 +225,35 @@ Total Score: /100
 
 STEP 5: FINAL TEAM RANKING
 
-Rank all teams.
+After analyzing all teams, rank them from strongest to weakest.
 
 Example:
 
-FINAL TEAM RANKING
+FINAL TEAM POWER RANKINGS
 
 1) Team Name - Score
 2) Team Name - Score
 3) Team Name - Score
 4) Team Name - Score
+5) Team Name - Score
+6) Team Name - Score
+7) Team Name - Score
 
 ------------------------------------------------
 
 STEP 6: FINAL ANALYST VERDICT
 
-Explain like a cricket analyst:
+Explain like a professional cricket analyst.
 
-- Why Rank 1 team is the strongest
-- Which team has the best batting
+Include:
+
+- Why Rank #1 team is the strongest
+- Which team has the best batting lineup
 - Which team has the best bowling attack
-- Which team could be a dark horse`;
+- Which team has the best bench strength
+- Which team could be the dark horse of the tournament
+
+Provide insights similar to Cricbuzz or ESPN expert analysis.`;
 
 window.addEventListener('DOMContentLoaded', loadResults);
 window.addEventListener('beforeunload', cleanupReAuctionListeners);
@@ -944,20 +1021,92 @@ function createPdfDocument() {
   });
 }
 
+const PDF_THEME = {
+  navy: [8, 20, 44],
+  blue: [18, 93, 152],
+  cyan: [0, 166, 214],
+  gold: [240, 183, 35],
+  mint: [35, 166, 122],
+  danger: [208, 64, 57],
+  slate900: [23, 38, 56],
+  slate700: [61, 81, 106],
+  slate500: [102, 121, 143],
+  slate300: [214, 222, 231],
+  slate200: [232, 237, 243],
+  white: [255, 255, 255]
+};
+
+function drawSectionTitle(doc, label, y, accent = PDF_THEME.blue) {
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.setLineWidth(0.8);
+  doc.line(40, y + 8, 555, y + 8);
+
+  doc.setFillColor(...accent);
+  doc.roundedRect(40, y - 10, 8, 18, 2, 2, 'F');
+
+  doc.setTextColor(...PDF_THEME.slate900);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(label, 54, y + 3);
+}
+
+function getSquadRoleMix(squad) {
+  return (squad || []).reduce((acc, entry) => {
+    const role = String(entry?.player?.role || '').toLowerCase();
+    if (role.includes('all-rounder')) acc.allRounder += 1;
+    else if (role.includes('wicket')) acc.wicketKeeper += 1;
+    else if (role.includes('bowler') || role.includes('spinner') || role.includes('fast')) acc.bowler += 1;
+    else acc.batsman += 1;
+    return acc;
+  }, { batsman: 0, wicketKeeper: 0, allRounder: 0, bowler: 0 });
+}
+
+function drawInfoChips(doc, y, chips) {
+  let x = 40;
+  chips.forEach((chip) => {
+    const text = `${chip.label}: ${chip.value}`;
+    const w = Math.max(90, doc.getTextWidth(text) + 24);
+    doc.setFillColor(...chip.bg);
+    doc.roundedRect(x, y, w, 20, 10, 10, 'F');
+
+    doc.setTextColor(...chip.fg);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text(text, x + 12, y + 13);
+
+    x += w + 8;
+  });
+}
+
 function renderPdfHeader(doc, title, roomCode, generatedAt) {
   const pageWidth = doc.internal.pageSize.getWidth();
-  doc.setFillColor(8, 20, 44);
-  doc.rect(0, 0, pageWidth, 92, 'F');
+  doc.setFillColor(...PDF_THEME.navy);
+  doc.rect(0, 0, pageWidth, 118, 'F');
 
-  doc.setTextColor(255, 255, 255);
+  // Layered accent bars for a premium look.
+  doc.setFillColor(...PDF_THEME.blue);
+  doc.rect(0, 88, pageWidth, 30, 'F');
+  doc.setFillColor(...PDF_THEME.cyan);
+  doc.rect(0, 102, pageWidth, 16, 'F');
+
+  doc.setFillColor(255, 255, 255, 0.08);
+  doc.circle(pageWidth - 60, 34, 52, 'F');
+  doc.circle(pageWidth - 10, 64, 36, 'F');
+
+  doc.setTextColor(...PDF_THEME.white);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text(title, 40, 38);
+  doc.setFontSize(24);
+  doc.text(title, 40, 40);
 
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('IPL Auction Analytics Dossier', 40, 58);
+
   doc.setFontSize(11);
-  doc.text(`Room: ${roomCode}`, 40, 58);
-  doc.text(`Generated: ${generatedAt.toLocaleString()}`, 40, 74);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Room: ${roomCode}`, 40, 78);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Generated: ${generatedAt.toLocaleString()}`, 40, 94);
 }
 
 function appendPdfFooter(doc) {
@@ -967,32 +1116,58 @@ function appendPdfFooter(doc) {
 
   for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
     doc.setPage(pageNumber);
-    doc.setTextColor(110, 120, 130);
+    doc.setDrawColor(...PDF_THEME.slate300);
+    doc.line(40, pageHeight - 26, pageWidth - 40, pageHeight - 26);
+
+    doc.setTextColor(...PDF_THEME.slate500);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
+    doc.text('IPL Auction Report', 40, pageHeight - 12);
     doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 40, pageHeight - 18, { align: 'right' });
   }
 }
 
 function renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSales) {
-  doc.setTextColor(28, 44, 66);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.text('Auction Summary', 40, 120);
+  const teamsCount = Object.keys(teams).length;
+  drawSectionTitle(doc, 'Auction Snapshot', 134, PDF_THEME.blue);
+
+  const stats = [
+    { label: 'Teams', value: String(teamsCount), bg: [228, 242, 255], fg: PDF_THEME.slate900 },
+    { label: 'Players Sold', value: String(soldCount), bg: [231, 247, 238], fg: PDF_THEME.slate900 },
+    { label: 'Unsold', value: String(unsoldCount), bg: [255, 236, 234], fg: PDF_THEME.slate900 },
+    { label: 'Total Spend', value: formatPricePdf(totalSales), bg: [255, 248, 227], fg: PDF_THEME.slate900 }
+  ];
+  drawInfoChips(doc, 148, stats);
 
   doc.autoTable({
-    startY: 132,
+    startY: 182,
     margin: { left: 40, right: 40 },
-    theme: 'grid',
-    head: [['Metric', 'Value']],
+    theme: 'plain',
+    head: [['Metric', 'Value', 'Insight']],
     body: [
-      ['Teams', String(Object.keys(teams).length)],
-      ['Players Sold', String(soldCount)],
-      ['Players Unsold', String(unsoldCount)],
-      ['Total Spend', formatPricePdf(totalSales)]
+      ['Teams in Auction', String(teamsCount), teamsCount >= 8 ? 'High competition pool' : 'Compact competition pool'],
+      ['Players Sold', String(soldCount), soldCount > 0 ? 'Active auction outcome' : 'No completed sales yet'],
+      ['Players Unsold', String(unsoldCount), unsoldCount <= 5 ? 'Efficient conversion rate' : 'Large unsold reserve remains'],
+      ['Total Spend', formatPricePdf(totalSales), totalSales > 0 ? 'Budget utilization completed' : 'No spending recorded']
     ],
-    styles: { fontSize: 10, cellPadding: 6 },
-    headStyles: { fillColor: [17, 94, 197] }
+    styles: {
+      fontSize: 10,
+      cellPadding: 7,
+      lineColor: PDF_THEME.slate300,
+      lineWidth: 0.6,
+      textColor: PDF_THEME.slate900
+    },
+    headStyles: {
+      fillColor: PDF_THEME.navy,
+      textColor: PDF_THEME.white,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: { fillColor: PDF_THEME.slate200 },
+    columnStyles: {
+      0: { cellWidth: 132, fontStyle: 'bold' },
+      1: { cellWidth: 120 },
+      2: { cellWidth: 223 }
+    }
   });
 }
 
@@ -1003,21 +1178,57 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
   const t = roomTeamCatalog[teamId] || getTeam(teamId) || {};
 
   let startY = (doc.lastAutoTable?.finalY || 132) + 16;
-  if (startY > pageHeight - 170) {
+  if (startY > pageHeight - 240) {
     doc.addPage();
-    startY = 56;
+    startY = 70;
   }
 
+  const roleMix = getSquadRoleMix(squad);
   const rankPrefix = typeof rank === 'number' ? `${rank}. ` : '';
-  doc.setTextColor(13, 35, 64);
+  const headerColor = rank === 1
+    ? PDF_THEME.gold
+    : rank === 2
+      ? [163, 170, 185]
+      : rank === 3
+        ? [174, 120, 81]
+        : PDF_THEME.blue;
+
+  doc.setFillColor(245, 248, 252);
+  doc.roundedRect(34, startY - 18, 527, 52, 10, 10, 'F');
+
+  doc.setFillColor(...headerColor);
+  doc.roundedRect(40, startY - 12, 8, 40, 3, 3, 'F');
+
+  doc.setTextColor(...PDF_THEME.slate900);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text(`${rankPrefix}${team.name} (${team.short || t.short || teamId})`, 40, startY);
+  doc.setFontSize(13);
+  doc.text(`${rankPrefix}${team.name} (${team.short || t.short || teamId})`, 56, startY);
+
+  doc.setTextColor(...PDF_THEME.slate700);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.text(`Owner: ${team.ownerName || '-'}`, 56, startY + 14);
+
+  drawInfoChips(doc, startY + 24, [
+    { label: 'Squad', value: String(squad.length), bg: [228, 242, 255], fg: PDF_THEME.slate900 },
+    { label: 'Spent', value: formatPricePdf(teamSpend), bg: [255, 248, 227], fg: PDF_THEME.slate900 },
+    { label: 'Purse Left', value: formatPricePdf(purseLeft), bg: [231, 247, 238], fg: PDF_THEME.slate900 }
+  ]);
+
+  doc.setTextColor(...PDF_THEME.slate700);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.2);
+  doc.text(
+    `Role Mix  BAT ${roleMix.batsman}  WK ${roleMix.wicketKeeper}  AR ${roleMix.allRounder}  BOWL ${roleMix.bowler}`,
+    430,
+    startY + 14,
+    { align: 'right' }
+  );
 
   doc.autoTable({
-    startY: startY + 8,
+    startY: startY + 52,
     margin: { left: 40, right: 40 },
-    theme: 'grid',
+    theme: 'plain',
     head: [['Owner', 'Players', 'Spent', 'Purse Left']],
     body: [[
       team.ownerName || '-',
@@ -1025,8 +1236,25 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
       formatPricePdf(teamSpend),
       formatPricePdf(purseLeft)
     ]],
-    styles: { fontSize: 9.5, cellPadding: 5 },
-    headStyles: { fillColor: [22, 93, 148] }
+    styles: {
+      fontSize: 9.5,
+      cellPadding: 6,
+      lineColor: PDF_THEME.slate300,
+      lineWidth: 0.6,
+      textColor: PDF_THEME.slate900
+    },
+    headStyles: {
+      fillColor: PDF_THEME.navy,
+      textColor: PDF_THEME.white,
+      fontStyle: 'bold'
+    },
+    bodyStyles: { fillColor: [250, 252, 255] },
+    columnStyles: {
+      0: { cellWidth: 180 },
+      1: { cellWidth: 90, halign: 'center' },
+      2: { cellWidth: 125, halign: 'right' },
+      3: { halign: 'right' }
+    }
   });
 
   const rows = squad.length
@@ -1042,11 +1270,22 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
   doc.autoTable({
     startY: doc.lastAutoTable.finalY + 8,
     margin: { left: 40, right: 40 },
-    theme: 'striped',
+    theme: 'plain',
     head: [['#', 'Player', 'Role', 'Country', 'Price']],
     body: rows,
-    styles: { fontSize: 9, cellPadding: 5 },
-    headStyles: { fillColor: [10, 87, 142] },
+    styles: {
+      fontSize: 9,
+      cellPadding: 5,
+      lineColor: PDF_THEME.slate300,
+      lineWidth: 0.5,
+      textColor: PDF_THEME.slate900
+    },
+    headStyles: {
+      fillColor: PDF_THEME.blue,
+      textColor: PDF_THEME.white,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: { fillColor: [247, 250, 254] },
     columnStyles: {
       0: { cellWidth: 26 },
       1: { cellWidth: 195 },
@@ -1066,13 +1305,10 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
     startY = doc.lastAutoTable.finalY + 14;
     if (startY > pageHeight - 150) {
       doc.addPage();
-      startY = 56;
+      startY = 70;
     }
 
-    doc.setTextColor(13, 35, 64);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('Best Playing 11', 40, startY);
+    drawSectionTitle(doc, 'Best Playing 11', startY, PDF_THEME.mint);
 
     const playing11Players = selectedIds.map(pid => {
       const entry = squad.find(e => String(e.player.id) === pid);
@@ -1092,13 +1328,24 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
     }).filter(Boolean);
 
     doc.autoTable({
-      startY: startY + 6,
+      startY: startY + 14,
       margin: { left: 40, right: 40 },
-      theme: 'striped',
+      theme: 'plain',
       head: [['Player', 'Role', 'Country', 'Price']],
       body: playing11Players.length ? playing11Players : [['Playing 11 could not be resolved from squad data', '-', '-', '-']],
-      styles: { fontSize: 9, cellPadding: 5 },
-      headStyles: { fillColor: [34, 139, 34] },
+      styles: {
+        fontSize: 9,
+        cellPadding: 5,
+        lineColor: PDF_THEME.slate300,
+        lineWidth: 0.5,
+        textColor: PDF_THEME.slate900
+      },
+      headStyles: {
+        fillColor: PDF_THEME.mint,
+        textColor: PDF_THEME.white,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: { fillColor: [239, 250, 245] },
       columnStyles: {
         0: { cellWidth: 205 },
         1: { cellWidth: 95 },

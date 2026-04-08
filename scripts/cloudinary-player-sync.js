@@ -8,6 +8,7 @@ const LOCAL_ENV_FILE = path.join(ROOT, '.env.local');
 const LOCAL_ENV_FALLBACK_FILE = path.join(ROOT, '.env.local.example');
 const DEFAULT_IMAGES_DIR = path.join(ROOT, 'assets', 'player-images');
 const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
+const ESPN_DEFAULT_PLAYER_IMAGE = 'https://a.espncdn.com/i/headshots/cricket/players/default-player-logo-500.png';
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -117,31 +118,207 @@ function normalizeName(value) {
     .trim();
 }
 
-async function resolveEspnImage(playerName) {
-  const query = encodeURIComponent(playerName);
-  const searchUrl = `https://site.api.espn.com/apis/search/v2?query=${query}`;
-  const payload = await fetchJson(searchUrl);
-  const playerBlock = (payload?.results || []).find((r) => r?.type === 'player');
-  const candidates = playerBlock?.contents || [];
+function getNameTokens(value) {
+  return normalizeName(value).split(' ').filter(Boolean);
+}
+
+function uniqueArray(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function buildQueryVariants(playerName) {
+  const tokens = getNameTokens(playerName);
+  if (!tokens.length) return [playerName];
+
+  const variants = [tokens.join(' ')];
+
+  const nonInitialTokens = tokens.filter((t) => t.length > 1);
+  if (nonInitialTokens.length && nonInitialTokens.length !== tokens.length) {
+    variants.push(nonInitialTokens.join(' '));
+  }
+
+  if (tokens.length >= 2) {
+    variants.push(tokens.slice(-2).join(' '));
+    variants.push(tokens[0] + ' ' + tokens[tokens.length - 1]);
+  }
+
+  // Common cricket data variations for initial-based names.
+  const aliases = {
+    't natarajan': ['natarajan', 'thangarasu natarajan'],
+    'ks bharat': ['bharat', 'srikar bharat'],
+    'ravisrinivasan sai kishore': ['sai kishore', 'r sai kishore'],
+    'narayan jagadeesan': ['jagadeesan', 'n jagadeesan'],
+    'arjun tendulkar': ['tendulkar'],
+    'ben duckett': ['ben matthew duckett']
+  };
+  const normalized = tokens.join(' ');
+  if (aliases[normalized]) {
+    variants.push(...aliases[normalized]);
+  }
+
+  // Last-name query often finds player/article data when full name misses.
+  variants.push(tokens[tokens.length - 1]);
+  return uniqueArray(variants);
+}
+
+function isLikelyPlayerImageForName(imageObj, playerName) {
+  if (!imageObj || !imageObj.url) return false;
+  const text = [imageObj.caption, imageObj.name, imageObj.alt]
+    .map((v) => normalizeName(v || ''))
+    .join(' ')
+    .trim();
+  if (!text) return false;
+
+  const tokens = getNameTokens(playerName);
+  if (!tokens.length) return false;
+
+  const surname = tokens[tokens.length - 1];
+  const full = tokens.join(' ');
+  if (text.includes(full)) return true;
+  if (surname && surname.length >= 4 && text.includes(surname)) return true;
+
+  // Fallback: if at least one strong token appears, still accept.
+  const strongTokens = tokens.filter((t) => t.length >= 5);
+  if (strongTokens.some((t) => text.includes(t))) return true;
+
+  return false;
+}
+
+function chooseBestArticleImage(article, playerName) {
+  const images = Array.isArray(article?.images) ? article.images : [];
+  const candidates = [];
+
+  for (const img of images) {
+    if (!img || !img.url) continue;
+    if (isLikelyPlayerImageForName(img, playerName)) candidates.push(img);
+    const peers = Array.isArray(img.peers) ? img.peers : [];
+    for (const p of peers) {
+      if (p?.url && isLikelyPlayerImageForName(p, playerName)) candidates.push(p);
+    }
+  }
+
   if (!candidates.length) return null;
 
-  const target = normalizeName(playerName);
-  const exact = candidates.find((item) => {
-    const n = normalizeName(item?.displayName || '');
-    return n === target;
+  // Prefer square/portrait-ish variants for avatar quality.
+  candidates.sort((a, b) => {
+    const arA = (a.width && a.height) ? Math.abs((a.width / a.height) - 1) : 10;
+    const arB = (b.width && b.height) ? Math.abs((b.width / b.height) - 1) : 10;
+    const pxA = Number(a.width || 0) * Number(a.height || 0);
+    const pxB = Number(b.width || 0) * Number(b.height || 0);
+    if (arA !== arB) return arA - arB;
+    return pxB - pxA;
   });
 
-  const ranked = [
-    ...(exact ? [exact] : []),
-    ...candidates.filter((item) => item !== exact && String(item?.description || '').toLowerCase().includes('cricket')),
-    ...candidates.filter((item) => item !== exact && !String(item?.description || '').toLowerCase().includes('cricket'))
-  ];
+  return candidates[0].url || null;
+}
 
-  for (const candidate of ranked) {
-    const image = candidate?.image?.default || candidate?.image?.defaultDark || '';
-    if (!image) continue;
-    const ok = await isUrlReachable(image);
-    if (ok) return image;
+async function resolveEspnImage(playerName) {
+  const variants = buildQueryVariants(playerName);
+
+  for (const queryValue of variants) {
+    const query = encodeURIComponent(queryValue);
+    const searchUrl = `https://site.api.espn.com/apis/search/v2?query=${query}`;
+    const payload = await fetchJson(searchUrl);
+    const playerBlock = (payload?.results || []).find((r) => r?.type === 'player');
+    const candidates = playerBlock?.contents || [];
+
+    const target = normalizeName(playerName);
+    const exact = candidates.find((item) => {
+      const n = normalizeName(item?.displayName || '');
+      return n === target;
+    });
+
+    const ranked = [
+      ...(exact ? [exact] : []),
+      ...candidates.filter((item) => item !== exact && String(item?.description || '').toLowerCase().includes('cricket')),
+      ...candidates.filter((item) => item !== exact && !String(item?.description || '').toLowerCase().includes('cricket'))
+    ];
+
+    let bestEffortPlayerImage = '';
+    for (const candidate of ranked) {
+      const image = candidate?.image?.default || candidate?.image?.defaultDark || '';
+      if (!image) continue;
+      if (!bestEffortPlayerImage) bestEffortPlayerImage = image;
+      const ok = await isUrlReachable(image);
+      if (ok) return image;
+    }
+
+    const articleBlock = (payload?.results || []).find((r) => r?.type === 'article');
+    const articles = Array.isArray(articleBlock?.contents) ? articleBlock.contents : [];
+    for (const article of articles) {
+      const fallbackUrl = chooseBestArticleImage(article, playerName);
+      if (!fallbackUrl) continue;
+      const ok = await isUrlReachable(fallbackUrl);
+      if (ok) return fallbackUrl;
+    }
+
+    // Some ESPN CDN player headshots fail precheck but still upload via Cloudinary fetch.
+    if (bestEffortPlayerImage) return bestEffortPlayerImage;
+  }
+
+  return null;
+}
+
+function extractAthleteIdFromUid(uid) {
+  const match = String(uid || '').match(/~a:(\d+)/);
+  return match ? match[1] : '';
+}
+
+async function resolveEspnAthleteId(playerName) {
+  const variants = buildQueryVariants(playerName);
+  const target = normalizeName(playerName);
+
+  for (const queryValue of variants) {
+    const query = encodeURIComponent(queryValue);
+    const searchUrl = `https://site.api.espn.com/apis/search/v2?query=${query}`;
+    const payload = await fetchJson(searchUrl);
+    const playerBlock = (payload?.results || []).find((r) => r?.type === 'player');
+    const candidates = playerBlock?.contents || [];
+    if (!candidates.length) continue;
+
+    const exact = candidates.find((item) => normalizeName(item?.displayName || '') === target);
+    const preferred = exact || candidates.find((item) => String(item?.description || '').toLowerCase().includes('cricket')) || candidates[0];
+    const id = extractAthleteIdFromUid(preferred?.uid);
+    if (id) return id;
+  }
+
+  return '';
+}
+
+async function resolveEspnAthleteFallbackImage(playerName) {
+  const athleteId = await resolveEspnAthleteId(playerName);
+  if (!athleteId) return null;
+
+  const athleteUrl = `https://site.api.espn.com/apis/common/v3/sports/cricket/athletes/${athleteId}`;
+  const payload = await fetchJson(athleteUrl);
+  const serialized = JSON.stringify(payload);
+    const imageUrlRegex = new RegExp('https:\\/\\/[^\"\\s]+\\.(jpg|jpeg|png|webp)', 'g');
+    const matches = serialized.match(imageUrlRegex) || [];
+  const urls = uniqueArray(matches.map((raw) => raw.replace(/\\\\\//g, '/')));
+
+  const filtered = urls.filter((u) => {
+    if (u.includes('/headshots/')) return false;
+    if (u.includes('/teamlogos/')) return false;
+    if (u.includes('default-player-logo')) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const score = (url) => {
+      let s = 0;
+      if (url.includes('/i/cricket/cricinfo/')) s += 40;
+      if (url.includes('media.video-cdn.espn.com/images/')) s += 25;
+      if (url.includes('/media/motion/')) s += 20;
+      if (url.includes('_1x1')) s += 15;
+      if (url.includes('_900x') || url.includes('_1296x')) s += 8;
+      return s;
+    };
+    return score(b) - score(a);
+  });
+
+  for (const url of filtered) {
+    const ok = await isUrlReachable(url);
+    if (ok) return url;
   }
 
   return null;
@@ -217,6 +394,7 @@ async function main() {
   let uploadedCount = 0;
   let updatedCount = 0;
   let keptExistingCount = 0;
+  let defaultFallbackCount = 0;
   const missingLocal = [];
   const missingWeb = [];
   const failedUploads = [];
@@ -245,7 +423,16 @@ async function main() {
           missingWeb.push(player.name + ' => no ESPN Cricinfo image match');
           continue;
         }
-        photoUrl = await uploadRemotePlayerImage(remoteUrl, folderArg, slug);
+        try {
+          photoUrl = await uploadRemotePlayerImage(remoteUrl, folderArg, slug);
+        } catch (uploadError) {
+          let fallbackUrl = await resolveEspnAthleteFallbackImage(player.name);
+          if (!fallbackUrl) fallbackUrl = ESPN_DEFAULT_PLAYER_IMAGE;
+          photoUrl = await uploadRemotePlayerImage(fallbackUrl, folderArg, slug);
+          if (fallbackUrl === ESPN_DEFAULT_PLAYER_IMAGE) {
+            defaultFallbackCount += 1;
+          }
+        }
       } else {
         const localFilePath = findLocalImage(imagesDir, slug);
         if (!localFilePath) {
@@ -280,6 +467,7 @@ async function main() {
   console.log('Uploaded         :', uploadedCount);
   console.log('Updated players  :', updatedCount);
   console.log('Kept existing    :', keptExistingCount);
+  console.log('Default fallback :', defaultFallbackCount);
   console.log('Missing local    :', missingLocal.length);
   console.log('Missing web      :', missingWeb.length);
   console.log('Failed uploads   :', failedUploads.length);

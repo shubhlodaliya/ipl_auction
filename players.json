@@ -1680,7 +1680,7 @@
     "country": "India",
     "base_price_lakh": 75,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1070180.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729307/ipl-auction/players/priyam-garg.webp"
   },
   {
     "id": 188,
@@ -1869,7 +1869,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1175423.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729245/ipl-auction/players/hrithik-shokeen.webp"
   },
   {
     "id": 209,
@@ -1995,7 +1995,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/592735.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729286/ipl-auction/players/sandeep-warrier.webp"
   },
   {
     "id": 223,
@@ -2058,7 +2058,7 @@
     "country": "India",
     "base_price_lakh": 75,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1175429.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729272/ipl-auction/players/rajvardhan-hangargekar.webp"
   },
   {
     "id": 230,
@@ -2067,7 +2067,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1292506.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729377/ipl-auction/players/nishant-sindhu.webp"
   },
   {
     "id": 231,
@@ -2076,7 +2076,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1252585.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729365/ipl-auction/players/shubham-dubey.webp"
   },
   {
     "id": 232,
@@ -2103,7 +2103,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1155262.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729234/ipl-auction/players/vidwath-kaverappa.webp"
   },
   {
     "id": 235,
@@ -2130,7 +2130,7 @@
     "country": "England",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/521637.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729348/ipl-auction/players/ben-duckett.webp"
   },
   {
     "id": 238,
@@ -2220,7 +2220,7 @@
     "country": "Bangladesh",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/990031.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729334/ipl-auction/players/towhid-hridoy.webp"
   },
   {
     "id": 248,
@@ -2310,7 +2310,7 @@
     "country": "India",
     "base_price_lakh": 100,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/32498.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729320/ipl-auction/players/yusuf-pathan.webp"
   },
   {
     "id": 258,

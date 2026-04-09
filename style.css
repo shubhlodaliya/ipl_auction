@@ -1409,7 +1409,7 @@ input[type=range]::-webkit-slider-thumb {
   text-align: center;
 }
 
-.top-pick-team-wrap {
+.top-pick-player-wrap {
   width: 54px;
   height: 54px;
   border-radius: 14px;
@@ -1421,11 +1421,24 @@ input[type=range]::-webkit-slider-thumb {
   justify-content: center;
 }
 
-.top-pick-team-wrap .result-team-logo,
-.top-pick-team-wrap .result-team-emoji {
+.top-pick-player-photo,
+.top-pick-player-fallback {
   width: 100%;
   height: 100%;
   border-radius: 12px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.top-pick-player-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: linear-gradient(135deg, rgba(255,203,48,0.12), rgba(255,255,255,0.04));
 }
 
 .top-pick-main {

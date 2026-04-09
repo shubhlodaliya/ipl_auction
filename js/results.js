@@ -901,12 +901,16 @@ function renderTopPickModal() {
 
   content.innerHTML = picks.map((pick, idx) => {
     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
-    const logo = pick.teamLogo ? `<img class="result-team-logo" src="${pick.teamLogo}" alt="${pick.teamShort} logo" />` : `<div class="result-team-emoji">${pick.teamShort}</div>`;
+    const player = topPickUiState.playerMap?.[pick.playerId] || topPickUiState.playerMap?.[String(pick.playerId)] || null;
+    const initials = player ? getPlayerInitials(player.name) : getPlayerInitials(pick.playerName);
+    const avatar = player?.photo_url
+      ? `<img class="top-pick-player-photo" src="${player.photo_url}" alt="${pick.playerName}" onerror="handlePlayerImageError(this, '${initials}')" />`
+      : `<div class="top-pick-player-fallback">${initials}</div>`;
     return `
       <div class="top-pick-row">
         <div class="top-pick-rank">${medal}</div>
-        <div class="top-pick-team-wrap" style="--team-color:${pick.teamColor};">
-          ${logo}
+        <div class="top-pick-player-wrap" style="--team-color:${pick.teamColor};">
+          ${avatar}
         </div>
         <div class="top-pick-main">
           <div class="top-pick-name">${pick.playerName}</div>

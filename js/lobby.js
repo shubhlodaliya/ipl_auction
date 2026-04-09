@@ -131,7 +131,7 @@ function initLobby() {
       </div>
       <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Bid Timer</div>
-        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${roomConfig.timerSeconds}s</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${(roomConfig.unlimitedTimer || roomConfig.timerMode === 'unlimited') ? 'Unlimited' : `${roomConfig.timerSeconds}s`}</div>
       </div>
       <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Order</div>
@@ -333,6 +333,7 @@ async function startAuction() {
 
   try {
     const isManual = roomConfig.auctionType === 'manual';
+    const unlimitedTimer = !!roomConfig.unlimitedTimer || roomConfig.timerMode === 'unlimited';
     const mode = roomConfig.auctionMode || 'random';
 
     // Load all players and build queue
@@ -365,7 +366,7 @@ async function startAuction() {
       skipVotes: {},
       poolSkipVotes: {},
       withdrawnTeams: {},
-      timerEnd: Date.now() + roomConfig.timerSeconds * 1000,
+      timerEnd: unlimitedTimer ? null : (Date.now() + roomConfig.timerSeconds * 1000),
       status: 'bidding'
     });
 

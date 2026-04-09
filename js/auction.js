@@ -251,7 +251,7 @@ async function initAuction() {
     if (snap.val() === 'finished') {
       if (voiceFeatureEnabled) leaveVoiceChat();
       requestCloudinaryCleanup();
-      setTimeout(() => { window.location.href = 'results.html'; }, 2000);
+      setTimeout(() => { window.location.href = `results.html?room=${encodeURIComponent(roomCode)}`; }, 2000);
     }
   });
 
@@ -262,8 +262,29 @@ async function initAuction() {
 function applySpectatorUi() {
   if (!isSpectator) return;
 
+  document.body.classList.add('spectator-mode');
+
+  const statusBadge = document.getElementById('auctionStatus');
+  if (statusBadge) {
+    statusBadge.textContent = 'LIVE VIEW';
+    statusBadge.style.background = 'rgba(29,160,255,0.15)';
+    statusBadge.style.color = 'var(--blue)';
+  }
+
   const purseEl = document.getElementById('myPurseDisplay');
   if (purseEl) purseEl.textContent = 'Viewer';
+
+  const bidPanel = document.querySelector('.bid-panel');
+  if (bidPanel) bidPanel.style.display = 'none';
+
+  const spectatorPanel = document.getElementById('spectatorPanel');
+  if (spectatorPanel) spectatorPanel.style.display = 'flex';
+
+  const quickToolbar = document.getElementById('quickChatToolbar');
+  if (quickToolbar) quickToolbar.style.display = 'none';
+
+  const hostControls = document.getElementById('hostAuctionControls');
+  if (hostControls) hostControls.style.display = 'none';
 
   const chatInput = document.getElementById('chatInput');
   if (chatInput) {
@@ -289,6 +310,39 @@ function applySpectatorUi() {
     voiceMuteBtn.disabled = true;
     voiceMuteBtn.textContent = 'Mute';
   }
+}
+
+function updateSpectatorPanel(data = null) {
+  if (!isSpectator) return;
+
+  const current = data || currentAuctionData;
+  const bidEl = document.getElementById('spectatorCurrentBid');
+  const leaderEl = document.getElementById('spectatorLeadingTeam');
+  const timerEl = document.getElementById('spectatorTimeLeft');
+  if (!bidEl || !leaderEl || !timerEl) return;
+
+  if (!current) {
+    bidEl.textContent = '₹—';
+    leaderEl.textContent = 'No bids yet';
+    timerEl.textContent = '—';
+    return;
+  }
+
+  bidEl.textContent = formatPrice(current.currentBid);
+  if (current.highestBidder) {
+    const t = teamsData[current.highestBidder] || getRoomTeamMeta(current.highestBidder) || {};
+    leaderEl.textContent = t.name || t.short || current.highestBidder;
+  } else {
+    leaderEl.textContent = 'No bids yet';
+  }
+
+  if (paused || current.status !== 'bidding') {
+    timerEl.textContent = paused ? 'Paused' : 'Closed';
+    return;
+  }
+
+  const left = Math.max(0, Math.ceil((current.timerEnd - getSyncedNowMs()) / 1000));
+  timerEl.textContent = `${left}s`;
 }
 
 // ---- RENDER AUCTION STATE ----
@@ -427,23 +481,7 @@ function renderBidDisplay(data, player = null) {
 
   if (data.status === 'bidding') {
     if (isSpectator) {
-      if (baseBidBtn) {
-        baseBidBtn.disabled = true;
-        baseBidBtn.textContent = 'Viewer Mode';
-      }
-      if (quickBidRow) quickBidRow.innerHTML = '';
-      if (withdrawnTeamsWrap) withdrawnTeamsWrap.style.display = 'none';
-      if (withdrawnTeamsList) withdrawnTeamsList.innerHTML = '';
-      withdrawBtn.disabled = true;
-      withdrawBtn.textContent = 'Viewer Mode';
-      passBtn.disabled = true;
-      passBtn.textContent = 'Viewer Mode';
-      skipPoolBtn.disabled = true;
-      skipPoolBtn.textContent = 'Viewer Mode';
-      warnEl.textContent = 'Live viewer mode: bidding controls are disabled.';
-      warnEl.style.display = 'block';
-      warnEl.style.color = 'var(--text-sec)';
-      if (bidPanelEl) bidPanelEl.classList.remove('motion-stagger');
+      updateSpectatorPanel(data);
       return;
     }
 
@@ -717,16 +755,19 @@ function timerTick() {
       ? Math.max(0, Math.ceil((currentAuctionData.timerEnd - getSyncedNowMs()) / 1000))
       : timerSeconds;
     updateTimerDisplay(freezeLeft, timerSeconds);
+    updateSpectatorPanel(currentAuctionData);
     return;
   }
 
   if (!currentAuctionData || currentAuctionData.status !== 'bidding') {
     updateTimerDisplay(0, timerSeconds);
+    updateSpectatorPanel(currentAuctionData);
     return;
   }
 
   const timeLeft = Math.max(0, Math.ceil((currentAuctionData.timerEnd - getSyncedNowMs()) / 1000));
   updateTimerDisplay(timeLeft, timerSeconds);
+  updateSpectatorPanel(currentAuctionData);
 
   // Host processes round when timer hits 0
   if (timeLeft <= 0 && isHost && !processingRound) {

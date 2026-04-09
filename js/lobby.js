@@ -176,9 +176,9 @@ function initLobby() {
   statusListener = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
     const status = snap.val();
     if (status === 'auction') {
-      window.location.href = 'auction.html';
+      window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}`;
     } else if (status === 'finished') {
-      window.location.href = 'results.html';
+      window.location.href = `results.html?room=${encodeURIComponent(roomCode)}`;
     }
   });
 }

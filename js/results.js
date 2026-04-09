@@ -1096,7 +1096,7 @@ function setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPla
 
   reAuctionState.listeners.status = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
     if (snap.val() === 'auction') {
-      window.location.href = 'auction.html';
+      window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}`;
     }
   });
 

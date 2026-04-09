@@ -294,7 +294,7 @@ async function watchLiveAuction() {
       isHost: false,
       isSpectator: true
     });
-    window.location.href = 'auction.html';
+    window.location.href = `auction.html?room=${encodeURIComponent(code)}`;
   } catch (err) {
     console.error(err);
     showError(errEl, 'Failed to open live auction. Check your connection.');

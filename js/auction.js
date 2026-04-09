@@ -343,6 +343,12 @@ function applySpectatorUi() {
   const quickToolbar = document.getElementById('quickChatToolbar');
   if (quickToolbar) quickToolbar.style.display = 'none';
 
+  const chatToggleBtn = document.getElementById('chatToggleBtn');
+  if (chatToggleBtn) {
+    chatToggleBtn.disabled = true;
+    chatToggleBtn.textContent = 'Chat Disabled';
+  }
+
   const hostControls = document.getElementById('hostAuctionControls');
   if (hostControls) hostControls.style.display = 'none';
 

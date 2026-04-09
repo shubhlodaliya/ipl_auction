@@ -56,6 +56,9 @@
               style="font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:100px;background:var(--gold-dim);color:var(--gold);font-weight:600;">
               LIVE
             </span>
+            <button class="auction-room-code-chip" id="auctionRoomCodeChip" onclick="copyAuctionCode()" title="Click to copy auction code">
+              Room: ------
+            </button>
             <span id="spectatorCountBadge" class="spectator-count-badge">👀 0 watching</span>
             <span id="voiceStatusBadge" class="chat-mute-badge" style="display:none;">Voice muted by host</span>
             <button class="btn btn-ghost" onclick="leaveAuction()">Leave</button>
@@ -154,6 +157,10 @@
         <div class="spectator-panel" id="spectatorPanel" style="display:none;">
           <div class="spectator-title">Live Spectator View</div>
           <div class="spectator-note">You are watching this auction in view-only mode.</div>
+
+          <button class="spectator-room-code" id="spectatorRoomCode" onclick="copyAuctionCode()" title="Click to copy auction code">
+            Room Code: ------
+          </button>
 
           <div class="spectator-card">
             <div class="spectator-label">Current Bid</div>

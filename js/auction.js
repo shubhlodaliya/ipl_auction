@@ -89,6 +89,15 @@ function updateSpectatorCountBadge(count = 0) {
   badge.textContent = `👀 ${n} watching`;
 }
 
+function renderAuctionCodeChip() {
+  const codeChip = document.getElementById('auctionRoomCodeChip');
+  if (!codeChip) return;
+  codeChip.textContent = `Room: ${roomCode}`;
+
+  const spectatorCode = document.getElementById('spectatorRoomCode');
+  if (spectatorCode) spectatorCode.textContent = `Room Code: ${roomCode}`;
+}
+
 function listenSpectatorCount() {
   listeners.spectatorCount = db.ref(`rooms/${roomCode}/spectators`).on('value', snap => {
     const viewers = snap.val() || {};
@@ -195,6 +204,7 @@ async function initAuction() {
   initBidButtonMagneticHover();
   initChatPopup();
   applySpectatorUi();
+  renderAuctionCodeChip();
   listenSpectatorCount();
   registerSpectatorPresence();
 
@@ -1665,6 +1675,31 @@ function showToast(msg, type = '') {
   t.textContent = msg;
   t.className = 'toast show ' + type;
   setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+
+function copyAuctionCode() {
+  if (!roomCode) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(roomCode)
+      .then(() => showToast('Auction code copied!', 'success'))
+      .catch(() => showToast('Failed to copy auction code.', 'error'));
+    return;
+  }
+
+  // Fallback for older browsers.
+  const temp = document.createElement('textarea');
+  temp.value = roomCode;
+  temp.style.position = 'fixed';
+  temp.style.opacity = '0';
+  document.body.appendChild(temp);
+  temp.select();
+  try {
+    document.execCommand('copy');
+    showToast('Auction code copied!', 'success');
+  } catch (_) {
+    showToast('Failed to copy auction code.', 'error');
+  }
+  document.body.removeChild(temp);
 }
 
 function updateSoundToggleButton() {

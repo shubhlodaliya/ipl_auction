@@ -55,7 +55,7 @@ let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY
 let serverTimeOffsetMs = 0;
 let spectatorSessionId = null;
 const avatarBorderVariantClass = 'border-bold';
-const voiceFeatureEnabled = true;
+const voiceFeatureEnabled = false;
 const voiceRtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },

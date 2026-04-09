@@ -16,6 +16,7 @@ let playerQueue = [];
 let currentIndex = 0;
 let timerInterval = null;
 let timerSeconds = 30;
+let unlimitedTimer = false;
 let processingRound = false;
 let teamsData = {};
 let soldPlayersData = {};
@@ -159,6 +160,7 @@ async function initAuction() {
   const room = roomSnap.val();
   roomConfig = room.config || {};
   isManualAuction = roomConfig.auctionType === 'manual';
+  unlimitedTimer = !!roomConfig.unlimitedTimer || roomConfig.timerMode === 'unlimited' || Number(roomConfig.timerSeconds) === 0;
   roomTeamCatalog = isManualAuction
     ? (room.manualTeams || {})
     : Object.fromEntries(IPL_TEAMS.map(t => [t.id, t]));
@@ -810,6 +812,12 @@ function leaveAuction() {
 // ---- TIMER ----
 function timerTick() {
   if (paused) {
+    if (unlimitedTimer && currentAuctionData && currentAuctionData.status === 'bidding') {
+      updateTimerDisplay(null, 1);
+      updateSpectatorPanel(currentAuctionData);
+      return;
+    }
+
     const freezeLeft = currentAuctionData && currentAuctionData.status === 'bidding'
       ? Math.max(0, Math.ceil((currentAuctionData.timerEnd - getSyncedNowMs()) / 1000))
       : timerSeconds;
@@ -820,6 +828,12 @@ function timerTick() {
 
   if (!currentAuctionData || currentAuctionData.status !== 'bidding') {
     updateTimerDisplay(0, timerSeconds);
+    updateSpectatorPanel(currentAuctionData);
+    return;
+  }
+
+  if (unlimitedTimer) {
+    updateTimerDisplay(null, 1);
     updateSpectatorPanel(currentAuctionData);
     return;
   }
@@ -839,6 +853,15 @@ function updateTimerDisplay(secondsLeft, total) {
   const val = document.getElementById('timerValue');
   const ring = document.getElementById('timerRing');
   if (!val || !ring) return;
+
+  if (secondsLeft === null) {
+    val.textContent = '∞';
+    ring.style.strokeDashoffset = 0;
+    ring.style.stroke = 'var(--blue)';
+    val.style.color = 'var(--blue)';
+    lastTimerSoundSecond = -1;
+    return;
+  }
 
   val.textContent = secondsLeft;
 
@@ -939,7 +962,9 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
         auction.bidHistory = auction.bidHistory.slice(-30);
       }
       // Reset timer on each bid
-      auction.timerEnd = getSyncedNowMs() + timerSeconds * 1000;
+      if (!unlimitedTimer) {
+        auction.timerEnd = getSyncedNowMs() + timerSeconds * 1000;
+      }
       return auction;
     });
   } catch (err) {
@@ -1146,7 +1171,7 @@ async function skipToNextPool() {
     skipVotes: {},
     poolSkipVotes: {},
     withdrawnTeams: {},
-    timerEnd: getSyncedNowMs() + timerSeconds * 1000,
+    timerEnd: unlimitedTimer ? null : (getSyncedNowMs() + timerSeconds * 1000),
     status: 'bidding'
   });
 }
@@ -1248,7 +1273,7 @@ async function advanceToNextPlayer() {
     skipVotes: {},
     poolSkipVotes: {},
     withdrawnTeams: {},
-    timerEnd: getSyncedNowMs() + timerSeconds * 1000,
+    timerEnd: unlimitedTimer ? null : (getSyncedNowMs() + timerSeconds * 1000),
     status: 'bidding'
   });
 }
@@ -1512,7 +1537,9 @@ async function removeTeamFromAuction(targetTeamId) {
         auction.highestBidder = null;
         const currentPlayer = playerMap[auction.playerId];
         if (currentPlayer) auction.currentBid = currentPlayer.base_price_lakh;
-        auction.timerEnd = getSyncedNowMs() + timerSeconds * 1000;
+        if (!unlimitedTimer) {
+          auction.timerEnd = getSyncedNowMs() + timerSeconds * 1000;
+        }
       }
 
       return auction;
@@ -1650,7 +1677,7 @@ async function togglePauseAuction() {
   const now = getSyncedNowMs();
   const pauseDuration = pausedAt ? (now - pausedAt) : 0;
 
-  if (pauseDuration > 0) {
+  if (pauseDuration > 0 && !unlimitedTimer) {
     await db.ref(`rooms/${roomCode}/currentAuction`).transaction(auction => {
       if (!auction || auction.status !== 'bidding') return auction;
       auction.timerEnd = (auction.timerEnd || now) + pauseDuration;

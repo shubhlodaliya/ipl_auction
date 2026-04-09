@@ -1318,6 +1318,7 @@ async function startReAuctionFromResults() {
 
   const now = Date.now();
   const timerSec = room.config?.timerSeconds || 30;
+  const unlimitedTimer = !!room.config?.unlimitedTimer || room.config?.timerMode === 'unlimited' || Number(room.config?.timerSeconds) === 0;
   const reAuctionRound = (room.config?.reAuctionRound || 0) + 1;
 
   const updates = {};
@@ -1334,7 +1335,7 @@ async function startReAuctionFromResults() {
     skipVotes: {},
     poolSkipVotes: {},
     withdrawnTeams: {},
-    timerEnd: now + timerSec * 1000,
+    timerEnd: unlimitedTimer ? null : (now + timerSec * 1000),
     status: 'bidding'
   };
   updates[`rooms/${roomCode}/auctionControl`] = { paused: false, pausedAt: null };

@@ -13,6 +13,14 @@ function initManualSetup() {
   for (let i = 0; i < 12; i += 1) addPlayerRow();
 }
 
+function toggleManualTimerUnlimited(enabled) {
+  const timerInput = document.getElementById('timerSeconds');
+  if (!timerInput) return;
+  timerInput.disabled = !!enabled;
+  if (enabled) timerInput.value = '0';
+  else if (!Number(timerInput.value) || Number(timerInput.value) < 5) timerInput.value = '30';
+}
+
 function normalizeTeamShort(name) {
   const cleaned = String(name || '').trim().toUpperCase().replace(/[^A-Z0-9 ]/g, '');
   if (!cleaned) return '';
@@ -483,6 +491,7 @@ async function createManualRoom() {
   const budget = Number(document.getElementById('budgetLakh').value || 0);
   const maxSquadSize = Number(document.getElementById('maxSquadSize').value || 0);
   const timerSeconds = Number(document.getElementById('timerSeconds').value || 0);
+  const timerUnlimited = !!document.getElementById('timerUnlimited')?.checked;
   const bidOptions = parseBidOptions();
 
   const teams = collectTeams(true);
@@ -494,7 +503,7 @@ async function createManualRoom() {
   if (players.length < 1) return showError('Add at least 1 player.');
   if (budget <= 0) return showError('Purse must be positive.');
   if (maxSquadSize <= 0) return showError('Max players per team must be positive.');
-  if (timerSeconds < 5) return showError('Timer must be at least 5 seconds.');
+  if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
 
   const hostTeam = teams.find(t => t.id === hostTeamId);
@@ -543,7 +552,9 @@ async function createManualRoom() {
         hostTeamId: hostTeam.id,
         budget,
         maxSquadSize,
-        timerSeconds,
+        timerSeconds: timerUnlimited ? 0 : timerSeconds,
+        timerMode: timerUnlimited ? 'unlimited' : 'countdown',
+        unlimitedTimer: timerUnlimited,
         bidOptions,
         manualPlayerFields: customPlayerFields,
         auctionMode: 'manual',

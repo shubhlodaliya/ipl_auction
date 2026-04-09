@@ -246,17 +246,12 @@ async function joinRoom() {
 async function watchLiveAuction() {
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   const name = document.getElementById('joinName').value.trim();
-  const passcode = document.getElementById('joinPasscode').value.trim();
 
   const errEl = document.getElementById('joinError');
   errEl.style.display = 'none';
 
   if (code.length !== 6) {
     showError(errEl, 'Enter a valid 6-character room code.');
-    return;
-  }
-  if (!passcode) {
-    showError(errEl, 'Passcode is required.');
     return;
   }
 
@@ -281,13 +276,6 @@ async function watchLiveAuction() {
       } else {
         showError(errEl, 'This room is not live yet. Ask host to start auction first.');
       }
-      btn.disabled = false;
-      btn.textContent = '👀 Watch Live Auction';
-      return;
-    }
-
-    if (!room?.config?.invitePasscode || room.config.invitePasscode !== passcode) {
-      showError(errEl, 'Invalid room passcode.');
       btn.disabled = false;
       btn.textContent = '👀 Watch Live Auction';
       return;

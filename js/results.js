@@ -628,6 +628,22 @@ async function loadResults() {
     const soldCount = Object.keys(soldPlayers).length;
     const unsoldCount = buildUnsoldQueue(playerQueue, soldPlayers).length;
 
+    const topPickEntry = Object.entries(soldPlayers).reduce((best, [pid, sale]) => {
+      if (!sale || !Number.isFinite(Number(sale.soldPrice))) return best;
+      if (!best || Number(sale.soldPrice) > Number(best.sale.soldPrice)) {
+        return { pid, sale };
+      }
+      return best;
+    }, null);
+
+    const topPickPlayer = topPickEntry ? (playerMap[topPickEntry.pid] || null) : null;
+    const topPickTeam = topPickEntry
+      ? (teams[topPickEntry.sale.teamId] || roomTeamCatalog[topPickEntry.sale.teamId] || getTeam(topPickEntry.sale.teamId) || null)
+      : null;
+    const topPickName = topPickPlayer?.name || '—';
+    const topPickTeamName = topPickTeam?.name || topPickTeam?.short || '—';
+    const topPickPrice = topPickEntry ? formatPrice(topPickEntry.sale.soldPrice) : '—';
+
     document.getElementById('summaryStats').innerHTML = `
       <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Players Sold</div>
@@ -644,6 +660,11 @@ async function loadResults() {
       <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Total Spent</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--green)">${formatPrice(totalSales)}</div>
+      </div>
+      <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;min-width:210px;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Top Pick</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;color:var(--gold);line-height:1.2;">${topPickName}</div>
+        <div style="font-size:0.85rem;color:var(--text-sec);margin-top:0.2rem;">${topPickTeamName} • ${topPickPrice}</div>
       </div>
     `;
 

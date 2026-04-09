@@ -699,7 +699,7 @@
     "country": "New Zealand",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/625960.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775665979/ipl-auction/players/kyle-jamieson.webp"
   },
   {
     "id": 79,
@@ -744,7 +744,7 @@
     "country": "New Zealand",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/823509.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775665207/ipl-auction/players/glenn-phillips.webp"
   },
   {
     "id": 84,
@@ -924,7 +924,7 @@
     "country": "India",
     "base_price_lakh": 75,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/446763.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775666644/ipl-auction/players/rahul-tripathi.webp"
   },
   {
     "id": 104,
@@ -969,7 +969,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1159720.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775666491/ipl-auction/players/yash-dayal.webp"
   },
   {
     "id": 109,
@@ -1023,7 +1023,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/778963.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775666378/ipl-auction/players/abhinav-manohar.webp"
   },
   {
     "id": 115,
@@ -1041,7 +1041,7 @@
     "country": "India",
     "base_price_lakh": 50,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1175489.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775667098/ipl-auction/players/sameer-rizvi.webp"
   },
   {
     "id": 117,
@@ -1059,7 +1059,7 @@
     "country": "India",
     "base_price_lakh": 100,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/823703.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775666779/ipl-auction/players/rajat-patidar.webp"
   },
   {
     "id": 119,
@@ -1158,7 +1158,7 @@
     "country": "Afghanistan",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/974087.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775667186/ipl-auction/players/rahmanullah-gurbaz.webp"
   },
   {
     "id": 130,
@@ -1248,7 +1248,7 @@
     "country": "Afghanistan",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1182529.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775667163/ipl-auction/players/noor-ahmad.webp"
   },
   {
     "id": 140,
@@ -1284,7 +1284,7 @@
     "country": "South Africa",
     "base_price_lakh": 50,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/971349.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775667143/ipl-auction/players/nandre-burger.webp"
   },
   {
     "id": 144,
@@ -1356,7 +1356,7 @@
     "country": "New Zealand",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/381743.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775667614/ipl-auction/players/daryl-mitchell.webp"
   },
   {
     "id": 152,
@@ -1374,7 +1374,7 @@
     "country": "New Zealand",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/959759.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775667599/ipl-auction/players/finn-allen.webp"
   },
   {
     "id": 154,
@@ -1392,7 +1392,7 @@
     "country": "New Zealand",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/493773.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775667570/ipl-auction/players/lockie-ferguson.webp"
   },
   {
     "id": 156,

@@ -1311,7 +1311,7 @@
     "country": "South Africa",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1070665.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729947/ipl-auction/players/dewald-brevis.webp"
   },
   {
     "id": 147,
@@ -1365,7 +1365,7 @@
     "country": "New Zealand",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/959767.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729959/ipl-auction/players/rachin-ravindra.webp"
   },
   {
     "id": 153,
@@ -1383,7 +1383,7 @@
     "country": "New Zealand",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/326968.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729967/ipl-auction/players/michael-bracewell.webp"
   },
   {
     "id": 155,
@@ -1410,7 +1410,7 @@
     "country": "New Zealand",
     "base_price_lakh": 50,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/959769.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729975/ipl-auction/players/ben-sears.webp"
   },
   {
     "id": 158,
@@ -1446,7 +1446,7 @@
     "country": "England",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/877051.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729982/ipl-auction/players/tom-banton.webp"
   },
   {
     "id": 162,
@@ -1455,7 +1455,7 @@
     "country": "England",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://static.cricbuzz.com/a/img/v1/192x192/i1/c717789/jamie-smith.jpg"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775729996/ipl-auction/players/jamie-smith.webp"
   },
   {
     "id": 163,
@@ -1464,7 +1464,7 @@
     "country": "England",
     "base_price_lakh": 50,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1263691.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775730011/ipl-auction/players/rehan-ahmed.webp"
   },
   {
     "id": 164,
@@ -1482,7 +1482,7 @@
     "country": "England",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/596417.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775730019/ipl-auction/players/brydon-carse.webp"
   },
   {
     "id": 166,
@@ -1491,7 +1491,7 @@
     "country": "England",
     "base_price_lakh": 50,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/459257.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775730029/ipl-auction/players/tymal-mills.webp"
   },
   {
     "id": 167,
@@ -1500,7 +1500,7 @@
     "country": "England",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/461632.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775730115/ipl-auction/players/reece-topley.webp"
   },
   {
     "id": 168,

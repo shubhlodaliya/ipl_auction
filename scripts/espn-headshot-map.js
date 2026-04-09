@@ -5,6 +5,8 @@ const ROOT = path.resolve(__dirname, '..');
 const PLAYERS_FILE = path.join(ROOT, 'players.json');
 const SEARCH_API = 'https://site.api.espn.com/apis/search/v2?query=';
 const ESPN_DEFAULT_HEADSHOT = 'https://a.espncdn.com/i/headshots/cricket/players/default-player-logo-500.png';
+const CRICBUZZ_SEARCH_API = 'https://www.cricbuzz.com/api/player-search/';
+const ESPN_HEADSHOT_REGEX = /https:\/\/a\.espncdn\.com\/i\/headshots\/cricket\/players\/full\/\d+\.png$/i;
 
 const FORCED_HEADSHOT_OVERRIDES = {
   'David Miller': 'https://a.espncdn.com/i/headshots/cricket/players/full/321777.png',
@@ -15,12 +17,12 @@ const FORCED_HEADSHOT_OVERRIDES = {
   'Brandon King': 'https://a.espncdn.com/i/headshots/cricket/players/full/670035.png'
 };
 
-const FORCE_DEFAULT_FOR = new Set([
-  'Will Jacks',
-  "Will O'Rourke",
-  'Jamie Smith',
-  'Harpreet Bhatia'
-]);
+const CRICBUZZ_MANUAL_OVERRIDES = {
+  'Will Jacks': 'https://static.cricbuzz.com/a/img/v1/192x192/i1/c848529/will-jacks.jpg',
+  "Will O'Rourke": 'https://static.cricbuzz.com/a/img/v1/192x192/i1/c616423/william-orourke.jpg',
+  'Jamie Smith': 'https://static.cricbuzz.com/a/img/v1/192x192/i1/c717789/jamie-smith.jpg',
+  'Harpreet Bhatia': 'https://static.cricbuzz.com/a/img/v1/192x192/i1/c153367/harpreet-singh-bhatia.jpg'
+};
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -45,6 +47,18 @@ function getNameTokens(value) {
 
 function uniqueArray(values) {
   return [...new Set(values.filter(Boolean))];
+}
+
+function isDefaultHeadshot(url) {
+  return String(url || '').includes('default-player-logo-500.png');
+}
+
+function isValidEspnHeadshot(url) {
+  return ESPN_HEADSHOT_REGEX.test(String(url || '').trim());
+}
+
+function slugify(value) {
+  return normalizeName(value).replace(/\s+/g, '-');
 }
 
 function buildQueryVariants(playerName) {
@@ -94,6 +108,108 @@ async function fetchSearch(query) {
     throw new Error(`HTTP ${response.status} for query ${query}`);
   }
   return response.json();
+}
+
+async function fetchCricbuzzSearch(query) {
+  const url = CRICBUZZ_SEARCH_API + encodeURIComponent(query);
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'ipl-auction-espn-headshot-map/1.0',
+      'Accept': 'application/json'
+    }
+  });
+
+  if (!response.ok) return [];
+
+  const payload = await response.json();
+  return Array.isArray(payload?.player) ? payload.player : [];
+}
+
+function rankCricbuzzCandidates(candidates, playerName) {
+  const target = normalizeName(playerName);
+  const targetTokens = getNameTokens(playerName);
+  const targetLast = targetTokens[targetTokens.length - 1] || '';
+
+  return [...candidates].sort((a, b) => {
+    const an = normalizeName(a?.name || '');
+    const bn = normalizeName(b?.name || '');
+
+    const aExact = an === target ? 1 : 0;
+    const bExact = bn === target ? 1 : 0;
+    if (aExact !== bExact) return bExact - aExact;
+
+    const aContains = an.includes(target) ? 1 : 0;
+    const bContains = bn.includes(target) ? 1 : 0;
+    if (aContains !== bContains) return bContains - aContains;
+
+    const aLast = targetLast && an.includes(targetLast) ? 1 : 0;
+    const bLast = targetLast && bn.includes(targetLast) ? 1 : 0;
+    if (aLast !== bLast) return bLast - aLast;
+
+    const aDelta = Math.abs(an.length - target.length);
+    const bDelta = Math.abs(bn.length - target.length);
+    return aDelta - bDelta;
+  });
+}
+
+async function fetchCricbuzzFaceImageId(profileId) {
+  try {
+    const url = `https://www.cricbuzz.com/profiles/${profileId}`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'ipl-auction-espn-headshot-map/1.0',
+        'Accept': 'text/html'
+      }
+    });
+    if (!response.ok) return null;
+
+    const html = await response.text();
+    const match = html.match(/faceImageId[^0-9]*(\d+)/i);
+    return match ? match[1] : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function resolveCricbuzzPhoto(playerName) {
+  if (CRICBUZZ_MANUAL_OVERRIDES[playerName]) {
+    return CRICBUZZ_MANUAL_OVERRIDES[playerName];
+  }
+
+  const variants = uniqueArray([
+    ...buildQueryVariants(playerName),
+    normalizeName(playerName),
+    getNameTokens(playerName).slice(-1)[0]
+  ]);
+
+  for (const q of variants) {
+    if (!q || q.length < 2) continue;
+
+    let candidates = [];
+    try {
+      candidates = await fetchCricbuzzSearch(q);
+    } catch (_) {
+      candidates = [];
+    }
+    if (!candidates.length) continue;
+
+    const ranked = rankCricbuzzCandidates(candidates, playerName).slice(0, 4);
+    for (const candidate of ranked) {
+      const id = candidate?.id;
+      if (!id) continue;
+
+      const faceImageId = await fetchCricbuzzFaceImageId(id);
+      if (!faceImageId) continue;
+
+      const slug = slugify(candidate?.name || playerName) || slugify(playerName) || 'player';
+      const imageUrl = `https://static.cricbuzz.com/a/img/v1/192x192/i1/c${faceImageId}/${slug}.jpg`;
+
+      const ok = await isUrlReachable(imageUrl);
+      if (ok) return imageUrl;
+    }
+  }
+
+  return null;
 }
 
 function getPlayerIdFromProfileUrl(url) {
@@ -192,34 +308,46 @@ async function main() {
       continue;
     }
 
-    if (FORCE_DEFAULT_FOR.has(player.name)) {
-      if (player.photo_url !== ESPN_DEFAULT_HEADSHOT) {
-        player.photo_url = ESPN_DEFAULT_HEADSHOT;
-        updated += 1;
-        console.log('Default headshot fallback:', player.name);
-      } else {
-        unchanged += 1;
-      }
+    if (isValidEspnHeadshot(player.photo_url) && !isDefaultHeadshot(player.photo_url)) {
+      unchanged += 1;
       await delay(20);
       continue;
     }
 
     const headshot = await resolveHeadshot(player.name);
-    if (!headshot) {
-      missing.push(player.name);
+    if (headshot && !isDefaultHeadshot(headshot)) {
+      if (player.photo_url === headshot) {
+        unchanged += 1;
+      } else {
+        player.photo_url = headshot;
+        updated += 1;
+        console.log('Headshot mapped:', player.name);
+      }
+
       await delay(70);
       continue;
     }
 
-    if (player.photo_url === headshot) {
-      unchanged += 1;
-    } else {
-      player.photo_url = headshot;
-      updated += 1;
-      console.log('Headshot mapped:', player.name);
+    const cricbuzzPhoto = await resolveCricbuzzPhoto(player.name);
+    if (cricbuzzPhoto) {
+      if (player.photo_url === cricbuzzPhoto) {
+        unchanged += 1;
+      } else {
+        player.photo_url = cricbuzzPhoto;
+        updated += 1;
+        console.log('Cricbuzz fallback mapped:', player.name);
+      }
+      await delay(90);
+      continue;
     }
 
-    await delay(70);
+    if (isValidEspnHeadshot(player.photo_url) && !isDefaultHeadshot(player.photo_url)) {
+      unchanged += 1;
+    } else {
+      missing.push(player.name);
+    }
+
+    await delay(90);
   }
 
   writeJson(PLAYERS_FILE, players);

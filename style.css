@@ -1358,6 +1358,11 @@ input[type=range]::-webkit-slider-thumb {
   background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015));
 }
 
+.spectator-history-wrap {
+  width: 100%;
+  margin-top: 0.1rem;
+}
+
 .spectator-label {
   font-size: 0.72rem;
   font-weight: 600;

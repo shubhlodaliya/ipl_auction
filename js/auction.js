@@ -391,6 +391,7 @@ function updateSpectatorPanel(data = null) {
     bidEl.textContent = '₹—';
     leaderEl.textContent = 'No bids yet';
     timerEl.textContent = '—';
+    renderSpectatorBidHistory(current);
     return;
   }
 
@@ -402,8 +403,15 @@ function updateSpectatorPanel(data = null) {
     leaderEl.textContent = 'No bids yet';
   }
 
+  renderSpectatorBidHistory(current);
+
   if (paused || current.status !== 'bidding') {
     timerEl.textContent = paused ? 'Paused' : 'Closed';
+    return;
+  }
+
+  if (unlimitedTimer) {
+    timerEl.textContent = '∞';
     return;
   }
 
@@ -701,6 +709,43 @@ async function autoWithdrawFromCurrentPlayerIfNeeded(data) {
 function renderBidHistory(data) {
   const listEl = document.getElementById('bidHistoryList');
   const countEl = document.getElementById('bidHistoryCount');
+  if (!listEl || !countEl) return;
+
+  const history = Array.isArray(data?.bidHistory) ? data.bidHistory : [];
+  countEl.textContent = String(history.length);
+
+  if (!history.length) {
+    listEl.innerHTML = '<div class="bid-history-empty">No bids yet for this player.</div>';
+    return;
+  }
+
+  const recent = history.slice(-12).reverse();
+  listEl.innerHTML = recent.map((entry, idx) => {
+    const team = teamsData[entry.teamId] || getRoomTeamMeta(entry.teamId) || {};
+    const teamShort = team.short || entry.teamId || 'TEAM';
+    const teamName = team.name || teamShort;
+    const jumpText = entry.isBaseBid ? 'Base Bid' : `+${formatPrice(entry.jump || 0)}`;
+    const bidText = formatPrice(entry.bid || 0);
+    const stamp = entry.ts ? new Date(entry.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--';
+    const latestCls = idx === 0 ? ' latest' : '';
+    return `
+      <div class="bid-history-item${latestCls}">
+        <div class="bid-history-left">
+          <span class="bid-history-team" title="${teamName}">${teamShort}</span>
+          <span class="bid-history-jump">${jumpText}</span>
+        </div>
+        <div class="bid-history-right">
+          <span class="bid-history-price">${bidText}</span>
+          <span class="bid-history-time">${stamp}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSpectatorBidHistory(data) {
+  const listEl = document.getElementById('spectatorBidHistoryList');
+  const countEl = document.getElementById('spectatorBidHistoryCount');
   if (!listEl || !countEl) return;
 
   const history = Array.isArray(data?.bidHistory) ? data.bidHistory : [];
@@ -2688,3 +2733,5 @@ window.addEventListener('beforeunload', () => {
   }
   db.ref('.info/serverTimeOffset').off('value', listeners.serverTimeOffset);
 });
+
+

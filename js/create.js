@@ -123,6 +123,7 @@ async function createRoom() {
 
   if (!name) { showError(errEl, 'Please enter your name.'); return; }
   if (!teamId) { showError(errEl, 'Please select an IPL team.'); return; }
+  if (!passcode) { showError(errEl, 'Please set a room passcode.'); return; }
 
   const btn = document.getElementById('createBtn');
   btn.disabled = true;
@@ -139,7 +140,7 @@ async function createRoom() {
         maxSquadSize: maxSquad,
         timerSeconds: timerSec,
         auctionMode,
-        invitePasscode: passcode || null,
+        invitePasscode: passcode,
         status: 'lobby',
         createdAt: Date.now()
       },
@@ -184,6 +185,7 @@ async function joinRoom() {
   if (code.length !== 6) { showError(errEl, 'Enter a valid 6-character room code.'); return; }
   if (!name) { showError(errEl, 'Please enter your name.'); return; }
   if (!teamId) { showError(errEl, 'Please pick an IPL team.'); return; }
+  if (!passcode) { showError(errEl, 'Passcode is required.'); return; }
 
   const btn = document.getElementById('joinBtn');
   btn.disabled = true;
@@ -196,7 +198,7 @@ async function joinRoom() {
     const room = snap.val();
     if (room.config.status === 'auction') { showError(errEl, 'This auction has already started!'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
     if (room.config.status === 'finished') { showError(errEl, 'This auction has ended.'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
-    if (room.config.invitePasscode && room.config.invitePasscode !== passcode) {
+    if (!room.config.invitePasscode || room.config.invitePasscode !== passcode) {
       showError(errEl, 'Invalid room passcode.');
       btn.disabled = false;
       btn.textContent = '🚀 Join Auction';
@@ -253,6 +255,10 @@ async function watchLiveAuction() {
     showError(errEl, 'Enter a valid 6-character room code.');
     return;
   }
+  if (!passcode) {
+    showError(errEl, 'Passcode is required.');
+    return;
+  }
 
   const btn = document.getElementById('watchLiveBtn');
   btn.disabled = true;
@@ -280,7 +286,7 @@ async function watchLiveAuction() {
       return;
     }
 
-    if (room?.config?.invitePasscode && room.config.invitePasscode !== passcode) {
+    if (!room?.config?.invitePasscode || room.config.invitePasscode !== passcode) {
       showError(errEl, 'Invalid room passcode.');
       btn.disabled = false;
       btn.textContent = '👀 Watch Live Auction';

@@ -499,6 +499,7 @@ async function createManualRoom() {
   const hostTeamId = document.getElementById('hostTeamSelect').value;
 
   if (!hostName) return showError('Host name is required.');
+  if (!passcode) return showError('Room passcode is required.');
   if (teams.length < 2) return showError('Add at least 2 teams.');
   if (players.length < 1) return showError('Add at least 1 player.');
   if (budget <= 0) return showError('Purse must be positive.');
@@ -558,7 +559,7 @@ async function createManualRoom() {
         bidOptions,
         manualPlayerFields: customPlayerFields,
         auctionMode: 'manual',
-        invitePasscode: passcode || null,
+        invitePasscode: passcode,
         status: 'lobby',
         createdAt: Date.now()
       },

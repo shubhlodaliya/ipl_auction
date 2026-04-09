@@ -43,6 +43,13 @@ const teamPowerUiState = {
   data: null
 };
 
+const topPickUiState = {
+  visible: false,
+  picks: [],
+  roomTeamCatalog: {},
+  playerMap: {}
+};
+
 const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
 
 I will provide a PDF generated from an IPL auction game.
@@ -628,6 +635,36 @@ async function loadResults() {
     const soldCount = Object.keys(soldPlayers).length;
     const unsoldCount = buildUnsoldQueue(playerQueue, soldPlayers).length;
 
+    const topPickList = Object.entries(soldPlayers)
+      .map(([pid, sale]) => {
+        const player = playerMap[pid] || playerMap[String(pid)] || null;
+        const team = teams[sale.teamId] || roomTeamCatalog[sale.teamId] || getTeam(sale.teamId) || null;
+        return {
+          playerId: String(pid),
+          playerName: player?.name || String(pid),
+          role: player?.role || '',
+          teamId: sale.teamId,
+          teamName: team?.name || team?.short || sale.teamId || '—',
+          teamShort: team?.short || sale.teamId || '—',
+          teamLogo: team?.logo || '',
+          teamColor: team?.primary || '#FFCB30',
+          price: Number(sale.soldPrice) || 0,
+          soldAt: sale.soldAt || 0
+        };
+      })
+      .filter(item => item.price > 0)
+      .sort((a, b) => b.price - a.price || String(a.playerName).localeCompare(String(b.playerName)))
+      .slice(0, 10);
+
+    topPickUiState.picks = topPickList;
+    topPickUiState.roomTeamCatalog = roomTeamCatalog;
+    topPickUiState.playerMap = playerMap;
+
+    const topPickEntry = topPickList[0] || null;
+    const topPickName = topPickEntry?.playerName || '—';
+    const topPickTeamName = topPickEntry?.teamName || '—';
+    const topPickPrice = topPickEntry ? formatPrice(topPickEntry.price) : '—';
+
     document.getElementById('summaryStats').innerHTML = `
       <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Players Sold</div>
@@ -644,6 +681,11 @@ async function loadResults() {
       <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Total Spent</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--green)">${formatPrice(totalSales)}</div>
+      </div>
+      <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;min-width:210px;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Top Pick</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;color:var(--gold);line-height:1.2;">${topPickName}</div>
+        <div style="font-size:0.85rem;color:var(--text-sec);margin-top:0.2rem;">${topPickTeamName} • ${topPickPrice}</div>
       </div>
     `;
 
@@ -824,6 +866,60 @@ function openPlaying11Modal() {
 function closePlaying11Modal() {
   const overlay = document.getElementById('playing11ModalOverlay');
   if (overlay) overlay.classList.remove('visible');
+}
+
+function openTopPickModal() {
+  const overlay = document.getElementById('topPickModalOverlay');
+  if (!overlay) return;
+  topPickUiState.visible = true;
+  renderTopPickModal();
+  overlay.classList.add('visible');
+}
+
+function closeTopPickModal() {
+  const overlay = document.getElementById('topPickModalOverlay');
+  if (overlay) overlay.classList.remove('visible');
+  topPickUiState.visible = false;
+}
+
+function renderTopPickModal() {
+  const content = document.getElementById('topPickModalContent');
+  const title = document.getElementById('topPickModalTitle');
+  if (!content || !title) return;
+
+  const picks = Array.isArray(topPickUiState.picks) ? topPickUiState.picks : [];
+  title.textContent = 'Top 10 Picks';
+
+  if (!picks.length) {
+    content.innerHTML = `
+      <div class="state-empty">
+        <p>No sold players found for this auction.</p>
+      </div>
+    `;
+    return;
+  }
+
+  content.innerHTML = picks.map((pick, idx) => {
+    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+    const player = topPickUiState.playerMap?.[pick.playerId] || topPickUiState.playerMap?.[String(pick.playerId)] || null;
+    const initials = player ? getPlayerInitials(player.name) : getPlayerInitials(pick.playerName);
+    const avatar = player?.photo_url
+      ? `<img class="top-pick-player-photo" src="${player.photo_url}" alt="${pick.playerName}" onerror="handlePlayerImageError(this, '${initials}')" />`
+      : `<div class="top-pick-player-fallback">${initials}</div>`;
+    return `
+      <div class="top-pick-row">
+        <div class="top-pick-rank">${medal}</div>
+        <div class="top-pick-player-wrap" style="--team-color:${pick.teamColor};">
+          ${avatar}
+        </div>
+        <div class="top-pick-main">
+          <div class="top-pick-name">${pick.playerName}</div>
+          <div class="top-pick-team">${pick.teamName}</div>
+        </div>
+        <div class="top-pick-price">${formatPrice(pick.price)}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderPlaying11Modal() {

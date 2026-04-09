@@ -52,6 +52,7 @@ let activeMagneticButton = null;
 let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 let serverTimeOffsetMs = 0;
+let spectatorSessionId = null;
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = true;
 const voiceRtcConfig = {
@@ -70,6 +71,51 @@ function getRoomTeamMeta(teamId) {
 
 function getSyncedNowMs() {
   return Date.now() + serverTimeOffsetMs;
+}
+
+function getOrCreateSpectatorSessionId() {
+  const key = 'ipl_spectator_id';
+  const existing = sessionStorage.getItem(key);
+  if (existing) return existing;
+  const generated = `sp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  sessionStorage.setItem(key, generated);
+  return generated;
+}
+
+function updateSpectatorCountBadge(count = 0) {
+  const badge = document.getElementById('spectatorCountBadge');
+  if (!badge) return;
+  const n = Number.isFinite(Number(count)) ? Number(count) : 0;
+  badge.textContent = `👀 ${n} watching`;
+}
+
+function listenSpectatorCount() {
+  listeners.spectatorCount = db.ref(`rooms/${roomCode}/spectators`).on('value', snap => {
+    const viewers = snap.val() || {};
+    updateSpectatorCountBadge(Object.keys(viewers).length);
+  });
+}
+
+function registerSpectatorPresence() {
+  if (!isSpectator) return;
+  spectatorSessionId = getOrCreateSpectatorSessionId();
+  const spectatorRef = db.ref(`rooms/${roomCode}/spectators/${spectatorSessionId}`);
+
+  listeners.spectatorConnected = db.ref('.info/connected').on('value', snap => {
+    if (!snap.val()) return;
+    spectatorRef.onDisconnect().remove();
+    spectatorRef.set({
+      joinedAt: firebase.database.ServerValue.TIMESTAMP,
+      viewerName: playerName || 'Viewer'
+    }).catch((err) => {
+      console.warn('Failed to register spectator presence:', err);
+    });
+  });
+}
+
+function removeSpectatorPresence() {
+  if (!isSpectator || !spectatorSessionId) return;
+  db.ref(`rooms/${roomCode}/spectators/${spectatorSessionId}`).remove().catch(() => {});
 }
 
 async function requestCloudinaryCleanup() {
@@ -149,6 +195,8 @@ async function initAuction() {
   initBidButtonMagneticHover();
   initChatPopup();
   applySpectatorUi();
+  listenSpectatorCount();
+  registerSpectatorPresence();
 
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
@@ -743,6 +791,7 @@ function clamp(value, min, max) {
 function leaveAuction() {
   const confirmed = window.confirm('Leave this auction screen? You can join again later with the same room code.');
   if (!confirmed) return;
+  removeSpectatorPresence();
   leaveVoiceChat();
   clearSession();
   window.location.href = 'index.html';
@@ -2541,6 +2590,7 @@ function hideResultBanner() {
 
 // ---- CLEANUP ----
 window.addEventListener('beforeunload', () => {
+  removeSpectatorPresence();
   if (voiceFeatureEnabled) leaveVoiceChat();
   if (voiceSocket) {
     try { voiceSocket.disconnect(); } catch (_) {}
@@ -2554,6 +2604,12 @@ window.addEventListener('beforeunload', () => {
   db.ref(`rooms/${roomCode}/currentAuction`).off('value', listeners.auction);
   db.ref(`rooms/${roomCode}/currentIndex`).off('value', listeners.index);
   db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
+  if (listeners.spectatorCount) {
+    db.ref(`rooms/${roomCode}/spectators`).off('value', listeners.spectatorCount);
+  }
+  if (listeners.spectatorConnected) {
+    db.ref('.info/connected').off('value', listeners.spectatorConnected);
+  }
   if (!isSpectator && listeners.watchlist) {
     db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', listeners.watchlist);
   }

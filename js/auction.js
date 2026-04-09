@@ -6,6 +6,7 @@ const session = requireSession();
 if (!session) throw new Error('No session');
 
 const { roomCode, teamId: myTeamId, playerName, isHost } = session;
+const isSpectator = !!session.isSpectator || !session.teamId;
 
 let roomConfig = null;
 let allPlayers = [];
@@ -93,7 +94,7 @@ async function initAuction() {
   updateSoundToggleButton();
 
   // Host: show pass button
-  if (isHost) {
+  if (isHost && !isSpectator) {
     document.getElementById('hostAuctionControls').style.display = 'flex';
   }
 
@@ -113,14 +114,20 @@ async function initAuction() {
   allPlayers.forEach(p => { playerMap[p.id] = p; });
 
   // Show my team chip
-  const me = getRoomTeamMeta(myTeamId);
-  if (me) {
+  if (isSpectator) {
     const chip = document.getElementById('myTeamChip');
     chip.style.display = 'flex';
-    chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" />` : ''} ${me.short}`;
-    if (me.primary) {
-      chip.style.borderColor = me.primary + '60';
-      chip.style.color = me.primary;
+    chip.textContent = 'LIVE VIEWER';
+  } else {
+    const me = getRoomTeamMeta(myTeamId);
+    if (me) {
+      const chip = document.getElementById('myTeamChip');
+      chip.style.display = 'flex';
+      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" />` : ''} ${me.short}`;
+      if (me.primary) {
+        chip.style.borderColor = me.primary + '60';
+        chip.style.color = me.primary;
+      }
     }
   }
 
@@ -141,13 +148,14 @@ async function initAuction() {
   document.getElementById('auctionLayout').style.display = 'grid';
   initBidButtonMagneticHover();
   initChatPopup();
+  applySpectatorUi();
 
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
     teamsData = snap.val() || {};
 
     // If this client's team no longer exists, the host removed them.
-    if (!teamsData[myTeamId]) {
+    if (!isSpectator && !teamsData[myTeamId]) {
       if (!removedFromRoom) {
         removedFromRoom = true;
         showToast('You were removed from this auction by host.', 'error');
@@ -194,13 +202,15 @@ async function initAuction() {
     if (isHost) hostEvaluateFastPath(currentAuctionData);
   });
 
-  listeners.watchlist = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).on('value', snap => {
-    watchlistForMe = snap.val() || {};
-    if (currentAuctionData && currentAuctionData.playerId) {
-      const currentPlayer = playerMap[currentAuctionData.playerId];
-      if (currentPlayer) renderPlayerSpotlight(currentPlayer);
-    }
-  });
+  if (!isSpectator) {
+    listeners.watchlist = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).on('value', snap => {
+      watchlistForMe = snap.val() || {};
+      if (currentAuctionData && currentAuctionData.playerId) {
+        const currentPlayer = playerMap[currentAuctionData.playerId];
+        if (currentPlayer) renderPlayerSpotlight(currentPlayer);
+      }
+    });
+  }
 
   listeners.chatMessages = db.ref(`rooms/${roomCode}/chat/messages`).limitToLast(80).on('value', snap => {
     const nextMessages = snap.val() || {};
@@ -214,17 +224,19 @@ async function initAuction() {
     renderChatMessages();
   });
 
-  listeners.chatMuted = db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).on('value', snap => {
-    isChatMuted = !!snap.val();
-    updateChatMuteState();
-  });
+  if (!isSpectator) {
+    listeners.chatMuted = db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).on('value', snap => {
+      isChatMuted = !!snap.val();
+      updateChatMuteState();
+    });
+  }
 
   listeners.serverTimeOffset = db.ref('.info/serverTimeOffset').on('value', snap => {
     const offset = Number(snap.val());
     serverTimeOffsetMs = Number.isFinite(offset) ? offset : 0;
   });
 
-  if (voiceFeatureEnabled) {
+  if (voiceFeatureEnabled && !isSpectator) {
     initVoiceSocket();
     updateVoiceControls();
     renderVoiceParticipants();
@@ -245,6 +257,38 @@ async function initAuction() {
 
   // Start local timer tick
   timerInterval = setInterval(timerTick, 500);
+}
+
+function applySpectatorUi() {
+  if (!isSpectator) return;
+
+  const purseEl = document.getElementById('myPurseDisplay');
+  if (purseEl) purseEl.textContent = 'Viewer';
+
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.disabled = true;
+    chatInput.placeholder = 'Viewer mode: chat disabled';
+  }
+
+  const chatSendBtn = document.getElementById('chatSendBtn');
+  if (chatSendBtn) chatSendBtn.disabled = true;
+
+  document.querySelectorAll('.chat-quick-btn').forEach((btn) => {
+    btn.disabled = true;
+  });
+
+  const voiceJoinBtn = document.getElementById('voiceJoinBtn');
+  if (voiceJoinBtn) {
+    voiceJoinBtn.disabled = true;
+    voiceJoinBtn.textContent = 'Viewer';
+  }
+
+  const voiceMuteBtn = document.getElementById('voiceMuteBtn');
+  if (voiceMuteBtn) {
+    voiceMuteBtn.disabled = true;
+    voiceMuteBtn.textContent = 'Mute';
+  }
 }
 
 // ---- RENDER AUCTION STATE ----
@@ -382,6 +426,27 @@ function renderBidDisplay(data, player = null) {
   const bidPanelEl = document.querySelector('.bid-panel');
 
   if (data.status === 'bidding') {
+    if (isSpectator) {
+      if (baseBidBtn) {
+        baseBidBtn.disabled = true;
+        baseBidBtn.textContent = 'Viewer Mode';
+      }
+      if (quickBidRow) quickBidRow.innerHTML = '';
+      if (withdrawnTeamsWrap) withdrawnTeamsWrap.style.display = 'none';
+      if (withdrawnTeamsList) withdrawnTeamsList.innerHTML = '';
+      withdrawBtn.disabled = true;
+      withdrawBtn.textContent = 'Viewer Mode';
+      passBtn.disabled = true;
+      passBtn.textContent = 'Viewer Mode';
+      skipPoolBtn.disabled = true;
+      skipPoolBtn.textContent = 'Viewer Mode';
+      warnEl.textContent = 'Live viewer mode: bidding controls are disabled.';
+      warnEl.style.display = 'block';
+      warnEl.style.color = 'var(--text-sec)';
+      if (bidPanelEl) bidPanelEl.classList.remove('motion-stagger');
+      return;
+    }
+
     const bidJumps = getBidJumpOptions(resolvedPlayer.base_price_lakh, roomConfig.bidOptions);
     const myTeam = teamsData[myTeamId];
     const withdrawn = !!(data.withdrawnTeams && data.withdrawnTeams[myTeamId]);
@@ -502,6 +567,7 @@ function renderBidDisplay(data, player = null) {
 }
 
 async function autoWithdrawFromCurrentPlayerIfNeeded(data) {
+  if (isSpectator) return;
   if (!data || data.status !== 'bidding') return;
   if (!data.playerId) return;
   if (data.highestBidder === myTeamId) return;
@@ -696,6 +762,10 @@ function updateTimerDisplay(secondsLeft, total) {
 
 // ---- PLACE BID ----
 async function placeBid(selectedJump = null, useBaseBid = false) {
+  if (isSpectator) {
+    showToast('Viewer mode: bidding is disabled.', 'error');
+    return;
+  }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding') return;
   if (paused) {
     showToast('Auction is paused.', 'error');
@@ -779,6 +849,10 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
 
 // ---- PASS PLAYER (host only) ----
 async function passPlayer() {
+  if (isSpectator) {
+    showToast('Viewer mode: skip vote is disabled.', 'error');
+    return;
+  }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
   const myTeam = teamsData[myTeamId];
@@ -806,6 +880,10 @@ async function passPlayer() {
 }
 
 async function skipCurrentPool() {
+  if (isSpectator) {
+    showToast('Viewer mode: pool skip is disabled.', 'error');
+    return;
+  }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
   const myTeam = teamsData[myTeamId];
@@ -835,6 +913,10 @@ async function skipCurrentPool() {
 }
 
 async function withdrawFromPlayer() {
+  if (isSpectator) {
+    showToast('Viewer mode: withdraw is disabled.', 'error');
+    return;
+  }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
   const myTeam = teamsData[myTeamId];
@@ -1724,6 +1806,10 @@ function applyLocalVoiceTrackState() {
 }
 
 async function toggleVoiceJoin() {
+  if (isSpectator) {
+    showToast('Viewer mode: voice is disabled.', 'error');
+    return;
+  }
   if (voiceJoined) {
     await leaveVoiceChat();
     showToast('Left voice chat.', 'success');
@@ -1737,6 +1823,7 @@ async function toggleVoiceJoin() {
 }
 
 async function joinVoiceChat() {
+  if (isSpectator) return;
   if (voiceJoined) return;
   if (!isWebRtcSupported()) {
     showToast('Voice chat unsupported. Use latest Chrome/Edge on HTTPS.', 'error');
@@ -2234,6 +2321,10 @@ async function sendQuickChat(message, sourceBtn = null) {
 }
 
 async function sendChatMessage(presetText = '', options = {}) {
+  if (isSpectator) {
+    showToast('Viewer mode: chat is disabled.', 'error');
+    return false;
+  }
   if (isChatMuted) {
     showToast('You are muted by host.', 'error');
     return false;
@@ -2373,6 +2464,11 @@ async function kickTeamFromChat(teamId) {
 }
 
 function updateMyPurse() {
+  if (isSpectator) {
+    const viewerEl = document.getElementById('myPurseDisplay');
+    if (viewerEl) viewerEl.textContent = 'Viewer';
+    return;
+  }
   const myTeam = teamsData[myTeamId];
   const el = document.getElementById('myPurseDisplay');
   if (el && myTeam) el.textContent = formatPrice(myTeam.purse);
@@ -2417,9 +2513,13 @@ window.addEventListener('beforeunload', () => {
   db.ref(`rooms/${roomCode}/currentAuction`).off('value', listeners.auction);
   db.ref(`rooms/${roomCode}/currentIndex`).off('value', listeners.index);
   db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
-  db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', listeners.watchlist);
+  if (!isSpectator && listeners.watchlist) {
+    db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', listeners.watchlist);
+  }
   db.ref(`rooms/${roomCode}/chat/messages`).off('value', listeners.chatMessages);
   db.ref(`rooms/${roomCode}/chat/muted`).off('value', listeners.chatMutedMap);
-  db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).off('value', listeners.chatMuted);
+  if (!isSpectator && listeners.chatMuted) {
+    db.ref(`rooms/${roomCode}/chat/muted/${myTeamId}`).off('value', listeners.chatMuted);
+  }
   db.ref('.info/serverTimeOffset').off('value', listeners.serverTimeOffset);
 });

@@ -238,6 +238,71 @@ async function joinRoom() {
   }
 }
 
+// ============================================================
+// WATCH LIVE AUCTION (SPECTATOR)
+// ============================================================
+async function watchLiveAuction() {
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  const name = document.getElementById('joinName').value.trim();
+  const passcode = document.getElementById('joinPasscode').value.trim();
+
+  const errEl = document.getElementById('joinError');
+  errEl.style.display = 'none';
+
+  if (code.length !== 6) {
+    showError(errEl, 'Enter a valid 6-character room code.');
+    return;
+  }
+
+  const btn = document.getElementById('watchLiveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Opening Live Auction...';
+
+  try {
+    const snap = await db.ref(`rooms/${code}`).get();
+    if (!snap.exists()) {
+      showError(errEl, 'Room not found. Check the code and try again.');
+      btn.disabled = false;
+      btn.textContent = '👀 Watch Live Auction';
+      return;
+    }
+
+    const room = snap.val();
+    const status = room?.config?.status;
+    if (status !== 'auction') {
+      if (status === 'finished') {
+        showError(errEl, 'This auction has ended.');
+      } else {
+        showError(errEl, 'This room is not live yet. Ask host to start auction first.');
+      }
+      btn.disabled = false;
+      btn.textContent = '👀 Watch Live Auction';
+      return;
+    }
+
+    if (room?.config?.invitePasscode && room.config.invitePasscode !== passcode) {
+      showError(errEl, 'Invalid room passcode.');
+      btn.disabled = false;
+      btn.textContent = '👀 Watch Live Auction';
+      return;
+    }
+
+    saveSession({
+      roomCode: code,
+      teamId: null,
+      playerName: name || 'Viewer',
+      isHost: false,
+      isSpectator: true
+    });
+    window.location.href = 'auction.html';
+  } catch (err) {
+    console.error(err);
+    showError(errEl, 'Failed to open live auction. Check your connection.');
+    btn.disabled = false;
+    btn.textContent = '👀 Watch Live Auction';
+  }
+}
+
 function showError(el, msg) {
   el.textContent = msg;
   el.style.display = 'block';

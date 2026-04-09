@@ -1104,7 +1104,7 @@
     "country": "India",
     "base_price_lakh": 75,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/721867.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775728825/ipl-auction/players/jitesh-sharma.webp"
   },
   {
     "id": 124,
@@ -1113,7 +1113,7 @@
     "country": "India",
     "base_price_lakh": 75,
     "category": "Indian",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/1161024.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775728835/ipl-auction/players/prabhsimran-singh.webp"
   },
   {
     "id": 125,
@@ -1140,7 +1140,7 @@
     "country": "South Africa",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/605661.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775728844/ipl-auction/players/ryan-rickelton.webp"
   },
   {
     "id": 128,
@@ -1167,7 +1167,7 @@
     "country": "Australia",
     "base_price_lakh": 100,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/892749.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775728854/ipl-auction/players/tim-david.webp"
   },
   {
     "id": 131,
@@ -1176,7 +1176,7 @@
     "country": "West Indies",
     "base_price_lakh": 75,
     "category": "Overseas",
-    "photo_url": "https://a.espncdn.com/i/headshots/cricket/players/full/914541.png"
+    "photo_url": "https://res.cloudinary.com/dwmqqokks/image/upload/v1775728863/ipl-auction/players/sherfane-rutherford.webp"
   },
   {
     "id": 132,

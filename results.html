@@ -108,6 +108,19 @@
     </div>
   </div>
 
+  <!-- Top Picks Modal -->
+  <div class="team-modal-overlay" id="topPickModalOverlay" onclick="closeTopPickModal()">
+    <div class="team-modal top-pick-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="topPickModalTitle">Top 10 Picks</h3>
+        <button class="btn btn-ghost" onclick="closeTopPickModal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="topPickModalContent">
+        <!-- Content rendered by JS -->
+      </div>
+    </div>
+  </div>
+
   <script>
     function newAuction() {
       clearSession();

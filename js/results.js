@@ -686,7 +686,6 @@ async function loadResults() {
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Top Pick</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;color:var(--gold);line-height:1.2;">${topPickName}</div>
         <div style="font-size:0.85rem;color:var(--text-sec);margin-top:0.2rem;">${topPickTeamName} • ${topPickPrice}</div>
-        <button class="btn btn-secondary" style="margin-top:0.75rem;width:100%;" onclick="openTopPickModal()">View Top 10 Picks</button>
       </div>
     `;
 

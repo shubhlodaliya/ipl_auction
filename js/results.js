@@ -12,7 +12,10 @@ const reAuctionState = {
   data: {},
   listeners: {},
   filterRole: 'All',
-  searchQuery: ''
+  searchQuery: '',
+  playerListScrollTop: 0,
+  searchCaret: null,
+  searchWasFocused: false
 };
 
 const playing11State = {
@@ -1253,13 +1256,36 @@ function setReAuctionSearch(value) {
   renderReAuctionSection();
 }
 
+function setReAuctionSearchWithCaret(value, caretPos) {
+  reAuctionState.searchQuery = String(value || '');
+  reAuctionState.searchCaret = Number.isFinite(Number(caretPos)) ? Number(caretPos) : null;
+  reAuctionState.searchWasFocused = true;
+  renderReAuctionSection();
+}
+
+function setReAuctionListScroll(scrollTop) {
+  reAuctionState.playerListScrollTop = Math.max(0, Number(scrollTop) || 0);
+}
+
 window.setReAuctionRoleFilter = setReAuctionRoleFilter;
 window.setReAuctionSearch = setReAuctionSearch;
+window.setReAuctionSearchWithCaret = setReAuctionSearchWithCaret;
+window.setReAuctionListScroll = setReAuctionListScroll;
 
 function renderReAuctionSection() {
   const body = document.getElementById('reAuctionBody');
   const hint = document.getElementById('reAuctionHint');
   if (!body || !hint) return;
+
+  const prevSearchEl = document.getElementById('reAuctionSearchInput');
+  const prevListEl = document.getElementById('reAuctionPlayerList');
+  if (prevListEl) {
+    reAuctionState.playerListScrollTop = prevListEl.scrollTop;
+  }
+  if (prevSearchEl && document.activeElement === prevSearchEl) {
+    reAuctionState.searchWasFocused = true;
+    reAuctionState.searchCaret = prevSearchEl.selectionStart;
+  }
 
   const { room, session, unsoldQueue, eligibleTeamIds, data } = reAuctionState;
   const teams = room?.teams || {};
@@ -1381,17 +1407,18 @@ function renderReAuctionSection() {
 
     <div class="reauction-filter-row">
       <input
+        id="reAuctionSearchInput"
         class="reauction-search-input"
         type="text"
         placeholder="Search player..."
         value="${escapeHtml(reAuctionState.searchQuery || '')}"
-        oninput="setReAuctionSearch(this.value)"
+        oninput="setReAuctionSearchWithCaret(this.value, this.selectionStart)"
       />
       <div class="reauction-role-chips">${roleFilterHtml}</div>
       <div class="reauction-filter-meta">Showing ${filteredQueue.length} of ${unsoldQueue.length}</div>
     </div>
 
-    <div class="reauction-player-list">${playerListHtml || '<div class="reauction-empty">No players match current filters.</div>'}</div>
+    <div id="reAuctionPlayerList" class="reauction-player-list" onscroll="setReAuctionListScroll(this.scrollTop)">${playerListHtml || '<div class="reauction-empty">No players match current filters.</div>'}</div>
 
     ${amHost ? `
       <div class="reauction-host-actions">
@@ -1403,12 +1430,38 @@ function renderReAuctionSection() {
     ` : ''}
   `;
 
+  const listEl = document.getElementById('reAuctionPlayerList');
+  if (listEl) {
+    listEl.scrollTop = reAuctionState.playerListScrollTop || 0;
+  }
+
+  const searchEl = document.getElementById('reAuctionSearchInput');
+  if (searchEl && reAuctionState.searchWasFocused) {
+    searchEl.focus({ preventScroll: true });
+    const caret = Number.isFinite(Number(reAuctionState.searchCaret))
+      ? Math.min(Number(reAuctionState.searchCaret), searchEl.value.length)
+      : searchEl.value.length;
+    try {
+      searchEl.setSelectionRange(caret, caret);
+    } catch (_) {
+      // Ignore selection errors on non-supporting browsers.
+    }
+  }
+
+  reAuctionState.searchWasFocused = false;
+  reAuctionState.searchCaret = null;
+
   hint.textContent = 'Teams with empty slots select unsold players, mark ready, then host starts re-auction.';
 }
 
 async function toggleReAuctionPlayer(playerId) {
   const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
   if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
+
+  const listEl = document.getElementById('reAuctionPlayerList');
+  if (listEl) {
+    reAuctionState.playerListScrollTop = listEl.scrollTop;
+  }
 
   const teamId = session.teamId;
   const teamSelections = data.selections?.[teamId] || {};

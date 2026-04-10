@@ -1538,6 +1538,10 @@ function renderSidebar() {
     const maxSquad = Number(roomConfig?.maxSquadSize || 0);
     const minSquad = Number(roomConfig?.minSquadSize || 1);
     const squadText = maxSquad > 0 ? `${squadCount}/${maxSquad}` : `${squadCount}`;
+    const minRequiredRemaining = Math.max(0, minSquad - squadCount);
+    const minNoteText = minRequiredRemaining > 0
+      ? `min ${minRequiredRemaining} required`
+      : 'minimum satisfied';
 
     return `
       <div class="sidebar-team ${isLeading ? 'leading' : ''} ${isMe ? 'mine' : ''}"
@@ -1551,7 +1555,7 @@ function renderSidebar() {
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>
-          <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note">min ${minSquad} required</small></span>
+          <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note">${minNoteText}</small></span>
         </div>
       </div>
     `;

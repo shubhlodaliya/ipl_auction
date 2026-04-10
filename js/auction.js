@@ -1536,6 +1536,7 @@ function renderSidebar() {
     const isMe = tId === myTeamId;
     const squadCount = (team.squad || []).length;
     const maxSquad = Number(roomConfig?.maxSquadSize || 0);
+    const minSquad = Number(roomConfig?.minSquadSize || 1);
     const squadText = maxSquad > 0 ? `${squadCount}/${maxSquad}` : `${squadCount}`;
 
     return `
@@ -1550,7 +1551,7 @@ function renderSidebar() {
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>
-          <span class="team-stat">🏃 <span>${squadText} players</span></span>
+          <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note">min ${minSquad} required</small></span>
         </div>
       </div>
     `;

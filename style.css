@@ -863,6 +863,13 @@ input[type=range]::-webkit-slider-thumb {
   font-weight: 600;
   color: var(--text);
 }
+.team-min-note {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  letter-spacing: 0.2px;
+}
 .leading-crown { font-size: 0.7rem; margin-left: auto; }
 
 /* Main Auction Area */

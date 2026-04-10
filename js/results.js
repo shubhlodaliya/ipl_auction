@@ -10,7 +10,9 @@ const reAuctionState = {
   unsoldQueue: [],
   eligibleTeamIds: [],
   data: {},
-  listeners: {}
+  listeners: {},
+  filterRole: 'All',
+  searchQuery: ''
 };
 
 const playing11State = {
@@ -1216,6 +1218,44 @@ function escapeHtml(str) {
     .replaceAll("'", '&#39;');
 }
 
+function normalizeReAuctionRole(role) {
+  const token = String(role || '').trim().toLowerCase().replace(/[_\s-]+/g, ' ');
+  if (!token) return 'Others';
+  if (token.includes('wicket')) return 'Wicket-keeper';
+  if (token.includes('all round') || token.includes('all-round')) return 'All-rounder';
+  if (token.includes('fast')) return 'Fast Bowler';
+  if (token.includes('spin')) return 'Spinner';
+  if (token.includes('bowl')) return 'Bowler';
+  if (token.includes('bat')) return 'Batsman';
+  return 'Others';
+}
+
+function getReAuctionRoleFilters(queue, playersById) {
+  const preferredOrder = ['Batsman', 'Bowler', 'Fast Bowler', 'Spinner', 'Wicket-keeper', 'All-rounder', 'Others'];
+  const present = new Set();
+
+  queue.forEach((pid) => {
+    const p = playersById[pid] || playersById[String(pid)];
+    if (!p) return;
+    present.add(normalizeReAuctionRole(p.role));
+  });
+
+  return ['All', ...preferredOrder.filter((role) => present.has(role))];
+}
+
+function setReAuctionRoleFilter(role) {
+  reAuctionState.filterRole = role || 'All';
+  renderReAuctionSection();
+}
+
+function setReAuctionSearch(value) {
+  reAuctionState.searchQuery = String(value || '');
+  renderReAuctionSection();
+}
+
+window.setReAuctionRoleFilter = setReAuctionRoleFilter;
+window.setReAuctionSearch = setReAuctionSearch;
+
 function renderReAuctionSection() {
   const body = document.getElementById('reAuctionBody');
   const hint = document.getElementById('reAuctionHint');
@@ -1270,7 +1310,34 @@ function renderReAuctionSection() {
   const mySelectedCount = Object.keys(mySelection).filter(pid => mySelection[pid]).length;
   const myReady = !!readyMap[myTeamId];
 
-  const playerListHtml = unsoldQueue.map(pid => {
+  const roleFilters = getReAuctionRoleFilters(unsoldQueue, reAuctionState.playersById);
+  const activeRole = roleFilters.includes(reAuctionState.filterRole) ? reAuctionState.filterRole : 'All';
+  reAuctionState.filterRole = activeRole;
+
+  const searchTerm = String(reAuctionState.searchQuery || '').trim().toLowerCase();
+  const filteredQueue = unsoldQueue.filter((pid) => {
+    const player = reAuctionState.playersById[pid] || reAuctionState.playersById[String(pid)];
+    if (!player) return false;
+
+    const normalizedRole = normalizeReAuctionRole(player.role);
+    const roleMatch = activeRole === 'All'
+      ? true
+      : (activeRole === 'Bowler'
+        ? ['Bowler', 'Fast Bowler', 'Spinner'].includes(normalizedRole)
+        : normalizedRole === activeRole);
+
+    if (!roleMatch) return false;
+
+    if (!searchTerm) return true;
+    const haystack = `${String(player.name || '').toLowerCase()} ${String(player.country || '').toLowerCase()} ${String(player.role || '').toLowerCase()}`;
+    return haystack.includes(searchTerm);
+  });
+
+  const roleFilterHtml = roleFilters.map((role) => `
+    <button class="reauction-role-chip ${role === activeRole ? 'active' : ''}" onclick="setReAuctionRoleFilter('${escapeHtml(role)}')">${escapeHtml(role)}</button>
+  `).join('');
+
+  const playerListHtml = filteredQueue.map(pid => {
     const player = reAuctionState.playersById[pid] || reAuctionState.playersById[String(pid)];
     if (!player) return '';
     const checked = !!(mySelection[String(pid)] || mySelection[pid]);
@@ -1312,7 +1379,19 @@ function renderReAuctionSection() {
       </div>
     ` : `<div class="reauction-note">Only teams with empty slots can select players.</div>`}
 
-    <div class="reauction-player-list">${playerListHtml}</div>
+    <div class="reauction-filter-row">
+      <input
+        class="reauction-search-input"
+        type="text"
+        placeholder="Search player..."
+        value="${escapeHtml(reAuctionState.searchQuery || '')}"
+        oninput="setReAuctionSearch(this.value)"
+      />
+      <div class="reauction-role-chips">${roleFilterHtml}</div>
+      <div class="reauction-filter-meta">Showing ${filteredQueue.length} of ${unsoldQueue.length}</div>
+    </div>
+
+    <div class="reauction-player-list">${playerListHtml || '<div class="reauction-empty">No players match current filters.</div>'}</div>
 
     ${amHost ? `
       <div class="reauction-host-actions">

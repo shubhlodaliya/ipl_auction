@@ -3043,6 +3043,46 @@ body.spectator-mode .my-team-chip {
   color: var(--text-sec);
   font-size: 0.85rem;
 }
+.reauction-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.reauction-search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-main);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+}
+.reauction-search-input::placeholder {
+  color: var(--text-dim);
+}
+.reauction-role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.reauction-role-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.02);
+  color: var(--text-sec);
+  font-size: 0.77rem;
+  padding: 0.28rem 0.62rem;
+  cursor: pointer;
+}
+.reauction-role-chip.active {
+  border-color: rgba(255,203,48,0.5);
+  background: rgba(255,203,48,0.15);
+  color: var(--gold);
+}
+.reauction-filter-meta {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+}
 .reauction-player-list {
   max-height: 330px;
   overflow-y: auto;
@@ -3078,6 +3118,12 @@ body.spectator-mode .my-team-chip {
   color: var(--text-dim);
   font-size: 0.78rem;
   text-align: right;
+}
+.reauction-empty {
+  color: var(--text-dim);
+  font-size: 0.84rem;
+  text-align: center;
+  padding: 0.9rem 0.4rem;
 }
 .reauction-host-actions {
   border-top: 1px solid var(--border);

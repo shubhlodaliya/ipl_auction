@@ -490,6 +490,7 @@ async function createManualRoom() {
   const passcode = document.getElementById('invitePasscode').value.trim();
   const budget = Number(document.getElementById('budgetLakh').value || 0);
   const maxSquadSize = Number(document.getElementById('maxSquadSize').value || 0);
+  const minSquadSize = Number(document.getElementById('minSquadSize').value || 0);
   const timerSeconds = Number(document.getElementById('timerSeconds').value || 0);
   const timerUnlimited = !!document.getElementById('timerUnlimited')?.checked;
   const bidOptions = parseBidOptions();
@@ -504,6 +505,8 @@ async function createManualRoom() {
   if (players.length < 1) return showError('Add at least 1 player.');
   if (budget <= 0) return showError('Purse must be positive.');
   if (maxSquadSize <= 0) return showError('Max players per team must be positive.');
+  if (minSquadSize <= 0) return showError('Min players per team must be positive.');
+  if (minSquadSize > maxSquadSize) return showError('Min players per team cannot be greater than max players per team.');
   if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
 
@@ -553,6 +556,7 @@ async function createManualRoom() {
         hostTeamId: hostTeam.id,
         budget,
         maxSquadSize,
+        minSquadSize,
         timerSeconds: timerUnlimited ? 0 : timerSeconds,
         timerMode: timerUnlimited ? 'unlimited' : 'countdown',
         unlimitedTimer: timerUnlimited,

@@ -10,6 +10,29 @@ window.addEventListener('DOMContentLoaded', initCreatePage);
 
 function initCreatePage() {
   initAuctionModeToggle();
+  initSquadRangeControls();
+}
+
+function initSquadRangeControls() {
+  const maxEl = document.getElementById('squadRange');
+  const minEl = document.getElementById('minSquadRange');
+  const maxValEl = document.getElementById('squadVal');
+  const minValEl = document.getElementById('minSquadVal');
+  if (!maxEl || !minEl) return;
+
+  const sync = () => {
+    const maxSquad = Number(maxEl.value || 25);
+    minEl.max = String(Math.max(1, maxSquad));
+    if (Number(minEl.value) > maxSquad) {
+      minEl.value = String(maxSquad);
+    }
+    if (maxValEl) maxValEl.textContent = `${maxEl.value} players`;
+    if (minValEl) minValEl.textContent = `${minEl.value} players`;
+  };
+
+  maxEl.addEventListener('input', sync);
+  minEl.addEventListener('input', sync);
+  sync();
 }
 
 function initAuctionModeToggle() {
@@ -115,6 +138,7 @@ async function createRoom() {
   const passcode = document.getElementById('createPasscode').value.trim();
   const budget = parseInt(document.getElementById('budgetRange').value);
   const maxSquad = parseInt(document.getElementById('squadRange').value);
+  const minSquad = parseInt(document.getElementById('minSquadRange').value || '1');
   const timerSec = parseInt(document.getElementById('timerRange').value);
   const auctionMode = document.querySelector('input[name="auctionMode"]:checked')?.value || 'random';
 
@@ -124,6 +148,8 @@ async function createRoom() {
   if (!name) { showError(errEl, 'Please enter your name.'); return; }
   if (!teamId) { showError(errEl, 'Please select an IPL team.'); return; }
   if (!passcode) { showError(errEl, 'Please set a room passcode.'); return; }
+  if (!Number.isFinite(minSquad) || minSquad < 1) { showError(errEl, 'Minimum squad size must be at least 1.'); return; }
+  if (minSquad > maxSquad) { showError(errEl, 'Minimum squad size cannot be greater than maximum squad size.'); return; }
 
   const btn = document.getElementById('createBtn');
   btn.disabled = true;
@@ -138,6 +164,7 @@ async function createRoom() {
         hostTeamId: teamId,
         budget,
         maxSquadSize: maxSquad,
+        minSquadSize: minSquad,
         timerSeconds: timerSec,
         auctionMode,
         invitePasscode: passcode,

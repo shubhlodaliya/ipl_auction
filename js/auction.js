@@ -1535,6 +1535,8 @@ function renderSidebar() {
     const isLeading = currentAuctionData && currentAuctionData.highestBidder === tId;
     const isMe = tId === myTeamId;
     const squadCount = (team.squad || []).length;
+    const maxSquad = Number(roomConfig?.maxSquadSize || 0);
+    const squadText = maxSquad > 0 ? `${squadCount}/${maxSquad}` : `${squadCount}`;
 
     return `
       <div class="sidebar-team ${isLeading ? 'leading' : ''} ${isMe ? 'mine' : ''}"
@@ -1548,7 +1550,7 @@ function renderSidebar() {
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>
-          <span class="team-stat">🏃 <span>${squadCount} players</span></span>
+          <span class="team-stat">🏃 <span>${squadText} players</span></span>
         </div>
       </div>
     `;

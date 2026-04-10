@@ -40,7 +40,8 @@ const resultsExportState = {
   soldCount: 0,
   unsoldCount: 0,
   totalSales: 0,
-  roomTeamCatalog: {}
+  roomTeamCatalog: {},
+  roomMinSquadSize: 1
 };
 
 const teamPowerUiState = {
@@ -404,6 +405,26 @@ function calculateBenchStrength(benchPlayers) {
 
 function calculateTeamPowerScore(teamModel) {
   const TOP_ORDER_SCORE = calculateTopOrderScore(teamModel.playingXI);
+  const squadCount = Number(teamModel?.squadCount || 0);
+  const minSquadSize = Number(teamModel?.minSquadSize || 1);
+  if (squadCount < minSquadSize) {
+    return {
+      teamId: teamModel.teamId,
+      teamName: teamModel.teamName,
+      score: 0,
+      invalidReason: `Minimum squad not met: ${squadCount}/${minSquadSize}`,
+      metrics: {
+        TOP_ORDER_SCORE: 0,
+        MIDDLE_ORDER_SCORE: 0,
+        FINISHER_SCORE: 0,
+        BOWLING_SCORE: 0,
+        ALL_ROUNDER_SCORE: 0,
+        TEAM_BALANCE_SCORE: 0,
+        MATCH_WINNER_SCORE: 0,
+        BENCH_STRENGTH_SCORE: 0
+      }
+    };
+  }
   const MIDDLE_ORDER_SCORE = calculateMiddleOrderScore(teamModel.playingXI);
   const FINISHER_SCORE = calculateFinisherScore(teamModel.playingXI);
   const BOWLING_SCORE = calculateBowlingScore(teamModel.playingXI);
@@ -469,10 +490,13 @@ function buildTeamPowerModel(teamId, team, squad, playing11Data) {
   const benchPlayers = (squad || [])
     .filter((entry) => !selectedIds.includes(String(entry.player.id)))
     .map((entry) => estimatePlayerRatings(entry.player, entry.price));
+  const minSquadSize = Number(resultsExportState?.roomMinSquadSize || 1);
 
   return {
     teamId,
     teamName: team.name,
+    squadCount: (squad || []).length,
+    minSquadSize,
     playingXI,
     benchPlayers
   };
@@ -487,6 +511,7 @@ function rankTeams(teamModels) {
     teamId: entry.teamId,
     team: entry.teamName,
     score: entry.score,
+    invalidReason: entry.invalidReason || '',
     metrics: entry.metrics
   }));
 
@@ -561,6 +586,7 @@ function renderTeamPowerInsights(powerData) {
         <span class="team-power-score">${item.score}</span>
       </div>
       <div class="team-power-team">${item.team}</div>
+      ${item.invalidReason ? `<div class="team-power-invalid-reason">${item.invalidReason}. Overall AI score is set to 0.</div>` : ''}
       <div class="team-power-metrics" style="margin-top:0.55rem;">
         <span>Top Order: <b>${item.metrics.TOP_ORDER_SCORE}</b></span>
         <span>Middle: <b>${item.metrics.MIDDLE_ORDER_SCORE}</b></span>
@@ -702,6 +728,8 @@ async function loadResults() {
       const player = playerMap[pid];
       if (player) teamSquads[sale.teamId].push({ player, price: sale.soldPrice });
     });
+
+    resultsExportState.roomMinSquadSize = Number(room.config?.minSquadSize || 1);
 
     // Build Team Power Rankings using Playing XI + bench depth.
     const playing11Snap = await db.ref(`rooms/${roomCode}/playing11`).get();

@@ -70,6 +70,15 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Minimum Squad Size</label>
+          <div class="range-wrapper">
+            <input type="range" id="minSquadRange" min="1" max="25" step="1" value="11"
+                   oninput="document.getElementById('minSquadVal').textContent=this.value+' players'" />
+            <span class="range-val" id="minSquadVal">11 players</span>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Bid Timer (seconds)</label>
           <div class="range-wrapper">
             <input type="range" id="timerRange" min="10" max="60" step="5" value="30"

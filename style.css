@@ -513,6 +513,31 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--text-dim);
 }
 
+.iconpick-toolbar {
+  gap: 0.8rem;
+}
+
+.iconpick-search {
+  max-width: 240px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+.iconpick-status {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  margin-right: 0.4rem;
+}
+
+.iconpick-row {
+  grid-template-columns: auto 1fr auto auto auto;
+}
+
+.iconpick-action {
+  font-size: 0.72rem;
+  padding: 0.26rem 0.55rem;
+}
+
 .manual-grid-two {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3785,6 +3810,15 @@ body.spectator-mode .my-team-chip {
   }
   .watchlist-player-meta {
     display: none;
+  }
+  .iconpick-row {
+    grid-template-columns: auto 1fr auto;
+    row-gap: 0.35rem;
+  }
+  .iconpick-row .watchlist-player-meta,
+  .iconpick-row .iconpick-status {
+    grid-column: 2 / 4;
+    display: block;
   }
   .manual-grid-two,
   .manual-grid-four,

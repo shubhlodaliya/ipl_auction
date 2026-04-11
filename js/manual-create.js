@@ -494,6 +494,8 @@ async function createManualRoom() {
   const timerSeconds = Number(document.getElementById('timerSeconds').value || 0);
   const timerUnlimited = !!document.getElementById('timerUnlimited')?.checked;
   const bidOptions = parseBidOptions();
+  const iconPlayerPrice = Number(document.getElementById('iconPlayerPrice').value || 0);
+  const maxIconPlayers = Number(document.getElementById('maxIconPlayers').value || 0);
 
   const teams = collectTeams(true);
   const players = collectPlayers();
@@ -507,6 +509,9 @@ async function createManualRoom() {
   if (maxSquadSize <= 0) return showError('Max players per team must be positive.');
   if (minSquadSize <= 0) return showError('Min players per team must be positive.');
   if (minSquadSize > maxSquadSize) return showError('Min players per team cannot be greater than max players per team.');
+  if (iconPlayerPrice < 0) return showError('Icon player fixed price cannot be negative.');
+  if (maxIconPlayers < 0) return showError('Max icon players cannot be negative.');
+  if (maxIconPlayers > maxSquadSize) return showError('Max icon players cannot exceed max players per team.');
   if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
 
@@ -561,6 +566,8 @@ async function createManualRoom() {
         timerMode: timerUnlimited ? 'unlimited' : 'countdown',
         unlimitedTimer: timerUnlimited,
         bidOptions,
+        iconPlayerPrice,
+        maxIconPlayers,
         manualPlayerFields: customPlayerFields,
         auctionMode: 'manual',
         invitePasscode: passcode,

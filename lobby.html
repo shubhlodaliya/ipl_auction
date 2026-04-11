@@ -61,6 +61,7 @@
         </button>
         <div style="margin-top:0.75rem;">
           <button class="btn btn-secondary" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+          <button class="btn btn-secondary" id="iconPickBtnHost" onclick="openIconPickerModal()" style="display:none;">🏷️ Select Icon Players</button>
         </div>
       </div>
 
@@ -70,6 +71,7 @@
         <p style="color:var(--text-sec)">Waiting for the host to start the auction...</p>
         <div style="margin-top:0.8rem;">
           <button class="btn btn-secondary" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+          <button class="btn btn-secondary" id="iconPickBtnGuest" onclick="openIconPickerModal()" style="display:none;">🏷️ Select Icon Players</button>
         </div>
       </div>
 
@@ -91,6 +93,21 @@
         <button class="btn btn-ghost" onclick="clearWatchlist()">Clear All</button>
       </div>
       <div class="watchlist-list" id="watchlistList"></div>
+    </div>
+  </div>
+
+  <div class="team-modal-overlay" id="iconPickerModalOverlay" onclick="closeIconPickerModal()">
+    <div class="team-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>Icon Player Selection</h3>
+        <button class="btn btn-ghost" onclick="closeIconPickerModal()">Close</button>
+      </div>
+      <p class="watchlist-help" id="iconPickerHelp">Pick players at fixed icon price before auction starts.</p>
+      <div class="watchlist-toolbar iconpick-toolbar">
+        <span id="iconPickerCountLabel">0 selected</span>
+        <input id="iconPickerSearch" class="form-input iconpick-search" type="text" placeholder="Search player..." oninput="renderIconPickerModal()" />
+      </div>
+      <div class="watchlist-list" id="iconPickerList"></div>
     </div>
   </div>
 

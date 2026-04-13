@@ -5,7 +5,8 @@
 const session = requireSession();
 if (!session) throw new Error('No session');
 
-const { roomCode, teamId: myTeamId, playerName, isHost } = session;
+const { roomCode, teamId: myTeamId, playerName } = session;
+let isHost = !!session.isHost;
 const isSpectator = !!session.isSpectator || !session.teamId;
 
 let roomConfig = null;
@@ -54,6 +55,11 @@ let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 let serverTimeOffsetMs = 0;
 let spectatorSessionId = null;
+let roomHostUid = null;
+let currentHostUid = null;
+let hostPresenceMap = {};
+let hostPresenceRef = null;
+let hostClaimInFlight = false;
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = false;
 const voiceRtcConfig = {
@@ -74,6 +80,79 @@ function getSyncedNowMs() {
   return Date.now() + serverTimeOffsetMs;
 }
 
+function getLocalAuthUid() {
+  return typeof getAuthUid === 'function' ? getAuthUid() : String(localStorage.getItem('ipl_auth_uid') || '').trim();
+}
+
+function isCurrentHostPresent() {
+  return !!currentHostUid && !!hostPresenceMap[currentHostUid];
+}
+
+function updateHostControlsUi() {
+  const hostControls = document.getElementById('hostAuctionControls');
+  if (!hostControls) return;
+  hostControls.style.display = isHost && !isSpectator ? 'flex' : 'none';
+}
+
+function syncLocalHostState() {
+  const authUid = getLocalAuthUid();
+  const ownsOriginalHost = !!roomHostUid && authUid === roomHostUid;
+  isHost = !!authUid && currentHostUid === authUid;
+
+  if (!isHost && ownsOriginalHost && (!currentHostUid || currentHostUid !== authUid)) {
+    return claimHostAuthority('original host rejoined');
+  }
+
+  updateHostControlsUi();
+  saveSession({ ...session, isHost });
+  return Promise.resolve(false);
+}
+
+async function claimHostAuthority(reason = 'host takeover') {
+  if (hostClaimInFlight || isSpectator) return false;
+
+  const authUid = getLocalAuthUid();
+  if (!authUid) return false;
+
+  const canClaimAsOriginalHost = !!roomHostUid && authUid === roomHostUid;
+  const canClaimAsFallbackHost = !isCurrentHostPresent() && (!currentHostUid || currentHostUid === roomHostUid);
+  if (!canClaimAsOriginalHost && !canClaimAsFallbackHost && currentHostUid === authUid) {
+    isHost = true;
+    updateHostControlsUi();
+    saveSession({ ...session, isHost: true });
+    registerHostPresence();
+    return true;
+  }
+  if (!canClaimAsOriginalHost && !canClaimAsFallbackHost) return false;
+
+  hostClaimInFlight = true;
+  try {
+    const ref = db.ref(`rooms/${roomCode}/config/currentHostUid`);
+    const result = await ref.transaction((currentValue) => {
+      if (authUid === roomHostUid) return authUid;
+      if (!isCurrentHostPresent() && (!currentValue || currentValue === roomHostUid)) return authUid;
+      if (currentValue === authUid) return currentValue;
+      return currentValue;
+    });
+
+    if (result.committed && result.snapshot && result.snapshot.val() === authUid) {
+      currentHostUid = authUid;
+      isHost = true;
+      updateHostControlsUi();
+      saveSession({ ...session, isHost: true });
+      registerHostPresence();
+      if (reason) showToast(authUid === roomHostUid ? 'Host authority restored.' : 'Host authority transferred.', 'success');
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.warn('Failed to claim host authority:', err);
+    return false;
+  } finally {
+    hostClaimInFlight = false;
+  }
+}
+
 function getOrCreateSpectatorSessionId() {
   const key = 'ipl_spectator_id';
   const existing = sessionStorage.getItem(key);
@@ -81,6 +160,37 @@ function getOrCreateSpectatorSessionId() {
   const generated = `sp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   sessionStorage.setItem(key, generated);
   return generated;
+}
+
+function registerHostPresence() {
+  if (isSpectator || !isHost) return;
+  const authUid = getLocalAuthUid();
+  if (!authUid) return;
+
+  unregisterHostPresenceListener();
+
+  if (!hostPresenceRef || hostPresenceRef.key !== authUid) {
+    hostPresenceRef = db.ref(`rooms/${roomCode}/hostPresence/${authUid}`);
+  }
+
+  listeners.hostConnected = db.ref('.info/connected').on('value', snap => {
+    if (!snap.val() || !isHost) return;
+    hostPresenceRef.onDisconnect().remove();
+    hostPresenceRef.set({
+      joinedAt: firebase.database.ServerValue.TIMESTAMP,
+      teamId: myTeamId,
+      playerName: playerName || 'Host'
+    }).catch((err) => {
+      console.warn('Failed to register host presence:', err);
+    });
+  });
+}
+
+function unregisterHostPresenceListener() {
+  if (listeners.hostConnected) {
+    db.ref('.info/connected').off('value', listeners.hostConnected);
+    listeners.hostConnected = null;
+  }
 }
 
 function updateSpectatorCountBadge(count = 0) {
@@ -159,6 +269,8 @@ async function initAuction() {
   if (!roomSnap.exists()) { alert('Room not found'); window.location.href = 'index.html'; return; }
   const room = roomSnap.val();
   roomConfig = room.config || {};
+  roomHostUid = roomConfig.hostUid || null;
+  currentHostUid = roomConfig.currentHostUid || roomConfig.hostUid || null;
   isManualAuction = roomConfig.auctionType === 'manual';
   unlimitedTimer = !!roomConfig.unlimitedTimer || roomConfig.timerMode === 'unlimited' || Number(roomConfig.timerSeconds) === 0;
   roomTeamCatalog = isManualAuction
@@ -188,6 +300,14 @@ async function initAuction() {
     }
   }
 
+  if (!isSpectator) {
+    await syncLocalHostState();
+    const authUid = getLocalAuthUid();
+    if (authUid && roomHostUid && authUid === roomHostUid && currentHostUid !== authUid) {
+      await claimHostAuthority('original host rejoined');
+    }
+  }
+
   // Load player queue
   const queueSnap = await db.ref(`rooms/${roomCode}/playerQueue`).get();
   if (queueSnap.exists()) {
@@ -209,6 +329,26 @@ async function initAuction() {
   renderAuctionCodeChip();
   listenSpectatorCount();
   registerSpectatorPresence();
+
+  listeners.currentHostUid = db.ref(`rooms/${roomCode}/config/currentHostUid`).on('value', snap => {
+    currentHostUid = snap.val() || null;
+    syncLocalHostState().catch?.(() => {});
+    const authUid = getLocalAuthUid();
+    if (!isSpectator && !isHost && (!currentHostUid || (authUid && roomHostUid && authUid === roomHostUid && currentHostUid !== authUid))) {
+      claimHostAuthority('host takeover').catch(() => {});
+    }
+  });
+
+  listeners.hostPresence = db.ref(`rooms/${roomCode}/hostPresence`).on('value', snap => {
+    hostPresenceMap = snap.val() || {};
+    if (!isSpectator && !isHost) {
+      claimHostAuthority('host takeover').catch(() => {});
+    }
+  });
+
+  if (!isSpectator && isHost) {
+    registerHostPresence();
+  }
 
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
@@ -859,6 +999,9 @@ function clamp(value, min, max) {
 function leaveAuction() {
   const confirmed = window.confirm('Leave this auction screen? You can join again later with the same room code.');
   if (!confirmed) return;
+  if (isHost && hostPresenceRef) {
+    hostPresenceRef.remove().catch(() => {});
+  }
   removeSpectatorPresence();
   leaveVoiceChat();
   clearSession();
@@ -2745,6 +2888,9 @@ function hideResultBanner() {
 // ---- CLEANUP ----
 window.addEventListener('beforeunload', () => {
   removeSpectatorPresence();
+  if (isHost && hostPresenceRef) {
+    try { hostPresenceRef.remove(); } catch (_) {}
+  }
   if (voiceFeatureEnabled) leaveVoiceChat();
   if (voiceSocket) {
     try { voiceSocket.disconnect(); } catch (_) {}
@@ -2758,12 +2904,19 @@ window.addEventListener('beforeunload', () => {
   db.ref(`rooms/${roomCode}/currentAuction`).off('value', listeners.auction);
   db.ref(`rooms/${roomCode}/currentIndex`).off('value', listeners.index);
   db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
+  if (listeners.currentHostUid) {
+    db.ref(`rooms/${roomCode}/config/currentHostUid`).off('value', listeners.currentHostUid);
+  }
+  if (listeners.hostPresence) {
+    db.ref(`rooms/${roomCode}/hostPresence`).off('value', listeners.hostPresence);
+  }
   if (listeners.spectatorCount) {
     db.ref(`rooms/${roomCode}/spectators`).off('value', listeners.spectatorCount);
   }
   if (listeners.spectatorConnected) {
     db.ref('.info/connected').off('value', listeners.spectatorConnected);
   }
+  unregisterHostPresenceListener();
   if (!isSpectator && listeners.watchlist) {
     db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', listeners.watchlist);
   }

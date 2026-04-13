@@ -182,6 +182,8 @@ async function createRoom() {
     await db.ref(`rooms/${code}`).set({
       config: {
         hostTeamId: teamId,
+        hostUid: authUid || null,
+        currentHostUid: authUid || null,
         budget,
         maxSquadSize: maxSquad,
         minSquadSize: minSquad,

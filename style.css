@@ -513,6 +513,31 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--text-dim);
 }
 
+.iconpick-toolbar {
+  gap: 0.8rem;
+}
+
+.iconpick-search {
+  max-width: 240px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+.iconpick-status {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  margin-right: 0.4rem;
+}
+
+.iconpick-row {
+  grid-template-columns: auto 1fr auto auto auto;
+}
+
+.iconpick-action {
+  font-size: 0.72rem;
+  padding: 0.26rem 0.55rem;
+}
+
 .manual-grid-two {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -862,6 +887,54 @@ input[type=range]::-webkit-slider-thumb {
 .team-stat span {
   font-weight: 600;
   color: var(--text);
+}
+.team-min-note {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  letter-spacing: 0.2px;
+}
+.sidebar-squad-preview {
+  margin-top: 0.4rem;
+  display: grid;
+  gap: 0.24rem;
+}
+.sidebar-squad-player {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.32rem;
+}
+.sidebar-squad-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sidebar-squad-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sidebar-squad-name {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-squad-more {
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  padding-left: 1px;
 }
 .leading-crown { font-size: 0.7rem; margin-left: auto; }
 
@@ -2475,6 +2548,93 @@ body.spectator-mode #voiceStatusBadge {
   display: flex;
   flex-direction: column;
 }
+.auth-modal {
+  width: min(520px, 94vw);
+  max-height: min(88vh, 760px);
+  padding: 1rem 1rem 1.1rem;
+  background:
+    radial-gradient(110% 85% at 100% 0%, rgba(255, 203, 48, 0.09), transparent 55%),
+    radial-gradient(120% 110% at 0% 100%, rgba(29,160,255,0.09), transparent 62%),
+    rgba(7, 16, 34, 0.98);
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 26px 80px rgba(0,0,0,0.48);
+}
+.auth-modal-header {
+  border-bottom: none;
+  padding: 0.25rem 0.1rem 0.2rem;
+  margin-bottom: 0.2rem;
+}
+.auth-subtitle {
+  margin: 0.1rem 0.2rem 0.9rem;
+  color: var(--text-sec);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.auth-tabs {
+  margin: 0 0.15rem 0.9rem;
+}
+.auth-group {
+  margin: 0 0.68rem 0.72rem;
+}
+.auth-group .form-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.95px;
+}
+.auth-group .form-input {
+  height: 52px;
+  border-radius: 12px;
+}
+.auth-submit-btn,
+.auth-google-btn {
+  margin: 0.1rem 0.68rem;
+  border-radius: 12px;
+  min-height: 52px;
+}
+.auth-google-btn {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.17);
+  font-weight: 700;
+}
+.auth-google-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+.auth-google-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+.auth-divider {
+  margin: 0.75rem 0.68rem;
+  display: flex;
+  align-items: center;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+}
+.auth-divider span {
+  padding: 0 0.5rem;
+}
+.auth-error {
+  margin: 0.72rem 0.68rem 0;
+  color: var(--red);
+  font-size: 0.84rem;
+  min-height: 1.2rem;
+}
 .pool-modal {
   width: min(760px, 94vw);
 }
@@ -2705,6 +2865,12 @@ body.spectator-mode #voiceStatusBadge {
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
+}
+.team-power-invalid-reason {
+  margin-top: 0.38rem;
+  color: #ff9b9b;
+  font-size: 0.74rem;
+  line-height: 1.3;
 }
 .team-power-score {
   font-family: 'Rajdhani', sans-serif;
@@ -3049,6 +3215,46 @@ body.spectator-mode #voiceStatusBadge {
   color: var(--text-sec);
   font-size: 0.85rem;
 }
+.reauction-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.reauction-search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text-main);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+}
+.reauction-search-input::placeholder {
+  color: var(--text-dim);
+}
+.reauction-role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.reauction-role-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.02);
+  color: var(--text-sec);
+  font-size: 0.77rem;
+  padding: 0.28rem 0.62rem;
+  cursor: pointer;
+}
+.reauction-role-chip.active {
+  border-color: rgba(255,203,48,0.5);
+  background: rgba(255,203,48,0.15);
+  color: var(--gold);
+}
+.reauction-filter-meta {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+}
 .reauction-player-list {
   max-height: 330px;
   overflow-y: auto;
@@ -3084,6 +3290,12 @@ body.spectator-mode #voiceStatusBadge {
   color: var(--text-dim);
   font-size: 0.78rem;
   text-align: right;
+}
+.reauction-empty {
+  color: var(--text-dim);
+  font-size: 0.84rem;
+  text-align: center;
+  padding: 0.9rem 0.4rem;
 }
 .reauction-host-actions {
   border-top: 1px solid var(--border);
@@ -3255,6 +3467,19 @@ body.spectator-mode #voiceStatusBadge {
   display: block;
 }
 .result-player-name { flex: 1; font-weight: 500; }
+.icon-player-tag {
+  display: inline-block;
+  margin-left: 0.42rem;
+  padding: 0.08rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 203, 48, 0.45);
+  background: rgba(255, 203, 48, 0.13);
+  color: #ffd86b;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.35px;
+  vertical-align: middle;
+}
 .result-player-price {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 600;
@@ -3850,6 +4075,15 @@ body.spectator-mode #voiceStatusBadge {
   }
   .watchlist-player-meta {
     display: none;
+  }
+  .iconpick-row {
+    grid-template-columns: auto 1fr auto;
+    row-gap: 0.35rem;
+  }
+  .iconpick-row .watchlist-player-meta,
+  .iconpick-row .iconpick-status {
+    grid-column: 2 / 4;
+    display: block;
   }
   .manual-grid-two,
   .manual-grid-four,

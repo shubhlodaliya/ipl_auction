@@ -131,8 +131,24 @@ function clearSession() {
   sessionStorage.removeItem('ipl_session');
 }
 
+function isAuthReady() {
+  return !!localStorage.getItem('ipl_auth_uid') && localStorage.getItem('ipl_auth_verified') === '1';
+}
+
+function requireAuth(redirectTo = 'index.html') {
+  if (!isAuthReady()) {
+    window.location.href = redirectTo;
+    return false;
+  }
+  return true;
+}
+
 // Redirect guard — call on pages that need a session
 function requireSession(redirectTo = 'index.html') {
+  if (!isAuthReady()) {
+    window.location.href = redirectTo;
+    return null;
+  }
   const s = getSession();
   if (!s || !s.roomCode) {
     window.location.href = redirectTo;

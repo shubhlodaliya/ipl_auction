@@ -10,6 +10,29 @@ window.addEventListener('DOMContentLoaded', initCreatePage);
 
 function initCreatePage() {
   initAuctionModeToggle();
+  initSquadRangeControls();
+}
+
+function initSquadRangeControls() {
+  const maxEl = document.getElementById('squadRange');
+  const minEl = document.getElementById('minSquadRange');
+  const maxValEl = document.getElementById('squadVal');
+  const minValEl = document.getElementById('minSquadVal');
+  if (!maxEl || !minEl) return;
+
+  const sync = () => {
+    const maxSquad = Number(maxEl.value || 25);
+    minEl.max = String(Math.max(1, maxSquad));
+    if (Number(minEl.value) > maxSquad) {
+      minEl.value = String(maxSquad);
+    }
+    if (maxValEl) maxValEl.textContent = `${maxEl.value} players`;
+    if (minValEl) minValEl.textContent = `${minEl.value} players`;
+  };
+
+  maxEl.addEventListener('input', sync);
+  minEl.addEventListener('input', sync);
+  sync();
 }
 
 function initAuctionModeToggle() {
@@ -110,11 +133,16 @@ function selectJoinTeam(teamId) {
 // CREATE ROOM
 // ============================================================
 async function createRoom() {
+  if (typeof requireAuthForAction === 'function' && !requireAuthForAction('Please login before creating an auction room.')) {
+    return;
+  }
+
   const name = document.getElementById('createName').value.trim();
   const teamId = selectedCreateTeam;
   const passcode = document.getElementById('createPasscode').value.trim();
   const budget = parseInt(document.getElementById('budgetRange').value);
   const maxSquad = parseInt(document.getElementById('squadRange').value);
+  const minSquad = parseInt(document.getElementById('minSquadRange').value || '1');
   const timerSec = parseInt(document.getElementById('timerRange').value);
   const auctionMode = document.querySelector('input[name="auctionMode"]:checked')?.value || 'random';
 
@@ -124,6 +152,8 @@ async function createRoom() {
   if (!name) { showError(errEl, 'Please enter your name.'); return; }
   if (!teamId) { showError(errEl, 'Please select an IPL team.'); return; }
   if (!passcode) { showError(errEl, 'Please set a room passcode.'); return; }
+  if (!Number.isFinite(minSquad) || minSquad < 1) { showError(errEl, 'Minimum squad size must be at least 1.'); return; }
+  if (minSquad > maxSquad) { showError(errEl, 'Minimum squad size cannot be greater than maximum squad size.'); return; }
 
   const btn = document.getElementById('createBtn');
   btn.disabled = true;
@@ -138,6 +168,7 @@ async function createRoom() {
         hostTeamId: teamId,
         budget,
         maxSquadSize: maxSquad,
+        minSquadSize: minSquad,
         timerSeconds: timerSec,
         auctionMode,
         invitePasscode: passcode,
@@ -174,6 +205,10 @@ async function createRoom() {
 // JOIN ROOM
 // ============================================================
 async function joinRoom() {
+  if (typeof requireAuthForAction === 'function' && !requireAuthForAction('Please login before joining an auction room.')) {
+    return;
+  }
+
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   const name = document.getElementById('joinName').value.trim();
   const passcode = document.getElementById('joinPasscode').value.trim();
@@ -244,6 +279,10 @@ async function joinRoom() {
 // WATCH LIVE AUCTION (SPECTATOR)
 // ============================================================
 async function watchLiveAuction() {
+  if (typeof requireAuthForAction === 'function' && !requireAuthForAction('Please login before opening live auction view.')) {
+    return;
+  }
+
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   const name = document.getElementById('joinName').value.trim();
 

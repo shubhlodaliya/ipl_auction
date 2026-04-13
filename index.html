@@ -14,7 +14,12 @@
   <!-- HEADER -->
   <header class="header">
     <div class="logo">🏏 IPL Auction</div>
-    <div class="header-badge">LIVE</div>
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <span id="authUserLabel" class="header-badge" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Not logged in</span>
+      <button class="btn btn-ghost" id="authLoginBtn" onclick="openAuthModal('login')">Login</button>
+      <button class="btn btn-secondary" id="authSignupBtn" onclick="openAuthModal('signup')">Sign Up</button>
+      <button class="btn btn-ghost" id="authLogoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
+    </div>
   </header>
 
   <!-- HERO -->
@@ -66,6 +71,15 @@
             <input type="range" id="squadRange" min="5" max="25" step="1" value="25"
                    oninput="document.getElementById('squadVal').textContent=this.value+' players'" />
             <span class="range-val" id="squadVal">25 players</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Minimum Squad Size</label>
+          <div class="range-wrapper">
+            <input type="range" id="minSquadRange" min="1" max="25" step="1" value="11"
+                   oninput="document.getElementById('minSquadVal').textContent=this.value+' players'" />
+            <span class="range-val" id="minSquadVal">11 players</span>
           </div>
         </div>
 
@@ -219,6 +233,39 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
+  <div class="team-modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
+    <div class="team-modal auth-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header auth-modal-header">
+        <h3 id="authModalTitle">Login</h3>
+        <button class="btn btn-ghost" onclick="closeAuthModal()">Close</button>
+      </div>
+      <p class="auth-subtitle">Securely access your rooms and keep your auction activity linked to your account.</p>
+      <div class="tabs auth-tabs">
+        <button class="tab-btn active" id="authTabLogin" onclick="switchAuthMode('login')">Login</button>
+        <button class="tab-btn" id="authTabSignup" onclick="switchAuthMode('signup')">Sign Up</button>
+      </div>
+      <div class="form-group auth-group" id="authNameWrap" style="display:none;">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="authName" type="text" maxlength="40" placeholder="Enter full name" />
+      </div>
+      <div class="form-group auth-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="authEmail" type="email" placeholder="Enter email" />
+      </div>
+      <div class="form-group auth-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="authPassword" type="password" placeholder="Enter password" minlength="6" />
+      </div>
+      <button class="btn btn-primary btn-lg btn-full auth-submit-btn" id="authSubmitBtn" onclick="submitAuthForm()">Login</button>
+      <div class="auth-divider"><span>or</span></div>
+      <button class="btn btn-secondary btn-lg btn-full auth-google-btn" id="authGoogleBtn" onclick="signInWithGoogle()">
+        <span class="auth-google-mark" aria-hidden="true">G</span>
+        Continue with Google
+      </button>
+      <p id="authError" class="auth-error" style="display:none;"></p>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="site-footer-inner">
       <span>© 2026 IPL Auction</span>
@@ -234,9 +281,11 @@
 
   <!-- FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/create.js"></script>
 
   <script>

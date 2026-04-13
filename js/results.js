@@ -10,7 +10,12 @@ const reAuctionState = {
   unsoldQueue: [],
   eligibleTeamIds: [],
   data: {},
-  listeners: {}
+  listeners: {},
+  filterRole: 'All',
+  searchQuery: '',
+  playerListScrollTop: 0,
+  searchCaret: null,
+  searchWasFocused: false
 };
 
 const playing11State = {
@@ -35,7 +40,8 @@ const resultsExportState = {
   soldCount: 0,
   unsoldCount: 0,
   totalSales: 0,
-  roomTeamCatalog: {}
+  roomTeamCatalog: {},
+  roomMinSquadSize: 1
 };
 
 const teamPowerUiState = {
@@ -399,6 +405,26 @@ function calculateBenchStrength(benchPlayers) {
 
 function calculateTeamPowerScore(teamModel) {
   const TOP_ORDER_SCORE = calculateTopOrderScore(teamModel.playingXI);
+  const squadCount = Number(teamModel?.squadCount || 0);
+  const minSquadSize = Number(teamModel?.minSquadSize || 1);
+  if (squadCount < minSquadSize) {
+    return {
+      teamId: teamModel.teamId,
+      teamName: teamModel.teamName,
+      score: 0,
+      invalidReason: `Minimum squad not met: ${squadCount}/${minSquadSize}`,
+      metrics: {
+        TOP_ORDER_SCORE: 0,
+        MIDDLE_ORDER_SCORE: 0,
+        FINISHER_SCORE: 0,
+        BOWLING_SCORE: 0,
+        ALL_ROUNDER_SCORE: 0,
+        TEAM_BALANCE_SCORE: 0,
+        MATCH_WINNER_SCORE: 0,
+        BENCH_STRENGTH_SCORE: 0
+      }
+    };
+  }
   const MIDDLE_ORDER_SCORE = calculateMiddleOrderScore(teamModel.playingXI);
   const FINISHER_SCORE = calculateFinisherScore(teamModel.playingXI);
   const BOWLING_SCORE = calculateBowlingScore(teamModel.playingXI);
@@ -464,10 +490,13 @@ function buildTeamPowerModel(teamId, team, squad, playing11Data) {
   const benchPlayers = (squad || [])
     .filter((entry) => !selectedIds.includes(String(entry.player.id)))
     .map((entry) => estimatePlayerRatings(entry.player, entry.price));
+  const minSquadSize = Number(resultsExportState?.roomMinSquadSize || 1);
 
   return {
     teamId,
     teamName: team.name,
+    squadCount: (squad || []).length,
+    minSquadSize,
     playingXI,
     benchPlayers
   };
@@ -482,6 +511,7 @@ function rankTeams(teamModels) {
     teamId: entry.teamId,
     team: entry.teamName,
     score: entry.score,
+    invalidReason: entry.invalidReason || '',
     metrics: entry.metrics
   }));
 
@@ -556,6 +586,7 @@ function renderTeamPowerInsights(powerData) {
         <span class="team-power-score">${item.score}</span>
       </div>
       <div class="team-power-team">${item.team}</div>
+      ${item.invalidReason ? `<div class="team-power-invalid-reason">${item.invalidReason}. Overall AI score is set to 0.</div>` : ''}
       <div class="team-power-metrics" style="margin-top:0.55rem;">
         <span>Top Order: <b>${item.metrics.TOP_ORDER_SCORE}</b></span>
         <span>Middle: <b>${item.metrics.MIDDLE_ORDER_SCORE}</b></span>
@@ -691,12 +722,20 @@ async function loadResults() {
 
     // Build team squad map
     // soldPlayers: { playerId: { teamId, soldPrice } }
-    const teamSquads = {}; // teamId → [ { player, price } ]
+    const teamSquads = {}; // teamId → [ { player, price, isIcon } ]
     Object.entries(soldPlayers).forEach(([pid, sale]) => {
       if (!teamSquads[sale.teamId]) teamSquads[sale.teamId] = [];
       const player = playerMap[pid];
-      if (player) teamSquads[sale.teamId].push({ player, price: sale.soldPrice });
+      if (player) {
+        teamSquads[sale.teamId].push({
+          player,
+          price: sale.soldPrice,
+          isIcon: sale?.via === 'icon' || sale?.type === 'icon'
+        });
+      }
     });
+
+    resultsExportState.roomMinSquadSize = Number(room.config?.minSquadSize || 1);
 
     // Build Team Power Rankings using Playing XI + bench depth.
     const playing11Snap = await db.ref(`rooms/${roomCode}/playing11`).get();
@@ -776,7 +815,7 @@ async function loadResults() {
           </div>
           <div class="result-squad-list">
             ${squad.length === 0 ? `<div class="result-no-squad">No players purchased</div>` :
-              squad.map(({ player, price }) => {
+              squad.map(({ player, price, isIcon }) => {
                 const color = getRoleColor(player.role);
                 const initials = getPlayerInitials(player.name);
                 const icon = getRoleIcon(player.role);
@@ -787,8 +826,8 @@ async function loadResults() {
                   <div class="result-player-row">
                     <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
                     <div style="flex:1;">
-                      <div class="result-player-name">${player.name}</div>
-                      <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}</div>
+                      <div class="result-player-name">${player.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
+                      <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}${isIcon ? ' · Icon Player' : ''}</div>
                     </div>
                     <div class="result-player-price">${formatPrice(price)}</div>
                   </div>
@@ -1216,10 +1255,71 @@ function escapeHtml(str) {
     .replaceAll("'", '&#39;');
 }
 
+function normalizeReAuctionRole(role) {
+  const token = String(role || '').trim().toLowerCase().replace(/[_\s-]+/g, ' ');
+  if (!token) return 'Others';
+  if (token.includes('wicket')) return 'Wicket-keeper';
+  if (token.includes('all round') || token.includes('all-round')) return 'All-rounder';
+  if (token.includes('fast')) return 'Fast Bowler';
+  if (token.includes('spin')) return 'Spinner';
+  if (token.includes('bowl')) return 'Bowler';
+  if (token.includes('bat')) return 'Batsman';
+  return 'Others';
+}
+
+function getReAuctionRoleFilters(queue, playersById) {
+  const preferredOrder = ['Batsman', 'Bowler', 'Fast Bowler', 'Spinner', 'Wicket-keeper', 'All-rounder', 'Others'];
+  const present = new Set();
+
+  queue.forEach((pid) => {
+    const p = playersById[pid] || playersById[String(pid)];
+    if (!p) return;
+    present.add(normalizeReAuctionRole(p.role));
+  });
+
+  return ['All', ...preferredOrder.filter((role) => present.has(role))];
+}
+
+function setReAuctionRoleFilter(role) {
+  reAuctionState.filterRole = role || 'All';
+  renderReAuctionSection();
+}
+
+function setReAuctionSearch(value) {
+  reAuctionState.searchQuery = String(value || '');
+  renderReAuctionSection();
+}
+
+function setReAuctionSearchWithCaret(value, caretPos) {
+  reAuctionState.searchQuery = String(value || '');
+  reAuctionState.searchCaret = Number.isFinite(Number(caretPos)) ? Number(caretPos) : null;
+  reAuctionState.searchWasFocused = true;
+  renderReAuctionSection();
+}
+
+function setReAuctionListScroll(scrollTop) {
+  reAuctionState.playerListScrollTop = Math.max(0, Number(scrollTop) || 0);
+}
+
+window.setReAuctionRoleFilter = setReAuctionRoleFilter;
+window.setReAuctionSearch = setReAuctionSearch;
+window.setReAuctionSearchWithCaret = setReAuctionSearchWithCaret;
+window.setReAuctionListScroll = setReAuctionListScroll;
+
 function renderReAuctionSection() {
   const body = document.getElementById('reAuctionBody');
   const hint = document.getElementById('reAuctionHint');
   if (!body || !hint) return;
+
+  const prevSearchEl = document.getElementById('reAuctionSearchInput');
+  const prevListEl = document.getElementById('reAuctionPlayerList');
+  if (prevListEl) {
+    reAuctionState.playerListScrollTop = prevListEl.scrollTop;
+  }
+  if (prevSearchEl && document.activeElement === prevSearchEl) {
+    reAuctionState.searchWasFocused = true;
+    reAuctionState.searchCaret = prevSearchEl.selectionStart;
+  }
 
   const { room, session, unsoldQueue, eligibleTeamIds, data } = reAuctionState;
   const teams = room?.teams || {};
@@ -1270,7 +1370,34 @@ function renderReAuctionSection() {
   const mySelectedCount = Object.keys(mySelection).filter(pid => mySelection[pid]).length;
   const myReady = !!readyMap[myTeamId];
 
-  const playerListHtml = unsoldQueue.map(pid => {
+  const roleFilters = getReAuctionRoleFilters(unsoldQueue, reAuctionState.playersById);
+  const activeRole = roleFilters.includes(reAuctionState.filterRole) ? reAuctionState.filterRole : 'All';
+  reAuctionState.filterRole = activeRole;
+
+  const searchTerm = String(reAuctionState.searchQuery || '').trim().toLowerCase();
+  const filteredQueue = unsoldQueue.filter((pid) => {
+    const player = reAuctionState.playersById[pid] || reAuctionState.playersById[String(pid)];
+    if (!player) return false;
+
+    const normalizedRole = normalizeReAuctionRole(player.role);
+    const roleMatch = activeRole === 'All'
+      ? true
+      : (activeRole === 'Bowler'
+        ? ['Bowler', 'Fast Bowler', 'Spinner'].includes(normalizedRole)
+        : normalizedRole === activeRole);
+
+    if (!roleMatch) return false;
+
+    if (!searchTerm) return true;
+    const haystack = `${String(player.name || '').toLowerCase()} ${String(player.country || '').toLowerCase()} ${String(player.role || '').toLowerCase()}`;
+    return haystack.includes(searchTerm);
+  });
+
+  const roleFilterHtml = roleFilters.map((role) => `
+    <button class="reauction-role-chip ${role === activeRole ? 'active' : ''}" onclick="setReAuctionRoleFilter('${escapeHtml(role)}')">${escapeHtml(role)}</button>
+  `).join('');
+
+  const playerListHtml = filteredQueue.map(pid => {
     const player = reAuctionState.playersById[pid] || reAuctionState.playersById[String(pid)];
     if (!player) return '';
     const checked = !!(mySelection[String(pid)] || mySelection[pid]);
@@ -1312,7 +1439,20 @@ function renderReAuctionSection() {
       </div>
     ` : `<div class="reauction-note">Only teams with empty slots can select players.</div>`}
 
-    <div class="reauction-player-list">${playerListHtml}</div>
+    <div class="reauction-filter-row">
+      <input
+        id="reAuctionSearchInput"
+        class="reauction-search-input"
+        type="text"
+        placeholder="Search player..."
+        value="${escapeHtml(reAuctionState.searchQuery || '')}"
+        oninput="setReAuctionSearchWithCaret(this.value, this.selectionStart)"
+      />
+      <div class="reauction-role-chips">${roleFilterHtml}</div>
+      <div class="reauction-filter-meta">Showing ${filteredQueue.length} of ${unsoldQueue.length}</div>
+    </div>
+
+    <div id="reAuctionPlayerList" class="reauction-player-list" onscroll="setReAuctionListScroll(this.scrollTop)">${playerListHtml || '<div class="reauction-empty">No players match current filters.</div>'}</div>
 
     ${amHost ? `
       <div class="reauction-host-actions">
@@ -1324,12 +1464,38 @@ function renderReAuctionSection() {
     ` : ''}
   `;
 
+  const listEl = document.getElementById('reAuctionPlayerList');
+  if (listEl) {
+    listEl.scrollTop = reAuctionState.playerListScrollTop || 0;
+  }
+
+  const searchEl = document.getElementById('reAuctionSearchInput');
+  if (searchEl && reAuctionState.searchWasFocused) {
+    searchEl.focus({ preventScroll: true });
+    const caret = Number.isFinite(Number(reAuctionState.searchCaret))
+      ? Math.min(Number(reAuctionState.searchCaret), searchEl.value.length)
+      : searchEl.value.length;
+    try {
+      searchEl.setSelectionRange(caret, caret);
+    } catch (_) {
+      // Ignore selection errors on non-supporting browsers.
+    }
+  }
+
+  reAuctionState.searchWasFocused = false;
+  reAuctionState.searchCaret = null;
+
   hint.textContent = 'Teams with empty slots select unsold players, mark ready, then host starts re-auction.';
 }
 
 async function toggleReAuctionPlayer(playerId) {
   const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
   if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
+
+  const listEl = document.getElementById('reAuctionPlayerList');
+  if (listEl) {
+    reAuctionState.playerListScrollTop = listEl.scrollTop;
+  }
 
   const teamId = session.teamId;
   const teamSelections = data.selections?.[teamId] || {};

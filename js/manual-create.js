@@ -9,6 +9,8 @@ let customPlayerFields = [];
 window.addEventListener('DOMContentLoaded', initManualSetup);
 
 function initManualSetup() {
+  if (typeof requireAuth === 'function' && !requireAuth('index.html')) return;
+
   for (let i = 0; i < 4; i += 1) addTeamRow();
   for (let i = 0; i < 12; i += 1) addPlayerRow();
 }
@@ -490,9 +492,12 @@ async function createManualRoom() {
   const passcode = document.getElementById('invitePasscode').value.trim();
   const budget = Number(document.getElementById('budgetLakh').value || 0);
   const maxSquadSize = Number(document.getElementById('maxSquadSize').value || 0);
+  const minSquadSize = Number(document.getElementById('minSquadSize').value || 0);
   const timerSeconds = Number(document.getElementById('timerSeconds').value || 0);
   const timerUnlimited = !!document.getElementById('timerUnlimited')?.checked;
   const bidOptions = parseBidOptions();
+  const iconPlayerPrice = Number(document.getElementById('iconPlayerPrice').value || 0);
+  const maxIconPlayers = Number(document.getElementById('maxIconPlayers').value || 0);
 
   const teams = collectTeams(true);
   const players = collectPlayers();
@@ -504,6 +509,11 @@ async function createManualRoom() {
   if (players.length < 1) return showError('Add at least 1 player.');
   if (budget <= 0) return showError('Purse must be positive.');
   if (maxSquadSize <= 0) return showError('Max players per team must be positive.');
+  if (minSquadSize <= 0) return showError('Min players per team must be positive.');
+  if (minSquadSize > maxSquadSize) return showError('Min players per team cannot be greater than max players per team.');
+  if (iconPlayerPrice < 0) return showError('Icon player fixed price cannot be negative.');
+  if (maxIconPlayers < 0) return showError('Max icon players cannot be negative.');
+  if (maxIconPlayers > maxSquadSize) return showError('Max icon players cannot exceed max players per team.');
   if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
 
@@ -553,10 +563,13 @@ async function createManualRoom() {
         hostTeamId: hostTeam.id,
         budget,
         maxSquadSize,
+        minSquadSize,
         timerSeconds: timerUnlimited ? 0 : timerSeconds,
         timerMode: timerUnlimited ? 'unlimited' : 'countdown',
         unlimitedTimer: timerUnlimited,
         bidOptions,
+        iconPlayerPrice,
+        maxIconPlayers,
         manualPlayerFields: customPlayerFields,
         auctionMode: 'manual',
         invitePasscode: passcode,

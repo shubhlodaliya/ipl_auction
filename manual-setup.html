@@ -38,6 +38,10 @@
           <input class="form-input" id="maxSquadSize" type="number" min="1" step="1" value="25" />
         </div>
         <div class="form-group">
+          <label class="form-label">Min Players Per Team</label>
+          <input class="form-input" id="minSquadSize" type="number" min="1" step="1" value="11" />
+        </div>
+        <div class="form-group">
           <label class="form-label">Bid Timer (seconds)</label>
           <input class="form-input" id="timerSeconds" type="number" min="5" step="1" value="30" />
           <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.85rem;color:var(--text-sec);margin-top:0.35rem;">
@@ -48,6 +52,14 @@
         <div class="form-group">
           <label class="form-label">Bid Buttons (Lakh, comma)</label>
           <input class="form-input" id="bidOptions" type="text" value="25,50,100" placeholder="e.g. 10,25,50" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icon Player Fixed Price (Lakh)</label>
+          <input class="form-input" id="iconPlayerPrice" type="number" min="0" step="1" value="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Icon Players Per Team</label>
+          <input class="form-input" id="maxIconPlayers" type="number" min="0" step="1" value="0" />
         </div>
       </div>
 
@@ -95,10 +107,12 @@
   <div class="toast" id="toast"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/manual-create.js"></script>
   <script>
     function showToast(msg, type = '') {

@@ -271,6 +271,27 @@ async function initAuction() {
   roomConfig = room.config || {};
   roomHostUid = roomConfig.hostUid || null;
   currentHostUid = roomConfig.currentHostUid || roomConfig.hostUid || null;
+  const authUid = getLocalAuthUid();
+
+  // Backward compatibility: recover host identity for rooms created before host UID fields existed.
+  if (!roomHostUid) {
+    const hostTeam = (room.teams || {})[roomConfig.hostTeamId];
+    roomHostUid = hostTeam?.ownerUid || null;
+    if (!roomHostUid && !isSpectator && isHost && authUid) {
+      roomHostUid = authUid;
+    }
+  }
+  if (!currentHostUid) {
+    currentHostUid = roomHostUid || null;
+  }
+
+  if (roomHostUid && roomConfig.hostUid !== roomHostUid) {
+    db.ref(`rooms/${roomCode}/config/hostUid`).set(roomHostUid).catch(() => {});
+  }
+  if (currentHostUid && roomConfig.currentHostUid !== currentHostUid) {
+    db.ref(`rooms/${roomCode}/config/currentHostUid`).set(currentHostUid).catch(() => {});
+  }
+
   isManualAuction = roomConfig.auctionType === 'manual';
   unlimitedTimer = !!roomConfig.unlimitedTimer || roomConfig.timerMode === 'unlimited' || Number(roomConfig.timerSeconds) === 0;
   roomTeamCatalog = isManualAuction
@@ -302,7 +323,6 @@ async function initAuction() {
 
   if (!isSpectator) {
     await syncLocalHostState();
-    const authUid = getLocalAuthUid();
     if (authUid && roomHostUid && authUid === roomHostUid && currentHostUid !== authUid) {
       await claimHostAuthority('original host rejoined');
     }

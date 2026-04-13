@@ -97,6 +97,8 @@ async function fetchRoomTeams(code) {
   }
 
   const room = snap.val();
+  const status = room?.config?.status;
+  const removedTeams = room?.removedTeams || {};
   if (room.config.status === 'finished') {
     grid.innerHTML = `<div style="grid-column:1/-1;padding:1rem;text-align:center;color:var(--red);font-size:0.85rem;">This auction has already ended.</div>`;
     return;
@@ -108,14 +110,20 @@ async function fetchRoomTeams(code) {
     : IPL_TEAMS;
 
   grid.innerHTML = sourceTeams.map(t => {
+    const blocked = !!removedTeams[t.id];
     const taken = takenTeams.includes(t.id);
+    const canSelect = !blocked && (status !== 'auction' || taken);
+    const stateLabel = blocked
+      ? 'Removed'
+      : (taken ? 'Taken' : 'Available');
     return `
-      <div class="team-option ${taken ? 'taken' : ''}" id="join-team-${t.id}"
-           onclick="${taken ? '' : `selectJoinTeam('${t.id}')`}"
+      <div class="team-option ${taken ? 'taken' : ''} ${blocked ? 'taken' : ''}" id="join-team-${t.id}"
+           onclick="${canSelect ? `selectJoinTeam('${t.id}')` : ''}"
            title="${t.name}"
            style="--team-color:${t.primary}">
         <img class="team-logo" src="${t.logo}" alt="${t.short} logo" />
         <div class="team-short" style="color:${t.primary}">${t.short}</div>
+        <div style="font-size:0.63rem;color:var(--text-dim);margin-top:0.16rem;">${stateLabel}</div>
       </div>
     `;
   }).join('');
@@ -223,7 +231,6 @@ async function joinRoom() {
     if (!snap.exists()) { showError(errEl, 'Room not found. Check the code and try again.'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
 
     const room = snap.val();
-    if (room.config.status === 'auction') { showError(errEl, 'This auction has already started!'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
     if (room.config.status === 'finished') { showError(errEl, 'This auction has ended.'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
     if (!room.config.invitePasscode || room.config.invitePasscode !== passcode) {
       showError(errEl, 'Invalid room passcode.');
@@ -232,8 +239,51 @@ async function joinRoom() {
       return;
     }
 
+    const status = room?.config?.status;
+    const removedTeams = room?.removedTeams || {};
+    if (removedTeams[teamId]) {
+      showError(errEl, 'This team was removed by host and cannot rejoin.');
+      btn.disabled = false;
+      btn.textContent = '🚀 Join Auction';
+      return;
+    }
+
     const existing = room.teams && room.teams[teamId];
-    if (existing) { showError(errEl, 'That team is already taken! Pick another.'); btn.disabled = false; btn.textContent = '🚀 Join Auction'; return; }
+    const sameOwner = existing && String(existing.ownerName || '').trim().toLowerCase() === name.toLowerCase();
+
+    // Once auction starts, only already-joined teams can rejoin.
+    if (status === 'auction') {
+      if (!existing) {
+        showError(errEl, 'Auction already started. New teams cannot join now.');
+        btn.disabled = false;
+        btn.textContent = '🚀 Join Auction';
+        return;
+      }
+      if (!sameOwner) {
+        showError(errEl, 'This team belongs to another user. Use your original team and name to rejoin.');
+        btn.disabled = false;
+        btn.textContent = '🚀 Join Auction';
+        return;
+      }
+
+      saveSession({ roomCode: code, teamId, playerName: existing.ownerName || name, isHost: !!existing.isHost });
+      window.location.href = `auction.html?room=${encodeURIComponent(code)}`;
+      return;
+    }
+
+    // Lobby rejoin path: reclaim same team with same owner name.
+    if (existing) {
+      if (!sameOwner) {
+        showError(errEl, 'That team is already taken by another user.');
+        btn.disabled = false;
+        btn.textContent = '🚀 Join Auction';
+        return;
+      }
+
+      saveSession({ roomCode: code, teamId, playerName: existing.ownerName || name, isHost: !!existing.isHost });
+      window.location.href = 'lobby.html';
+      return;
+    }
 
     const team = room.config?.auctionType === 'manual'
       ? (room.manualTeams && room.manualTeams[teamId])

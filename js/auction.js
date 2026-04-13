@@ -5,7 +5,7 @@
 const session = requireSession();
 if (!session) throw new Error('No session');
 
-const { roomCode, teamId: myTeamId, playerName, isHost } = session;
+const { roomCode, teamId: myTeamId, playerName, isHost: sessionIsHost } = session;
 const isSpectator = !!session.isSpectator || !session.teamId;
 
 let roomConfig = null;
@@ -54,6 +54,8 @@ let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 let serverTimeOffsetMs = 0;
 let spectatorSessionId = null;
+let teamPresenceClientId = null;
+let teamPresenceMap = {};
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = false;
 const voiceRtcConfig = {
@@ -68,6 +70,101 @@ let listeners = {};
 
 function getRoomTeamMeta(teamId) {
   return roomTeamCatalog[teamId] || teamsData[teamId] || getTeam(teamId);
+}
+
+function isCurrentHost() {
+  if (isSpectator) return false;
+  const myTeam = teamsData?.[myTeamId] || null;
+  if (myTeam && typeof myTeam.isHost === 'boolean') return !!myTeam.isHost;
+  return !!sessionIsHost;
+}
+
+function syncHostAuctionControls() {
+  const hostControls = document.getElementById('hostAuctionControls');
+  if (!hostControls) return;
+  hostControls.style.display = isCurrentHost() ? 'flex' : 'none';
+}
+
+function getTeamPresenceClientId() {
+  if (teamPresenceClientId) return teamPresenceClientId;
+  const key = `ipl_team_presence_${roomCode}_${myTeamId || 'viewer'}`;
+  const existing = sessionStorage.getItem(key);
+  if (existing) {
+    teamPresenceClientId = existing;
+    return teamPresenceClientId;
+  }
+  teamPresenceClientId = `tp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  sessionStorage.setItem(key, teamPresenceClientId);
+  return teamPresenceClientId;
+}
+
+function registerTeamPresence() {
+  if (isSpectator || !myTeamId) return;
+
+  const clientId = getTeamPresenceClientId();
+  const presenceRef = db.ref(`rooms/${roomCode}/presence/${myTeamId}/${clientId}`);
+
+  listeners.teamPresenceConnected = db.ref('.info/connected').on('value', (snap) => {
+    if (!snap.val()) return;
+    presenceRef.onDisconnect().remove();
+    presenceRef.set({
+      at: firebase.database.ServerValue.TIMESTAMP,
+      ownerName: playerName || 'Player'
+    }).catch((err) => {
+      console.warn('Team presence update failed:', err);
+    });
+  });
+}
+
+function removeTeamPresence() {
+  if (isSpectator || !myTeamId) return;
+  const clientId = getTeamPresenceClientId();
+  db.ref(`rooms/${roomCode}/presence/${myTeamId}/${clientId}`).remove().catch(() => {});
+}
+
+function pickHostCandidate(teams = {}, presenceMap = {}) {
+  const activeTeamIds = Object.entries(presenceMap)
+    .filter(([, clients]) => clients && typeof clients === 'object' && Object.keys(clients).length > 0)
+    .map(([teamId]) => teamId)
+    .filter((teamId) => !!teams[teamId]);
+
+  if (!activeTeamIds.length) return null;
+
+  return activeTeamIds.sort((a, b) => {
+    const aJoined = Number(teams[a]?.joinedAt || 0);
+    const bJoined = Number(teams[b]?.joinedAt || 0);
+    if (aJoined !== bJoined) return aJoined - bJoined;
+    return String(a).localeCompare(String(b));
+  })[0];
+}
+
+async function ensureActiveHost() {
+  if (isSpectator) return;
+
+  try {
+    await db.ref(`rooms/${roomCode}`).transaction((curr) => {
+      if (!curr || !curr.config || curr.config.status === 'finished') return curr;
+
+      const teams = curr.teams || {};
+      const presence = curr.presence || {};
+      const currentHostId = curr.config.hostTeamId || Object.keys(teams).find((teamId) => teams[teamId]?.isHost) || null;
+      const currentHostActive = !!(currentHostId && teams[currentHostId] && presence[currentHostId] && Object.keys(presence[currentHostId] || {}).length > 0);
+      if (currentHostActive) return curr;
+
+      const nextHostId = pickHostCandidate(teams, presence);
+      if (!nextHostId) return curr;
+
+      Object.keys(teams).forEach((teamId) => {
+        teams[teamId].isHost = (teamId === nextHostId);
+      });
+      curr.teams = teams;
+      curr.config.hostTeamId = nextHostId;
+      curr.config.hostChangedAt = Date.now();
+      return curr;
+    });
+  } catch (err) {
+    console.warn('Host handover check failed:', err);
+  }
 }
 
 function getSyncedNowMs() {
@@ -129,7 +226,7 @@ function removeSpectatorPresence() {
 }
 
 async function requestCloudinaryCleanup() {
-  if (cleanupRequested || !isHost || !isManualAuction) return;
+  if (cleanupRequested || !isCurrentHost() || !isManualAuction) return;
   cleanupRequested = true;
   try {
     await fetch('/api/cloudinary-cleanup', {
@@ -149,10 +246,7 @@ async function initAuction() {
   soundEnabled = localStorage.getItem('ipl_sound_enabled') !== '0';
   updateSoundToggleButton();
 
-  // Host: show pass button
-  if (isHost && !isSpectator) {
-    document.getElementById('hostAuctionControls').style.display = 'flex';
-  }
+  syncHostAuctionControls();
 
   // Load room data
   const roomSnap = await db.ref(`rooms/${roomCode}`).get();
@@ -209,6 +303,12 @@ async function initAuction() {
   renderAuctionCodeChip();
   listenSpectatorCount();
   registerSpectatorPresence();
+  registerTeamPresence();
+
+  listeners.teamPresence = db.ref(`rooms/${roomCode}/presence`).on('value', (snap) => {
+    teamPresenceMap = snap.val() || {};
+    ensureActiveHost();
+  });
 
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
@@ -226,6 +326,12 @@ async function initAuction() {
         }, 900);
       }
       return;
+    }
+
+    if (!isSpectator) {
+      roomConfig.hostTeamId = Object.keys(teamsData).find((teamId) => teamsData[teamId]?.isHost) || roomConfig.hostTeamId;
+      syncHostAuctionControls();
+      ensureActiveHost();
     }
 
     renderSidebar();
@@ -259,7 +365,7 @@ async function initAuction() {
     currentAuctionData = snap.val();
     processingRound = false;
     renderAuction(currentAuctionData, prevAuctionData);
-    if (isHost) hostEvaluateFastPath(currentAuctionData);
+    if (isCurrentHost()) hostEvaluateFastPath(currentAuctionData);
   });
 
   if (!isSpectator) {
@@ -894,7 +1000,7 @@ function timerTick() {
   updateSpectatorPanel(currentAuctionData);
 
   // Host processes round when timer hits 0
-  if (timeLeft <= 0 && isHost && !processingRound) {
+  if (timeLeft <= 0 && isCurrentHost() && !processingRound) {
     processingRound = true;
     processAuctionRound();
   }
@@ -1120,7 +1226,7 @@ async function withdrawFromPlayer() {
 }
 
 async function hostEvaluateFastPath(data) {
-  if (!isHost || paused || !data || data.status !== 'bidding' || processingRound) return;
+  if (!isCurrentHost() || paused || !data || data.status !== 'bidding' || processingRound) return;
 
   const totalTeams = Object.keys(teamsData).length;
   const skipCount = Object.keys(data.skipVotes || {}).length;
@@ -1578,7 +1684,7 @@ function renderSidebar() {
         <div class="team-row-top">
           <span class="team-short-badge">${t?.logo ? `<img class="sidebar-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.short}</span>
           <span class="team-owner-name">${team.ownerName}</span>
-          ${(isHost && !isMe) ? `<button class="team-remove-btn" onclick="event.stopPropagation(); removeTeamFromAuction('${tId}')" title="Remove ${team.ownerName}">Remove</button>` : ''}
+          ${(isCurrentHost() && !isMe) ? `<button class="team-remove-btn" onclick="event.stopPropagation(); removeTeamFromAuction('${tId}')" title="Remove ${team.ownerName}">Remove</button>` : ''}
           ${team.isHost ? '<span class="leading-crown">👑</span>' : ''}
         </div>
         <div class="team-row-bottom">
@@ -1591,7 +1697,7 @@ function renderSidebar() {
 }
 
 async function removeTeamFromAuction(targetTeamId) {
-  if (!isHost) return;
+  if (!isCurrentHost()) return;
   if (!targetTeamId || targetTeamId === myTeamId) {
     showToast('Host team cannot be removed.', 'error');
     return;
@@ -1606,7 +1712,9 @@ async function removeTeamFromAuction(targetTeamId) {
   if (!confirm(`Remove ${target.ownerName} (${target.short}) from this auction?`)) return;
 
   try {
+    await db.ref(`rooms/${roomCode}/removedTeams/${targetTeamId}`).set(true);
     await db.ref(`rooms/${roomCode}/teams/${targetTeamId}`).remove();
+    await db.ref(`rooms/${roomCode}/presence/${targetTeamId}`).remove();
     await db.ref(`rooms/${roomCode}/voice/participants/${targetTeamId}`).remove();
     await db.ref(`rooms/${roomCode}/voice/muted/${targetTeamId}`).remove();
     await db.ref(`rooms/${roomCode}/voice/signals/${targetTeamId}`).remove();
@@ -1752,7 +1860,7 @@ function updateAuctionStatusBadge() {
 }
 
 async function togglePauseAuction() {
-  if (!isHost) return;
+  if (!isCurrentHost()) return;
 
   const controlRef = db.ref(`rooms/${roomCode}/auctionControl`);
   if (!paused) {
@@ -1777,7 +1885,7 @@ async function togglePauseAuction() {
 }
 
 async function terminateAuction() {
-  if (!isHost) return;
+  if (!isCurrentHost()) return;
   if (!confirm('Terminate auction now and show results?')) return;
   await db.ref(`rooms/${roomCode}/config`).update({ status: 'finished', terminatedAt: Date.now(), terminatedBy: myTeamId });
   await requestCloudinaryCleanup();
@@ -1958,7 +2066,7 @@ function initVoiceSocket() {
         teamId: myTeamId,
         ownerName: myTeam.ownerName || playerName || 'Player',
         short: myTeam.short || myTeamId,
-        isHost: !!isHost
+        isHost: !!isCurrentHost()
       });
     }
   });
@@ -2086,7 +2194,7 @@ async function joinVoiceChat() {
         teamId: myTeamId,
         ownerName: myTeam.ownerName || playerName || 'Player',
         short: myTeam.short || myTeamId,
-        isHost: !!isHost
+        isHost: !!isCurrentHost()
       });
     } else {
       console.warn('[Voice] Voice socket not connected, will join when connected');
@@ -2335,7 +2443,7 @@ function renderVoiceParticipants() {
       ownerName: myTeam.ownerName || playerName || 'You',
       short: myTeam.short || myTeamId,
       joinedAt: Date.now(),
-      isHost: !!isHost,
+      isHost: !!isCurrentHost(),
       localOnly: true
     };
   }
@@ -2353,7 +2461,7 @@ function renderVoiceParticipants() {
     const owner = team.ownerName || info.ownerName || 'Player';
     const isMe = teamId === myTeamId;
     const isMuted = !!voiceHostMutedMap[teamId];
-    const hostAction = isHost && !isMe
+    const hostAction = isCurrentHost() && !isMe
       ? `<button class="voice-host-btn" onclick="toggleHostVoiceMute('${teamId}')">${isMuted ? 'Unmute' : 'Mute'}</button>`
       : '';
 
@@ -2387,7 +2495,7 @@ async function toggleVoiceMute() {
 }
 
 async function toggleHostVoiceMute(teamId) {
-  if (!isHost || !teamId || teamId === myTeamId) return;
+  if (!isCurrentHost() || !teamId || teamId === myTeamId) return;
   try {
     if (!voiceSocket || !voiceSocketConnected) {
       showToast('Voice signaling disconnected.', 'error');
@@ -2528,7 +2636,7 @@ function renderChatMessages() {
     const owner = team.ownerName || msg.senderName || 'Unknown';
     const isMine = senderTeam === myTeamId;
     const isMuted = !!chatMutedMap[senderTeam];
-    const hostControls = isHost && !isMine
+    const hostControls = isCurrentHost() && !isMine
       ? `<div class="chat-host-actions">
           <button onclick="toggleMuteTeam('${senderTeam}')">${isMuted ? 'Unmute' : 'Mute'}</button>
           <button onclick="kickTeamFromChat('${senderTeam}')">Kick</button>
@@ -2681,7 +2789,7 @@ function animateQuickChatPulse(message, sourceBtn = null, options = {}) {
 }
 
 async function toggleMuteTeam(teamId) {
-  if (!isHost || !teamId || teamId === myTeamId) return;
+  if (!isCurrentHost() || !teamId || teamId === myTeamId) return;
   const ref = db.ref(`rooms/${roomCode}/chat/muted/${teamId}`);
   try {
     if (chatMutedMap[teamId]) {
@@ -2698,7 +2806,7 @@ async function toggleMuteTeam(teamId) {
 }
 
 async function kickTeamFromChat(teamId) {
-  if (!isHost || !teamId || teamId === myTeamId) return;
+  if (!isCurrentHost() || !teamId || teamId === myTeamId) return;
   await removeTeamFromAuction(teamId);
 }
 
@@ -2740,6 +2848,7 @@ function hideResultBanner() {
 // ---- CLEANUP ----
 window.addEventListener('beforeunload', () => {
   removeSpectatorPresence();
+  removeTeamPresence();
   if (voiceFeatureEnabled) leaveVoiceChat();
   if (voiceSocket) {
     try { voiceSocket.disconnect(); } catch (_) {}
@@ -2758,6 +2867,12 @@ window.addEventListener('beforeunload', () => {
   }
   if (listeners.spectatorConnected) {
     db.ref('.info/connected').off('value', listeners.spectatorConnected);
+  }
+  if (listeners.teamPresenceConnected) {
+    db.ref('.info/connected').off('value', listeners.teamPresenceConnected);
+  }
+  if (listeners.teamPresence) {
+    db.ref(`rooms/${roomCode}/presence`).off('value', listeners.teamPresence);
   }
   if (!isSpectator && listeners.watchlist) {
     db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', listeners.watchlist);

@@ -88,6 +88,12 @@ function isCurrentHostPresent() {
   return !!currentHostUid && !!hostPresenceMap[currentHostUid];
 }
 
+function canDriveAuctionEngine() {
+  if (isSpectator) return false;
+  if (isHost) return true;
+  return !isCurrentHostPresent();
+}
+
 function updateHostControlsUi() {
   const hostControls = document.getElementById('hostAuctionControls');
   if (!hostControls) return;
@@ -419,7 +425,7 @@ async function initAuction() {
     currentAuctionData = snap.val();
     processingRound = false;
     renderAuction(currentAuctionData, prevAuctionData);
-    if (isHost) hostEvaluateFastPath(currentAuctionData);
+    hostEvaluateFastPath(currentAuctionData);
   });
 
   if (!isSpectator) {
@@ -1061,8 +1067,8 @@ function timerTick() {
   updateTimerDisplay(timeLeft, timerSeconds);
   updateSpectatorPanel(currentAuctionData);
 
-  // Host processes round when timer hits 0
-  if (timeLeft <= 0 && isHost && !processingRound) {
+  // Host or fallback driver processes round when timer hits 0.
+  if (timeLeft <= 0 && canDriveAuctionEngine() && !processingRound) {
     processingRound = true;
     processAuctionRound();
   }
@@ -1288,7 +1294,7 @@ async function withdrawFromPlayer() {
 }
 
 async function hostEvaluateFastPath(data) {
-  if (!isHost || paused || !data || data.status !== 'bidding' || processingRound) return;
+  if (!canDriveAuctionEngine() || paused || !data || data.status !== 'bidding' || processingRound) return;
 
   const totalTeams = Object.keys(teamsData).length;
   const skipCount = Object.keys(data.skipVotes || {}).length;

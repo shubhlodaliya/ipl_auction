@@ -1570,21 +1570,6 @@ function renderSidebar() {
     const minNoteText = minRequiredRemaining > 0
       ? `min ${minRequiredRemaining} required`
       : 'minimum satisfied';
-    const previewRows = squadEntries.slice(0, 3).map(({ playerId, isIcon }) => {
-      const p = playerMap[playerId] || playerMap[String(playerId)] || null;
-      if (!p) return '';
-      const initials = getPlayerInitials(p.name);
-      const avatar = p.photo_url
-        ? `<img src="${p.photo_url}" alt="${p.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
-        : initials;
-      return `
-        <div class="sidebar-squad-player">
-          <div class="sidebar-squad-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${avatar}</div>
-          <div class="sidebar-squad-name">${p.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
-        </div>
-      `;
-    }).join('');
-    const extraCount = squadCount > 3 ? `<div class="sidebar-squad-more">+${squadCount - 3} more</div>` : '';
 
     return `
       <div class="sidebar-team ${isLeading ? 'leading' : ''} ${isMe ? 'mine' : ''}"
@@ -1600,7 +1585,6 @@ function renderSidebar() {
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>
           <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note">${minNoteText}</small></span>
         </div>
-        ${previewRows ? `<div class="sidebar-squad-preview">${previewRows}${extraCount}</div>` : ''}
       </div>
     `;
   }).join('');

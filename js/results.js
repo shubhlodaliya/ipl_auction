@@ -722,11 +722,17 @@ async function loadResults() {
 
     // Build team squad map
     // soldPlayers: { playerId: { teamId, soldPrice } }
-    const teamSquads = {}; // teamId → [ { player, price } ]
+    const teamSquads = {}; // teamId → [ { player, price, isIcon } ]
     Object.entries(soldPlayers).forEach(([pid, sale]) => {
       if (!teamSquads[sale.teamId]) teamSquads[sale.teamId] = [];
       const player = playerMap[pid];
-      if (player) teamSquads[sale.teamId].push({ player, price: sale.soldPrice });
+      if (player) {
+        teamSquads[sale.teamId].push({
+          player,
+          price: sale.soldPrice,
+          isIcon: sale?.via === 'icon' || sale?.type === 'icon'
+        });
+      }
     });
 
     resultsExportState.roomMinSquadSize = Number(room.config?.minSquadSize || 1);
@@ -809,7 +815,7 @@ async function loadResults() {
           </div>
           <div class="result-squad-list">
             ${squad.length === 0 ? `<div class="result-no-squad">No players purchased</div>` :
-              squad.map(({ player, price }) => {
+              squad.map(({ player, price, isIcon }) => {
                 const color = getRoleColor(player.role);
                 const initials = getPlayerInitials(player.name);
                 const icon = getRoleIcon(player.role);
@@ -820,8 +826,8 @@ async function loadResults() {
                   <div class="result-player-row">
                     <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
                     <div style="flex:1;">
-                      <div class="result-player-name">${player.name}</div>
-                      <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}</div>
+                      <div class="result-player-name">${player.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
+                      <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}${isIcon ? ' · Icon Player' : ''}</div>
                     </div>
                     <div class="result-player-price">${formatPrice(price)}</div>
                   </div>

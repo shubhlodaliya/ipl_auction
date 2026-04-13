@@ -1522,6 +1522,33 @@ async function advanceHelper(idx) {
 }
 
 // ---- SIDEBAR ----
+function normalizeTeamSquadEntries(team) {
+  const rawSquad = Array.isArray(team?.squad) ? team.squad : [];
+  return rawSquad
+    .map((entry) => {
+      if (entry && typeof entry === 'object') {
+        const playerId = String(entry.playerId || entry.id || '').trim();
+        if (!playerId) return null;
+        const sold = soldPlayersData[playerId] || soldPlayersData[String(playerId)] || null;
+        return {
+          playerId,
+          isIcon: entry.type === 'icon' || sold?.via === 'icon' || sold?.type === 'icon',
+          iconPrice: Number(entry.priceLakh || sold?.soldPrice || 0)
+        };
+      }
+
+      const playerId = String(entry || '').trim();
+      if (!playerId) return null;
+      const sold = soldPlayersData[playerId] || soldPlayersData[String(playerId)] || null;
+      return {
+        playerId,
+        isIcon: sold?.via === 'icon' || sold?.type === 'icon',
+        iconPrice: Number(sold?.soldPrice || 0)
+      };
+    })
+    .filter(Boolean);
+}
+
 function renderSidebar() {
   const container = document.getElementById('sidebarTeams');
   const sortedTeams = Object.entries(teamsData).sort((a, b) => {
@@ -1534,7 +1561,8 @@ function renderSidebar() {
     const t = getRoomTeamMeta(tId);
     const isLeading = currentAuctionData && currentAuctionData.highestBidder === tId;
     const isMe = tId === myTeamId;
-    const squadCount = (team.squad || []).length;
+    const squadEntries = normalizeTeamSquadEntries(team);
+    const squadCount = squadEntries.length;
     const maxSquad = Number(roomConfig?.maxSquadSize || 0);
     const minSquad = Number(roomConfig?.minSquadSize || 1);
     const squadText = maxSquad > 0 ? `${squadCount}/${maxSquad}` : `${squadCount}`;
@@ -1542,6 +1570,21 @@ function renderSidebar() {
     const minNoteText = minRequiredRemaining > 0
       ? `min ${minRequiredRemaining} required`
       : 'minimum satisfied';
+    const previewRows = squadEntries.slice(0, 3).map(({ playerId, isIcon }) => {
+      const p = playerMap[playerId] || playerMap[String(playerId)] || null;
+      if (!p) return '';
+      const initials = getPlayerInitials(p.name);
+      const avatar = p.photo_url
+        ? `<img src="${p.photo_url}" alt="${p.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
+        : initials;
+      return `
+        <div class="sidebar-squad-player">
+          <div class="sidebar-squad-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${avatar}</div>
+          <div class="sidebar-squad-name">${p.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
+        </div>
+      `;
+    }).join('');
+    const extraCount = squadCount > 3 ? `<div class="sidebar-squad-more">+${squadCount - 3} more</div>` : '';
 
     return `
       <div class="sidebar-team ${isLeading ? 'leading' : ''} ${isMe ? 'mine' : ''}"
@@ -1557,6 +1600,7 @@ function renderSidebar() {
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>
           <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note">${minNoteText}</small></span>
         </div>
+        ${previewRows ? `<div class="sidebar-squad-preview">${previewRows}${extraCount}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -1615,7 +1659,7 @@ function showTeamSquad(teamId) {
   if (!team) return;
 
   const t = getRoomTeamMeta(teamId);
-  const squadIds = team.squad || [];
+  const squadEntries = normalizeTeamSquadEntries(team);
 
   document.getElementById('teamModalTitle').innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.name} Squad`;
 
@@ -1644,32 +1688,33 @@ function showTeamSquad(teamId) {
     return 'Others';
   }
 
-  for (const pid of squadIds) {
-    const p = playerMap[pid];
+  for (const entry of squadEntries) {
+    const p = playerMap[entry.playerId] || playerMap[String(entry.playerId)];
     if (!p) continue;
     const sectionKey = normalizeRole(p.role);
     grouped[sectionKey] = grouped[sectionKey] || [];
-    grouped[sectionKey].push(pid);
+    grouped[sectionKey].push(entry);
   }
 
   for (const key of Object.keys(grouped)) {
     grouped[key].sort((a, b) => {
-      const pa = playerMap[a];
-      const pb = playerMap[b];
+      const pa = playerMap[a.playerId] || playerMap[String(a.playerId)];
+      const pb = playerMap[b.playerId] || playerMap[String(b.playerId)];
       return String(pa?.name || '').localeCompare(String(pb?.name || ''));
     });
   }
 
-  const html = squadIds.length === 0
+  const html = squadEntries.length === 0
     ? `<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players bought yet.</p></div>`
     : [...roleSections, { key: 'Others', label: 'Others' }].map(section => {
         const sectionPlayers = grouped[section.key] || [];
         if (!sectionPlayers.length) return '';
 
-        const sectionRows = sectionPlayers.map(pid => {
-          const p = playerMap[pid];
+        const sectionRows = sectionPlayers.map((entry) => {
+          const p = playerMap[entry.playerId] || playerMap[String(entry.playerId)];
           if (!p) return '';
-          const sold = soldPlayersData[pid];
+          const sold = soldPlayersData[entry.playerId] || soldPlayersData[String(entry.playerId)];
+          const isIcon = !!entry.isIcon;
           const avatarHtml = p.photo_url
             ? `<img src="${p.photo_url}" alt="${p.name}" onerror="handlePlayerImageError(this, '${getPlayerInitials(p.name)}')" />`
             : getPlayerInitials(p.name);
@@ -1677,8 +1722,8 @@ function showTeamSquad(teamId) {
             <div class="result-player-row">
               <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${avatarHtml}</div>
               <div style="flex:1;">
-                <div class="result-player-name">${p.name}</div>
-                <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}</div>
+                <div class="result-player-name">${p.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
+                <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}${isIcon ? ' · Icon Player' : ''}</div>
               </div>
               <div class="result-player-price">${formatPrice(sold ? sold.soldPrice : p.base_price_lakh)}</div>
             </div>

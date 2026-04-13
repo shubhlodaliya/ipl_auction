@@ -2542,6 +2542,93 @@ body.spectator-mode .my-team-chip {
   display: flex;
   flex-direction: column;
 }
+.auth-modal {
+  width: min(520px, 94vw);
+  max-height: min(88vh, 760px);
+  padding: 1rem 1rem 1.1rem;
+  background:
+    radial-gradient(110% 85% at 100% 0%, rgba(255, 203, 48, 0.09), transparent 55%),
+    radial-gradient(120% 110% at 0% 100%, rgba(29,160,255,0.09), transparent 62%),
+    rgba(7, 16, 34, 0.98);
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 26px 80px rgba(0,0,0,0.48);
+}
+.auth-modal-header {
+  border-bottom: none;
+  padding: 0.25rem 0.1rem 0.2rem;
+  margin-bottom: 0.2rem;
+}
+.auth-subtitle {
+  margin: 0.1rem 0.2rem 0.9rem;
+  color: var(--text-sec);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+.auth-tabs {
+  margin: 0 0.15rem 0.9rem;
+}
+.auth-group {
+  margin: 0 0.68rem 0.72rem;
+}
+.auth-group .form-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.95px;
+}
+.auth-group .form-input {
+  height: 52px;
+  border-radius: 12px;
+}
+.auth-submit-btn,
+.auth-google-btn {
+  margin: 0.1rem 0.68rem;
+  border-radius: 12px;
+  min-height: 52px;
+}
+.auth-google-btn {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.17);
+  font-weight: 700;
+}
+.auth-google-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+.auth-google-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.86rem;
+}
+.auth-divider {
+  margin: 0.75rem 0.68rem;
+  display: flex;
+  align-items: center;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+}
+.auth-divider span {
+  padding: 0 0.5rem;
+}
+.auth-error {
+  margin: 0.72rem 0.68rem 0;
+  color: var(--red);
+  font-size: 0.84rem;
+  min-height: 1.2rem;
+}
 .pool-modal {
   width: min(760px, 94vw);
 }

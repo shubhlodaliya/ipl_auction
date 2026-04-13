@@ -1,5 +1,5 @@
 // ============================================================
-// AUTH.JS - Firebase Authentication (Email/Password)
+// AUTH.JS - Firebase Authentication (Email/Password + Google)
 // ============================================================
 
 let authMode = 'login';
@@ -30,6 +30,32 @@ function getAuthDisplayName(user) {
   const email = String(user.email || '').trim();
   if (!email) return 'User';
   return email.split('@')[0];
+}
+
+async function upsertUserProfile(user, explicitName = '') {
+  if (!user?.uid) return;
+  const profileName = String(explicitName || user.displayName || '').trim();
+  await db.ref(`users/${user.uid}`).transaction((curr) => {
+    const current = curr || {};
+    return {
+      ...current,
+      name: profileName || current.name || getAuthDisplayName(user),
+      email: user.email || current.email || '',
+      lastLoginAt: Date.now(),
+      createdAt: current.createdAt || Date.now()
+    };
+  });
+}
+
+function setGoogleButtonLoading(isLoading) {
+  const btn = document.getElementById('authGoogleBtn');
+  if (!btn) return;
+  btn.disabled = !!isLoading;
+  if (isLoading) {
+    btn.textContent = 'Connecting to Google...';
+    return;
+  }
+  btn.innerHTML = '<span class="auth-google-mark" aria-hidden="true">G</span><span>Continue with Google</span>';
 }
 
 function setAuthError(message) {
@@ -105,7 +131,10 @@ function getAuthFriendlyError(code) {
     'auth/user-not-found': 'Account not found. Please sign up first.',
     'auth/wrong-password': 'Incorrect password. Try again.',
     'auth/invalid-credential': 'Invalid email or password.',
-    'auth/too-many-requests': 'Too many attempts. Please try again later.'
+    'auth/too-many-requests': 'Too many attempts. Please try again later.',
+    'auth/popup-closed-by-user': 'Google sign-in popup was closed.',
+    'auth/cancelled-popup-request': 'Google sign-in was cancelled.',
+    'auth/popup-blocked': 'Popup was blocked by browser. Please allow popups and try again.'
   };
   return map[code] || 'Authentication failed. Please try again.';
 }
@@ -146,15 +175,10 @@ async function submitAuthForm() {
       if (fullName) {
         await cred.user.updateProfile({ displayName: fullName });
       }
-      if (fullName) {
-        await db.ref(`users/${cred.user.uid}`).update({
-          name: fullName,
-          email,
-          createdAt: Date.now()
-        });
-      }
+      await upsertUserProfile(cred.user, fullName);
     } else {
       cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+      await upsertUserProfile(cred.user);
     }
 
     setAuthCache(cred.user);
@@ -168,6 +192,27 @@ async function submitAuthForm() {
       submitBtn.disabled = false;
       submitBtn.textContent = authMode === 'signup' ? 'Create Account' : 'Login';
     }
+  }
+}
+
+async function signInWithGoogle() {
+  setAuthError('');
+  setGoogleButtonLoading(true);
+
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const cred = await firebase.auth().signInWithPopup(provider);
+    await upsertUserProfile(cred.user);
+
+    setAuthCache(cred.user);
+    applyAuthUi(cred.user);
+    closeAuthModal();
+  } catch (err) {
+    console.error('Google sign-in failed:', err);
+    setAuthError(getAuthFriendlyError(err?.code));
+  } finally {
+    setGoogleButtonLoading(false);
   }
 }
 
@@ -227,3 +272,4 @@ window.requireAuthForAction = requireAuthForAction;
 window.enforceAuthPage = enforceAuthPage;
 window.waitForAuthReady = waitForAuthReady;
 window.getCurrentAuthUser = () => currentAuthUser;
+window.signInWithGoogle = signInWithGoogle;

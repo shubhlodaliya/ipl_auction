@@ -20,6 +20,7 @@ let unlimitedTimer = false;
 let processingRound = false;
 let teamsData = {};
 let soldPlayersData = {};
+let removedTeamsData = {};
 let paused = false;
 let pausedAt = null;
 let poolByIndex = {};
@@ -56,6 +57,7 @@ let serverTimeOffsetMs = 0;
 let spectatorSessionId = null;
 let teamPresenceClientId = null;
 let teamPresenceMap = {};
+let hasSeenMyTeamInRoom = false;
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = false;
 const voiceRtcConfig = {
@@ -253,6 +255,10 @@ async function initAuction() {
   if (!roomSnap.exists()) { alert('Room not found'); window.location.href = 'index.html'; return; }
   const room = roomSnap.val();
   roomConfig = room.config || {};
+  removedTeamsData = room.removedTeams || {};
+  if (!isSpectator && myTeamId && room.teams && room.teams[myTeamId]) {
+    hasSeenMyTeamInRoom = true;
+  }
   isManualAuction = roomConfig.auctionType === 'manual';
   unlimitedTimer = !!roomConfig.unlimitedTimer || roomConfig.timerMode === 'unlimited' || Number(roomConfig.timerSeconds) === 0;
   roomTeamCatalog = isManualAuction
@@ -313,12 +319,19 @@ async function initAuction() {
   // Listen to teams (sidebar)
   listeners.teams = db.ref(`rooms/${roomCode}/teams`).on('value', snap => {
     teamsData = snap.val() || {};
+    const myTeamExists = !isSpectator && !!teamsData[myTeamId];
+    if (myTeamExists) hasSeenMyTeamInRoom = true;
 
     // If this client's team no longer exists, the host removed them.
-    if (!isSpectator && !teamsData[myTeamId]) {
+    if (!isSpectator && !myTeamExists) {
+      const explicitlyRemoved = !!removedTeamsData[myTeamId];
+      if (!explicitlyRemoved && !hasSeenMyTeamInRoom) {
+        // Ignore initial/transient empty team snapshots until membership is confirmed once.
+        return;
+      }
       if (!removedFromRoom) {
         removedFromRoom = true;
-        showToast('You were removed from this auction by host.', 'error');
+        showToast(explicitlyRemoved ? 'You were removed from this auction by host.' : 'Your team session was lost. Please rejoin with room code.', 'error');
         setTimeout(() => {
           leaveVoiceChat();
           clearSession();
@@ -336,6 +349,10 @@ async function initAuction() {
 
     renderSidebar();
     updateMyPurse();
+  });
+
+  listeners.removedTeams = db.ref(`rooms/${roomCode}/removedTeams`).on('value', (snap) => {
+    removedTeamsData = snap.val() || {};
   });
 
   listeners.soldPlayers = db.ref(`rooms/${roomCode}/soldPlayers`).on('value', snap => {
@@ -2858,6 +2875,7 @@ window.addEventListener('beforeunload', () => {
   clearInterval(timerInterval);
   db.ref(`rooms/${roomCode}/teams`).off('value', listeners.teams);
   db.ref(`rooms/${roomCode}/soldPlayers`).off('value', listeners.soldPlayers);
+  db.ref(`rooms/${roomCode}/removedTeams`).off('value', listeners.removedTeams);
   db.ref(`rooms/${roomCode}/auctionControl`).off('value', listeners.pause);
   db.ref(`rooms/${roomCode}/currentAuction`).off('value', listeners.auction);
   db.ref(`rooms/${roomCode}/currentIndex`).off('value', listeners.index);

@@ -322,16 +322,16 @@ async function initAuction() {
     const myTeamExists = !isSpectator && !!teamsData[myTeamId];
     if (myTeamExists) hasSeenMyTeamInRoom = true;
 
-    // If this client's team no longer exists, the host removed them.
+    // Only force-kick when removal is explicit. Team node can be transiently missing during reconnects.
     if (!isSpectator && !myTeamExists) {
       const explicitlyRemoved = !!removedTeamsData[myTeamId];
-      if (!explicitlyRemoved && !hasSeenMyTeamInRoom) {
-        // Ignore initial/transient empty team snapshots until membership is confirmed once.
+      if (!explicitlyRemoved) {
+        // Ignore transient team-missing states to avoid false redirects.
         return;
       }
       if (!removedFromRoom) {
         removedFromRoom = true;
-        showToast(explicitlyRemoved ? 'You were removed from this auction by host.' : 'Your team session was lost. Please rejoin with room code.', 'error');
+        showToast('You were removed from this auction by host.', 'error');
         setTimeout(() => {
           leaveVoiceChat();
           clearSession();

@@ -132,7 +132,7 @@ function clearSession() {
 }
 
 function isAuthReady() {
-  return !!localStorage.getItem('ipl_auth_uid');
+  return !!localStorage.getItem('ipl_auth_uid') && localStorage.getItem('ipl_auth_verified') === '1';
 }
 
 function requireAuth(redirectTo = 'index.html') {

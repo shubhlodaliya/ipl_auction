@@ -11,15 +11,25 @@ const authReadyPromise = new Promise((resolve) => {
   authReadyResolver = resolve;
 });
 
+function isUserVerified(user) {
+  if (!user) return false;
+  const providers = Array.isArray(user.providerData) ? user.providerData : [];
+  const hasPasswordProvider = providers.some((p) => p?.providerId === 'password');
+  if (hasPasswordProvider) return !!user.emailVerified;
+  return true;
+}
+
 function setAuthCache(user) {
   if (user) {
     localStorage.setItem('ipl_auth_uid', user.uid || '');
     localStorage.setItem('ipl_auth_email', user.email || '');
     localStorage.setItem('ipl_auth_name', user.displayName || '');
+    localStorage.setItem('ipl_auth_verified', isUserVerified(user) ? '1' : '0');
   } else {
     localStorage.removeItem('ipl_auth_uid');
     localStorage.removeItem('ipl_auth_email');
     localStorage.removeItem('ipl_auth_name');
+    localStorage.removeItem('ipl_auth_verified');
   }
 }
 
@@ -77,7 +87,8 @@ function applyAuthUi(user) {
   const logoutBtn = document.getElementById('authLogoutBtn');
 
   if (userLabel) {
-    userLabel.textContent = user ? `Hi, ${getAuthDisplayName(user)}` : 'Not logged in';
+    const verifiedLabel = user && !isUserVerified(user) ? ' (verify email)' : '';
+    userLabel.textContent = user ? `Hi, ${getAuthDisplayName(user)}${verifiedLabel}` : 'Not logged in';
   }
   if (loginBtn) loginBtn.style.display = user ? 'none' : 'inline-flex';
   if (signupBtn) signupBtn.style.display = user ? 'none' : 'inline-flex';
@@ -139,6 +150,16 @@ function getAuthFriendlyError(code) {
   return map[code] || 'Authentication failed. Please try again.';
 }
 
+async function sendVerificationIfPossible(user) {
+  if (!user || isUserVerified(user)) return;
+  if (typeof user.sendEmailVerification !== 'function') return;
+  try {
+    await user.sendEmailVerification();
+  } catch (err) {
+    console.warn('Could not send verification email:', err);
+  }
+}
+
 async function submitAuthForm() {
   const emailEl = document.getElementById('authEmail');
   const passEl = document.getElementById('authPassword');
@@ -176,8 +197,20 @@ async function submitAuthForm() {
         await cred.user.updateProfile({ displayName: fullName });
       }
       await upsertUserProfile(cred.user, fullName);
+      await sendVerificationIfPossible(cred.user);
+
+      await firebase.auth().signOut();
+      setAuthError('Verification email sent. Please verify your email, then login.');
+      switchAuthMode('login');
+      return;
     } else {
       cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+      if (!isUserVerified(cred.user)) {
+        await sendVerificationIfPossible(cred.user);
+        await firebase.auth().signOut();
+        setAuthError('Please verify your email first. We sent a verification link to your inbox.');
+        return;
+      }
       await upsertUserProfile(cred.user);
     }
 
@@ -230,11 +263,13 @@ async function logoutUser() {
 }
 
 function requireAuthForAction(message = 'Please login to continue.') {
-  if (localStorage.getItem('ipl_auth_uid')) return true;
+  const uid = localStorage.getItem('ipl_auth_uid');
+  const verified = localStorage.getItem('ipl_auth_verified') === '1';
+  if (uid && verified) return true;
   if (typeof showToast === 'function') {
-    showToast(message, 'error');
+    showToast(uid ? 'Please verify your email before continuing.' : message, 'error');
   }
-  openAuthModal('login');
+  openAuthModal(uid ? 'login' : 'login');
   return false;
 }
 

@@ -9,6 +9,8 @@ let customPlayerFields = [];
 window.addEventListener('DOMContentLoaded', initManualSetup);
 
 function initManualSetup() {
+  if (typeof requireAuth === 'function' && !requireAuth('index.html')) return;
+
   for (let i = 0; i < 4; i += 1) addTeamRow();
   for (let i = 0; i < 12; i += 1) addPlayerRow();
 }

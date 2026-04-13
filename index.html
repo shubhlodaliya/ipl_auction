@@ -14,7 +14,12 @@
   <!-- HEADER -->
   <header class="header">
     <div class="logo">🏏 IPL Auction</div>
-    <div class="header-badge">LIVE</div>
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <span id="authUserLabel" class="header-badge" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Not logged in</span>
+      <button class="btn btn-ghost" id="authLoginBtn" onclick="openAuthModal('login')">Login</button>
+      <button class="btn btn-secondary" id="authSignupBtn" onclick="openAuthModal('signup')">Sign Up</button>
+      <button class="btn btn-ghost" id="authLogoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
+    </div>
   </header>
 
   <!-- HERO -->
@@ -228,6 +233,33 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
+  <div class="team-modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
+    <div class="team-modal" onclick="event.stopPropagation()" style="max-width:460px;">
+      <div class="team-modal-header">
+        <h3 id="authModalTitle">Login</h3>
+        <button class="btn btn-ghost" onclick="closeAuthModal()">Close</button>
+      </div>
+      <div class="tabs" style="margin-bottom:0.85rem;">
+        <button class="tab-btn active" id="authTabLogin" onclick="switchAuthMode('login')">Login</button>
+        <button class="tab-btn" id="authTabSignup" onclick="switchAuthMode('signup')">Sign Up</button>
+      </div>
+      <div class="form-group" id="authNameWrap" style="display:none;">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="authName" type="text" maxlength="40" placeholder="Enter full name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="authEmail" type="email" placeholder="Enter email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="authPassword" type="password" placeholder="Enter password" minlength="6" />
+      </div>
+      <button class="btn btn-primary btn-lg btn-full" id="authSubmitBtn" onclick="submitAuthForm()">Login</button>
+      <p id="authError" style="display:none;color:var(--red);font-size:0.85rem;margin-top:0.6rem;"></p>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <div class="site-footer-inner">
       <span>© 2026 IPL Auction</span>
@@ -243,9 +275,11 @@
 
   <!-- FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/create.js"></script>
 
   <script>

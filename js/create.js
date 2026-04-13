@@ -133,6 +133,10 @@ function selectJoinTeam(teamId) {
 // CREATE ROOM
 // ============================================================
 async function createRoom() {
+  if (typeof requireAuthForAction === 'function' && !requireAuthForAction('Please login before creating an auction room.')) {
+    return;
+  }
+
   const name = document.getElementById('createName').value.trim();
   const teamId = selectedCreateTeam;
   const passcode = document.getElementById('createPasscode').value.trim();
@@ -201,6 +205,10 @@ async function createRoom() {
 // JOIN ROOM
 // ============================================================
 async function joinRoom() {
+  if (typeof requireAuthForAction === 'function' && !requireAuthForAction('Please login before joining an auction room.')) {
+    return;
+  }
+
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   const name = document.getElementById('joinName').value.trim();
   const passcode = document.getElementById('joinPasscode').value.trim();
@@ -271,6 +279,10 @@ async function joinRoom() {
 // WATCH LIVE AUCTION (SPECTATOR)
 // ============================================================
 async function watchLiveAuction() {
+  if (typeof requireAuthForAction === 'function' && !requireAuthForAction('Please login before opening live auction view.')) {
+    return;
+  }
+
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   const name = document.getElementById('joinName').value.trim();
 

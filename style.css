@@ -386,6 +386,46 @@ input[type=range]::-webkit-slider-thumb {
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
 }
+
+.team-option.rejoin-open {
+  opacity: 1;
+  cursor: pointer;
+  border-color: rgba(29,160,255,0.55);
+  background: rgba(29,160,255,0.12);
+}
+
+.team-option.rejoin-open::after {
+  content: 'REJOIN';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #9fd8ff;
+  letter-spacing: 1px;
+  background: rgba(6,11,24,0.86);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.team-option.locked-live {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+.team-option.locked-live::after {
+  content: 'LOCKED';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: var(--text-sec);
+  letter-spacing: 1px;
+  background: rgba(6,11,24,0.86);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
 .team-short {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;

@@ -1579,7 +1579,7 @@ function renderSidebar() {
           <span class="team-short-badge">${t?.logo ? `<img class="sidebar-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.short}</span>
           <span class="team-owner-name">${team.ownerName}</span>
           ${(isHost && !isMe) ? `<button class="team-remove-btn" onclick="event.stopPropagation(); removeTeamFromAuction('${tId}')" title="Remove ${team.ownerName}">Remove</button>` : ''}
-          ${(isHost && isLeading) ? '<span class="leading-crown">👑</span>' : ''}
+          ${team.isHost ? '<span class="leading-crown">👑</span>' : ''}
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>

@@ -584,12 +584,14 @@ async function joinTeamFromLobby(tId) {
   if (snap.exists()) { showToast('Team already taken!', 'error'); return; }
 
   const team = getRoomTeamMeta(tId);
+  const ownerUid = String(localStorage.getItem('ipl_auth_uid') || '').trim();
   await db.ref(`rooms/${roomCode}/teams/${tId}`).set({
     name: team.name,
     short: team.short,
     primary: team.primary,
     logo: team.logo,
     ownerName: playerName,
+    ownerUid: ownerUid || null,
     purse: roomConfig.budget,
     squad: [],
     isHost: false,

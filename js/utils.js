@@ -131,6 +131,10 @@ function clearSession() {
   sessionStorage.removeItem('ipl_session');
 }
 
+function getAuthUid() {
+  return String(localStorage.getItem('ipl_auth_uid') || '').trim();
+}
+
 function isAuthReady() {
   return !!localStorage.getItem('ipl_auth_uid') && localStorage.getItem('ipl_auth_verified') === '1';
 }

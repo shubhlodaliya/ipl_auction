@@ -90,7 +90,7 @@ function isCurrentHostPresent() {
 }
 
 function canDriveAuctionEngine() {
-  if (isSpectator) return false;
+  if (isSpectator && !isHostManager) return false;
   if (isHost) return true;
   return !isCurrentHostPresent();
 }
@@ -98,7 +98,7 @@ function canDriveAuctionEngine() {
 function updateHostControlsUi() {
   const hostControls = document.getElementById('hostAuctionControls');
   if (!hostControls) return;
-  hostControls.style.display = isHost && !isSpectator ? 'flex' : 'none';
+  hostControls.style.display = (isHost && (!isSpectator || isHostManager)) ? 'flex' : 'none';
 }
 
 function syncLocalHostState() {
@@ -116,7 +116,7 @@ function syncLocalHostState() {
 }
 
 async function claimHostAuthority(reason = 'host takeover') {
-  if (hostClaimInFlight || isSpectator) return false;
+  if (hostClaimInFlight || (isSpectator && !isHostManager)) return false;
 
   const authUid = getLocalAuthUid();
   if (!authUid) return false;
@@ -284,7 +284,7 @@ async function initAuction() {
   if (!roomHostUid) {
     const hostTeam = (room.teams || {})[roomConfig.hostTeamId];
     roomHostUid = hostTeam?.ownerUid || null;
-    if (!roomHostUid && !isSpectator && isHost && authUid) {
+    if (!roomHostUid && isHost && authUid) {
       roomHostUid = authUid;
     }
   }
@@ -332,7 +332,7 @@ async function initAuction() {
     }
   }
 
-  if (!isSpectator) {
+  if (!isSpectator || isHostManager) {
     await syncLocalHostState();
     if (authUid && roomHostUid && authUid === roomHostUid && currentHostUid !== authUid) {
       await claimHostAuthority('original host rejoined');
@@ -365,19 +365,19 @@ async function initAuction() {
     currentHostUid = snap.val() || null;
     syncLocalHostState().catch?.(() => {});
     const authUid = getLocalAuthUid();
-    if (!isSpectator && !isHost && (!currentHostUid || (authUid && roomHostUid && authUid === roomHostUid && currentHostUid !== authUid))) {
+    if ((!isSpectator || isHostManager) && !isHost && (!currentHostUid || (authUid && roomHostUid && authUid === roomHostUid && currentHostUid !== authUid))) {
       claimHostAuthority('host takeover').catch(() => {});
     }
   });
 
   listeners.hostPresence = db.ref(`rooms/${roomCode}/hostPresence`).on('value', snap => {
     hostPresenceMap = snap.val() || {};
-    if (!isSpectator && !isHost) {
+    if ((!isSpectator || isHostManager) && !isHost) {
       claimHostAuthority('host takeover').catch(() => {});
     }
   });
 
-  if (!isSpectator && isHost) {
+  if ((!isSpectator || isHostManager) && isHost) {
     registerHostPresence();
   }
 
@@ -512,14 +512,14 @@ function applySpectatorUi() {
   if (spectatorPanel) spectatorPanel.style.display = 'flex';
 
   const quickToolbar = document.getElementById('quickChatToolbar');
-  if (quickToolbar) quickToolbar.style.display = 'none';
+  if (quickToolbar) quickToolbar.style.display = isHostManager ? 'flex' : 'none';
 
   const soundToggleBtn = document.getElementById('soundToggleBtn');
-  if (soundToggleBtn) soundToggleBtn.style.display = 'none';
+  if (soundToggleBtn) soundToggleBtn.style.display = isHostManager ? 'inline-flex' : 'none';
 
   const chatToggleBtn = document.getElementById('chatToggleBtn');
   if (chatToggleBtn) {
-    chatToggleBtn.style.display = 'none';
+    chatToggleBtn.style.display = isHostManager ? 'inline-flex' : 'none';
   }
 
   const voiceStatusBadge = document.getElementById('voiceStatusBadge');
@@ -530,15 +530,15 @@ function applySpectatorUi() {
 
   const chatInput = document.getElementById('chatInput');
   if (chatInput) {
-    chatInput.disabled = true;
-    chatInput.placeholder = 'Viewer mode: chat disabled';
+    chatInput.disabled = !isHostManager;
+    chatInput.placeholder = isHostManager ? 'Type message...' : 'Viewer mode: chat disabled';
   }
 
   const chatSendBtn = document.getElementById('chatSendBtn');
-  if (chatSendBtn) chatSendBtn.disabled = true;
+  if (chatSendBtn) chatSendBtn.disabled = !isHostManager;
 
   document.querySelectorAll('.chat-quick-btn').forEach((btn) => {
-    btn.disabled = true;
+    btn.disabled = !isHostManager;
   });
 
   const voiceJoinBtn = document.getElementById('voiceJoinBtn');
@@ -2741,7 +2741,7 @@ async function sendQuickChat(message, sourceBtn = null) {
 }
 
 async function sendChatMessage(presetText = '', options = {}) {
-  if (isSpectator) {
+  if (isSpectator && !isHostManager) {
     showToast('Viewer mode: chat is disabled.', 'error');
     return false;
   }

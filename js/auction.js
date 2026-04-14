@@ -7,6 +7,7 @@ if (!session) throw new Error('No session');
 
 const { roomCode, teamId: myTeamId, playerName, isHost } = session;
 const isSpectator = !!session.isSpectator || !session.teamId;
+const isHostManager = !!isHost && !myTeamId;
 
 let roomConfig = null;
 let allPlayers = [];
@@ -150,7 +151,7 @@ async function initAuction() {
   updateSoundToggleButton();
 
   // Host: show pass button
-  if (isHost && !isSpectator) {
+  if (isHost) {
     document.getElementById('hostAuctionControls').style.display = 'flex';
   }
 
@@ -171,7 +172,11 @@ async function initAuction() {
   allPlayers.forEach(p => { playerMap[p.id] = p; });
 
   // Show my team chip
-  if (isSpectator) {
+  if (isHostManager) {
+    const chip = document.getElementById('myTeamChip');
+    chip.style.display = 'flex';
+    chip.textContent = 'HOST MANAGER';
+  } else if (isSpectator) {
     const chip = document.getElementById('myTeamChip');
     chip.style.display = 'flex';
     chip.textContent = 'LIVE VIEWER';
@@ -350,7 +355,7 @@ function applySpectatorUi() {
   }
 
   const hostControls = document.getElementById('hostAuctionControls');
-  if (hostControls) hostControls.style.display = 'none';
+  if (hostControls) hostControls.style.display = isHost ? 'flex' : 'none';
 
   const chatInput = document.getElementById('chatInput');
   if (chatInput) {
@@ -1753,10 +1758,11 @@ function updateAuctionStatusBadge() {
 
 async function togglePauseAuction() {
   if (!isHost) return;
+  const actorId = myTeamId || 'host-manager';
 
   const controlRef = db.ref(`rooms/${roomCode}/auctionControl`);
   if (!paused) {
-    await controlRef.update({ paused: true, pausedAt: getSyncedNowMs(), pausedBy: myTeamId });
+    await controlRef.update({ paused: true, pausedAt: getSyncedNowMs(), pausedBy: actorId });
     showToast('Auction paused', 'success');
     return;
   }
@@ -1772,14 +1778,15 @@ async function togglePauseAuction() {
     });
   }
 
-  await controlRef.update({ paused: false, pausedAt: null, resumedAt: now, resumedBy: myTeamId });
+  await controlRef.update({ paused: false, pausedAt: null, resumedAt: now, resumedBy: actorId });
   showToast('Auction resumed', 'success');
 }
 
 async function terminateAuction() {
   if (!isHost) return;
+  const actorId = myTeamId || 'host-manager';
   if (!confirm('Terminate auction now and show results?')) return;
-  await db.ref(`rooms/${roomCode}/config`).update({ status: 'finished', terminatedAt: Date.now(), terminatedBy: myTeamId });
+  await db.ref(`rooms/${roomCode}/config`).update({ status: 'finished', terminatedAt: Date.now(), terminatedBy: actorId });
   await requestCloudinaryCleanup();
 }
 

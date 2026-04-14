@@ -60,7 +60,7 @@
           🏏 Start Auction
         </button>
         <div style="margin-top:0.75rem;">
-          <button class="btn btn-secondary" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+          <button class="btn btn-secondary" id="hostWatchlistBtn" onclick="openWatchlistModal()">⭐ My Watchlist</button>
           <button class="btn btn-secondary" id="iconPickBtnHost" onclick="openIconPickerModal()" style="display:none;">🏷️ Select Icon Players</button>
         </div>
       </div>
@@ -70,7 +70,7 @@
         <div class="spinner" style="margin:0 auto 1rem;"></div>
         <p style="color:var(--text-sec)">Waiting for the host to start the auction...</p>
         <div style="margin-top:0.8rem;">
-          <button class="btn btn-secondary" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+          <button class="btn btn-secondary" id="guestWatchlistBtn" onclick="openWatchlistModal()">⭐ My Watchlist</button>
           <button class="btn btn-secondary" id="iconPickBtnGuest" onclick="openIconPickerModal()" style="display:none;">🏷️ Select Icon Players</button>
         </div>
       </div>

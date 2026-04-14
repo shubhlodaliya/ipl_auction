@@ -23,6 +23,12 @@ function toggleManualTimerUnlimited(enabled) {
   else if (!Number(timerInput.value) || Number(timerInput.value) < 5) timerInput.value = '30';
 }
 
+function toggleHostManagerOnly(enabled) {
+  const hostTeamSelect = document.getElementById('hostTeamSelect');
+  if (!hostTeamSelect) return;
+  hostTeamSelect.disabled = !!enabled;
+}
+
 function normalizeTeamShort(name) {
   const cleaned = String(name || '').trim().toUpperCase().replace(/[^A-Z0-9 ]/g, '');
   if (!cleaned) return '';
@@ -330,6 +336,9 @@ function syncHostTeamOptions() {
   if (current && teams.some(t => t.id === current)) {
     select.value = current;
   }
+
+  const managerOnly = !!document.getElementById('hostManagerOnly')?.checked;
+  toggleHostManagerOnly(managerOnly);
 }
 
 function collectTeams(strict = true) {
@@ -498,6 +507,7 @@ async function createManualRoom() {
   const bidOptions = parseBidOptions();
   const iconPlayerPrice = Number(document.getElementById('iconPlayerPrice').value || 0);
   const maxIconPlayers = Number(document.getElementById('maxIconPlayers').value || 0);
+  const hostManagerOnly = !!document.getElementById('hostManagerOnly')?.checked;
 
   const teams = collectTeams(true);
   const players = collectPlayers();
@@ -517,8 +527,8 @@ async function createManualRoom() {
   if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
 
-  const hostTeam = teams.find(t => t.id === hostTeamId);
-  if (!hostTeam) return showError('Select host team.');
+  const hostTeam = hostManagerOnly ? null : teams.find(t => t.id === hostTeamId);
+  if (!hostManagerOnly && !hostTeam) return showError('Select host team.');
 
   const btn = document.getElementById('createManualRoomBtn');
   btn.disabled = true;
@@ -560,7 +570,8 @@ async function createManualRoom() {
     await db.ref(`rooms/${code}`).set({
       config: {
         auctionType: 'manual',
-        hostTeamId: hostTeam.id,
+        hostTeamId: hostTeam ? hostTeam.id : null,
+        hostManagerOnly,
         budget,
         maxSquadSize,
         minSquadSize,
@@ -578,7 +589,7 @@ async function createManualRoom() {
       },
       manualTeams,
       manualPlayers: finalPlayers,
-      teams: {
+      teams: hostTeam ? {
         [hostTeam.id]: {
           name: hostTeam.name,
           short: hostTeam.short,
@@ -590,11 +601,17 @@ async function createManualRoom() {
           isHost: true,
           joinedAt: Date.now()
         }
-      },
+      } : {},
       playerQueue
     });
 
-    saveSession({ roomCode: code, teamId: hostTeam.id, playerName: hostName, isHost: true });
+    saveSession({
+      roomCode: code,
+      teamId: hostTeam ? hostTeam.id : null,
+      playerName: hostName,
+      isHost: true,
+      isSpectator: hostManagerOnly
+    });
     window.location.href = 'lobby.html';
   } catch (err) {
     console.error(err);
@@ -608,3 +625,5 @@ async function createManualRoom() {
     errEl.style.display = 'block';
   }
 }
+
+window.toggleHostManagerOnly = toggleHostManagerOnly;

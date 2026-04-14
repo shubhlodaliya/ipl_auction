@@ -96,6 +96,10 @@
         <div class="form-group">
           <label class="form-label">Host Team</label>
           <select class="form-input" id="hostTeamSelect"></select>
+          <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.85rem;color:var(--text-sec);margin-top:0.45rem;">
+            <input id="hostManagerOnly" type="checkbox" onchange="toggleHostManagerOnly(this.checked)" />
+            <span>Host manages only (does not play)</span>
+          </label>
         </div>
       </div>
 

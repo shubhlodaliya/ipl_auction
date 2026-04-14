@@ -596,12 +596,15 @@ function renderTeamPowerInsights(powerData) {
       </div>
       <div class="team-power-team">${item.team}</div>
       ${item.invalidReason ? `<div class="team-power-invalid-reason">${item.invalidReason}. Overall AI score is set to 0.</div>` : ''}
+      <div style="margin-top:0.35rem;font-size:0.7rem;color:var(--text-dim);">Overall score uses all metrics below.</div>
       <div class="team-power-metrics" style="margin-top:0.55rem;">
         <span>Top Order: <b>${item.metrics.TOP_ORDER_SCORE}</b></span>
         <span>Middle: <b>${item.metrics.MIDDLE_ORDER_SCORE}</b></span>
         <span>Finish: <b>${item.metrics.FINISHER_SCORE}</b></span>
         <span>Bowling: <b>${item.metrics.BOWLING_SCORE}</b></span>
         <span>All-round: <b>${item.metrics.ALL_ROUNDER_SCORE}</b></span>
+        <span>Balance: <b>${item.metrics.TEAM_BALANCE_SCORE}</b></span>
+        <span>Match Winners: <b>${item.metrics.MATCH_WINNER_SCORE}</b></span>
         <span>Bench: <b>${item.metrics.BENCH_STRENGTH_SCORE}</b></span>
       </div>
     </article>

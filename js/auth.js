@@ -208,7 +208,7 @@ async function submitAuthForm() {
       if (!isUserVerified(cred.user)) {
         await sendVerificationIfPossible(cred.user);
         await firebase.auth().signOut();
-        setAuthError('Please verify your email first. We sent a verification link to your inbox.');
+        setAuthError('Please verify your email first. We sent a verification link to your inbox or spam folder.');
         return;
       }
       await upsertUserProfile(cred.user);

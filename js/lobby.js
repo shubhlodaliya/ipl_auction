@@ -17,6 +17,7 @@ let roomTeamCatalog = {};
 let liveTeams = {};
 let iconPicks = {};
 let iconPicksListener = null;
+let hasMyTeam = false;
 
 function shufflePoolOrder(items) {
   const arr = [...items];
@@ -112,6 +113,7 @@ function initLobby() {
     allPlayers = roomConfig.auctionType === 'manual'
       ? (room.manualPlayers || [])
       : [];
+    hasMyTeam = !!myTeamId;
 
     // Show my team chip
     const me = getRoomTeamMeta(myTeamId);
@@ -119,6 +121,20 @@ function initLobby() {
       const chip = document.getElementById('myTeamChip');
       chip.style.display = 'flex';
       chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" />` : ''} ${me.short}`;
+      hasMyTeam = true;
+    } else if (isHost && roomConfig.auctionType === 'manual' && roomConfig.hostManagerOnly) {
+      const chip = document.getElementById('myTeamChip');
+      if (chip) {
+        chip.style.display = 'flex';
+        chip.textContent = 'HOST MANAGER';
+      }
+    }
+
+    const hostWatchlistBtn = document.getElementById('hostWatchlistBtn');
+    const guestWatchlistBtn = document.getElementById('guestWatchlistBtn');
+    if (!hasMyTeam) {
+      if (hostWatchlistBtn) hostWatchlistBtn.style.display = 'none';
+      if (guestWatchlistBtn) guestWatchlistBtn.style.display = 'none';
     }
 
     window.getLobbyInviteLink = (includePasscode = false) => buildInviteUrl(roomCode, roomConfig.invitePasscode, includePasscode);
@@ -148,6 +164,11 @@ function initLobby() {
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Bid Buttons</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${(roomConfig.bidOptions || [25,50,100]).map(v => formatPrice(v)).join(' / ')}</div>
       </div>
+      ${roomConfig.auctionType === 'manual' ? `
+      <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Host Role</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${roomConfig.hostManagerOnly ? 'Manager Only' : 'Playing Host'}</div>
+      </div>` : ''}
       ${roomConfig.auctionType === 'manual' && Number(roomConfig.maxIconPlayers || 0) > 0 ? `
       <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Icon Fixed Price</div>
@@ -160,6 +181,14 @@ function initLobby() {
     `;
 
     toggleIconPickerButtons();
+
+    if (hasMyTeam) {
+      watchlistListener = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).on('value', snap => {
+        const data = snap.val() || {};
+        watchlistSet = new Set(Object.keys(data));
+        updateWatchlistCounter();
+      });
+    }
 
     // Show lobby content
     document.getElementById('loadingScreen').style.display = 'none';
@@ -176,12 +205,6 @@ function initLobby() {
         console.error('Failed to load players for watchlist:', err);
       });
     }
-  });
-
-  watchlistListener = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).on('value', snap => {
-    const data = snap.val() || {};
-    watchlistSet = new Set(Object.keys(data));
-    updateWatchlistCounter();
   });
 
   // Listen to teams
@@ -213,7 +236,7 @@ function initLobby() {
 }
 
 function toggleIconPickerButtons() {
-  const enabled = roomConfig?.auctionType === 'manual' && Number(roomConfig?.maxIconPlayers || 0) > 0;
+  const enabled = hasMyTeam && roomConfig?.auctionType === 'manual' && Number(roomConfig?.maxIconPlayers || 0) > 0;
   const hostBtn = document.getElementById('iconPickBtnHost');
   const guestBtn = document.getElementById('iconPickBtnGuest');
   if (hostBtn) hostBtn.style.display = enabled ? 'inline-flex' : 'none';
@@ -221,6 +244,10 @@ function toggleIconPickerButtons() {
 }
 
 function openIconPickerModal() {
+  if (!hasMyTeam) {
+    showToast('Host manager mode has no team to select icon players.', 'error');
+    return;
+  }
   if (!(roomConfig?.auctionType === 'manual')) {
     showToast('Icon player selection is only for manual auctions.', 'error');
     return;
@@ -432,6 +459,10 @@ function updateWatchlistCounter() {
 }
 
 function openWatchlistModal() {
+  if (!hasMyTeam) {
+    showToast('Host manager mode has no team watchlist.', 'error');
+    return;
+  }
   const overlay = document.getElementById('watchlistModalOverlay');
   const list = document.getElementById('watchlistList');
   if (!overlay || !list) return;
@@ -464,6 +495,7 @@ function closeWatchlistModal() {
 }
 
 async function toggleWatchlistPlayer(playerId, checked) {
+  if (!hasMyTeam) return;
   try {
     const ref = db.ref(`rooms/${roomCode}/watchlists/${myTeamId}/${playerId}`);
     if (checked) {
@@ -481,6 +513,7 @@ async function toggleWatchlistPlayer(playerId, checked) {
 }
 
 async function clearWatchlist() {
+  if (!hasMyTeam) return;
   if (!watchlistSet.size) return;
   try {
     await db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).remove();
@@ -517,8 +550,8 @@ function renderTeamSlots(teams) {
     else if (teamIsHost) badge = `<div class="slot-badge host">HOST</div>`;
 
     return `
-      <div class="${cls}" style="--team-color:${t.primary}"
-           onclick="${(!joined && !isMe) ? `joinTeamFromLobby('${t.id}')` : ''}">
+       <div class="${cls}" style="--team-color:${t.primary}"
+         onclick="${(!isHost && !joined && !isMe) ? `joinTeamFromLobby('${t.id}')` : ''}">
         ${badge}
         <img class="slot-logo" src="${t.logo}" alt="${t.short} logo" />
         <div class="slot-name" style="color:${t.primary}">${t.short}</div>
@@ -637,7 +670,7 @@ async function startAuction() {
 window.addEventListener('beforeunload', () => {
   if (teamsListener) db.ref(`rooms/${roomCode}/teams`).off('value', teamsListener);
   if (statusListener) db.ref(`rooms/${roomCode}/config/status`).off('value', statusListener);
-  if (watchlistListener) db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', watchlistListener);
+  if (hasMyTeam && watchlistListener) db.ref(`rooms/${roomCode}/watchlists/${myTeamId}`).off('value', watchlistListener);
   if (iconPicksListener) db.ref(`rooms/${roomCode}/iconPicks`).off('value', iconPicksListener);
 });
 

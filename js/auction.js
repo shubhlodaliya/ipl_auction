@@ -56,6 +56,10 @@ let autoWithdrawInFlightForPlayerId = null;
 let chatPopupDragState = { dragging: false, pointerId: null, offsetX: 0, offsetY: 0 };
 let serverTimeOffsetMs = 0;
 let spectatorSessionId = null;
+let spectatorPollPlayerId = null;
+let spectatorPollVotes = {};
+let spectatorPollRef = null;
+let lastSpectatorPollOutcomeKey = '';
 let roomHostUid = null;
 let currentHostUid = null;
 let hostPresenceMap = {};
@@ -401,6 +405,7 @@ async function initAuction() {
 
     renderSidebar();
     updateMyPurse();
+    if (isSpectator) renderSpectatorPredictionPoll(currentAuctionData);
   });
 
   listeners.soldPlayers = db.ref(`rooms/${roomCode}/soldPlayers`).on('value', snap => {
@@ -595,11 +600,219 @@ function updateSpectatorPanel(data = null) {
   timerEl.textContent = `${left}s`;
 }
 
+function detachSpectatorPollListener() {
+  if (spectatorPollRef && listeners.spectatorPollVotes) {
+    spectatorPollRef.off('value', listeners.spectatorPollVotes);
+  }
+  listeners.spectatorPollVotes = null;
+  spectatorPollRef = null;
+  spectatorPollPlayerId = null;
+  spectatorPollVotes = {};
+}
+
+function attachSpectatorPollListener(playerId) {
+  if (!isSpectator || !playerId) return;
+  const normalized = String(playerId);
+  if (spectatorPollPlayerId === normalized && spectatorPollRef) return;
+
+  detachSpectatorPollListener();
+  spectatorPollPlayerId = normalized;
+  spectatorPollRef = db.ref(`rooms/${roomCode}/spectatorPolls/${normalized}/votes`);
+  listeners.spectatorPollVotes = (snap) => {
+    spectatorPollVotes = snap.val() || {};
+    renderSpectatorPredictionPoll(currentAuctionData);
+  };
+  spectatorPollRef.on('value', listeners.spectatorPollVotes);
+}
+
+function getSpectatorPollStats() {
+  const tally = {};
+  Object.values(spectatorPollVotes || {}).forEach((entry) => {
+    const teamId = typeof entry === 'string' ? entry : entry?.teamId;
+    if (!teamId) return;
+    tally[teamId] = (tally[teamId] || 0) + 1;
+  });
+
+  const ranking = Object.entries(tally)
+    .map(([teamId, votes]) => ({ teamId, votes }))
+    .sort((a, b) => b.votes - a.votes || String(a.teamId).localeCompare(String(b.teamId)));
+
+  const totalVotes = ranking.reduce((sum, row) => sum + row.votes, 0);
+  const top = ranking[0] || null;
+  const tie = !!(ranking[1] && top && ranking[1].votes === top.votes);
+  const myVoteEntry = spectatorSessionId ? spectatorPollVotes?.[spectatorSessionId] : null;
+  const myVoteTeamId = typeof myVoteEntry === 'string' ? myVoteEntry : (myVoteEntry?.teamId || null);
+
+  return {
+    ranking,
+    totalVotes,
+    topTeamId: tie ? null : (top?.teamId || null),
+    tie,
+    myVoteTeamId
+  };
+}
+
+function renderSpectatorPredictionPoll(data = null) {
+  if (!isSpectator) return;
+
+  const card = document.getElementById('spectatorPollCard');
+  const graphEl = document.getElementById('spectatorPollGraph');
+  const listEl = document.getElementById('spectatorPollTeams');
+  const totalEl = document.getElementById('spectatorPollTotalVotes');
+  const subEl = document.getElementById('spectatorPollSub');
+  if (!card || !graphEl || !listEl || !totalEl || !subEl) return;
+
+  const auction = data || currentAuctionData;
+  const currentPlayer = auction?.playerId ? playerMap[auction.playerId] : null;
+  if (!auction || !currentPlayer) {
+    totalEl.textContent = '0 votes';
+    subEl.textContent = 'Vote which team will win this player.';
+    graphEl.innerHTML = '';
+    listEl.innerHTML = '<div class="bid-history-empty">Waiting for live player...</div>';
+    return;
+  }
+
+  const { ranking, totalVotes, topTeamId, tie, myVoteTeamId } = getSpectatorPollStats();
+  const teamIds = Object.keys(teamsData || {});
+
+  totalEl.textContent = `${totalVotes} vote${totalVotes === 1 ? '' : 's'}`;
+  if (auction.status === 'bidding') {
+    if (isHostManager) {
+      subEl.textContent = `${currentPlayer.name}: Manager mode cannot vote. Watching live graph only.`;
+    } else if (myVoteTeamId) {
+      const myTeam = getRoomTeamMeta(myVoteTeamId) || teamsData[myVoteTeamId] || {};
+      subEl.textContent = `${currentPlayer.name}: You voted ${myTeam.short || myTeam.name || myVoteTeamId}.`;
+    } else {
+      subEl.textContent = `${currentPlayer.name}: Vote now before this player is sold.`;
+    }
+  }
+
+  if (!ranking.length) {
+    graphEl.innerHTML = '<div class="spectator-poll-empty">No predictions yet. Be the first to vote.</div>';
+  } else {
+    const topRows = ranking.slice(0, 4);
+    graphEl.innerHTML = topRows.map((row) => {
+      const team = getRoomTeamMeta(row.teamId) || teamsData[row.teamId] || {};
+      const pct = totalVotes > 0 ? Math.round((row.votes / totalVotes) * 100) : 0;
+      const accent = team.primary || '#1DA0FF';
+      return `
+        <div class="spectator-poll-graph-row ${topTeamId === row.teamId ? 'leader' : ''}">
+          <div class="spectator-poll-graph-meta">
+            <span>${team.short || row.teamId}</span>
+            <span>${row.votes} (${pct}%)</span>
+          </div>
+          <div class="spectator-poll-bar-track">
+            <div class="spectator-poll-bar-fill" style="width:${pct}%;background:${accent};"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  if (!teamIds.length) {
+    listEl.innerHTML = '<div class="bid-history-empty">Team data unavailable.</div>';
+    return;
+  }
+
+  const voteClosed = auction.status !== 'bidding';
+  const sortedTeamIds = teamIds.slice().sort((a, b) => {
+    const ta = teamsData[a] || getRoomTeamMeta(a) || {};
+    const tb = teamsData[b] || getRoomTeamMeta(b) || {};
+    return String(ta.short || ta.name || a).localeCompare(String(tb.short || tb.name || b));
+  });
+
+  listEl.innerHTML = sortedTeamIds.map((teamId) => {
+    const team = teamsData[teamId] || getRoomTeamMeta(teamId) || {};
+    const voteRow = ranking.find((r) => r.teamId === teamId);
+    const votes = voteRow?.votes || 0;
+    const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+    const isMyVote = myVoteTeamId === teamId;
+    const disabled = voteClosed || isHostManager;
+    return `
+      <button class="spectator-poll-team-btn ${isMyVote ? 'selected' : ''}" ${disabled ? 'disabled' : ''} onclick="castSpectatorPollVote('${teamId}')">
+        <span class="spectator-poll-team-left">
+          ${team.logo ? `<img src="${team.logo}" alt="${team.short || teamId} logo" />` : ''}
+          <span>${team.short || team.name || teamId}</span>
+        </span>
+        <span class="spectator-poll-team-right">${votes} • ${pct}%</span>
+      </button>
+    `;
+  }).join('');
+
+  if (voteClosed) {
+    if (auction.status === 'sold') {
+      const soldTeam = teamsData[auction.highestBidder] || getRoomTeamMeta(auction.highestBidder) || {};
+      if (tie) {
+        subEl.textContent = `${currentPlayer.name} sold to ${soldTeam.short || soldTeam.name || auction.highestBidder}. Poll ended with tie.`;
+      } else if (topTeamId) {
+        const topTeam = teamsData[topTeamId] || getRoomTeamMeta(topTeamId) || {};
+        subEl.textContent = `${currentPlayer.name} sold to ${soldTeam.short || soldTeam.name || auction.highestBidder}. Top predicted: ${topTeam.short || topTeam.name || topTeamId}.`;
+      } else {
+        subEl.textContent = `${currentPlayer.name} sold to ${soldTeam.short || soldTeam.name || auction.highestBidder}.`;
+      }
+    } else if (auction.status === 'unsold') {
+      subEl.textContent = `${currentPlayer.name} remained unsold. Poll closed.`;
+    }
+  }
+}
+
+async function castSpectatorPollVote(teamId) {
+  if (!isSpectator || isHostManager) return;
+  if (!teamId || !currentAuctionData || currentAuctionData.status !== 'bidding') return;
+  if (!currentAuctionData.playerId || spectatorPollPlayerId !== String(currentAuctionData.playerId)) return;
+
+  try {
+    const voteRef = db.ref(`rooms/${roomCode}/spectatorPolls/${spectatorPollPlayerId}/votes/${spectatorSessionId}`);
+    await voteRef.set({
+      teamId,
+      viewerName: playerName || 'Viewer',
+      ts: firebase.database.ServerValue.TIMESTAMP
+    });
+  } catch (err) {
+    console.error('Spectator poll vote failed:', err);
+    showToast('Vote failed. Please retry.', 'error');
+  }
+}
+
+function maybeCelebrateSpectatorPollOutcome(data, player) {
+  if (!isSpectator || !data || data.status !== 'sold') return;
+
+  const pollCard = document.getElementById('spectatorPollCard');
+  if (!pollCard) return;
+
+  const outcomeKey = `${data.playerId}:${data.highestBidder}:${data.status}`;
+  if (lastSpectatorPollOutcomeKey === outcomeKey) return;
+  lastSpectatorPollOutcomeKey = outcomeKey;
+
+  const { topTeamId, totalVotes, tie } = getSpectatorPollStats();
+  const wonByPrediction = !tie && !!topTeamId && topTeamId === data.highestBidder;
+
+  pollCard.classList.remove('prediction-hit', 'prediction-miss');
+  void pollCard.offsetWidth;
+
+  if (wonByPrediction && totalVotes > 0) {
+    pollCard.classList.add('prediction-hit');
+    showToast(`Prediction hit! Spectators called ${player?.name || 'this player'} correctly.`, 'success');
+    showResultBanner('sold', 'PREDICTION HIT', `${player?.name || 'Player'} sold to crowd favorite ${teamsData[data.highestBidder]?.name || data.highestBidder}`);
+  } else {
+    pollCard.classList.add('prediction-miss');
+  }
+}
+
 // ---- RENDER AUCTION STATE ----
 function renderAuction(data, prevData = null) {
   if (!data) return;
   const player = playerMap[data.playerId];
   if (!player) return;
+
+  if (isSpectator && data.playerId) {
+    attachSpectatorPollListener(data.playerId);
+    if (data.status === 'bidding') {
+      const pollCard = document.getElementById('spectatorPollCard');
+      if (pollCard) pollCard.classList.remove('prediction-hit', 'prediction-miss');
+    }
+    renderSpectatorPredictionPoll(data);
+  }
 
   handleAudioEvents(data, prevData);
 
@@ -618,6 +831,7 @@ function renderAuction(data, prevData = null) {
   if (data.status === 'sold') {
     const buyer = teamsData[data.highestBidder];
     showResultBanner('sold', `SOLD`, `${player.name} → ${buyer ? buyer.name : data.highestBidder} for ${formatPrice(data.currentBid)}`);
+    maybeCelebrateSpectatorPollOutcome(data, player);
   } else if (data.status === 'unsold') {
     showResultBanner('unsold', `UNSOLD`, `${player.name} goes back to the pool`);
   } else {
@@ -1030,6 +1244,7 @@ function clamp(value, min, max) {
 function leaveAuction() {
   const confirmed = window.confirm('Leave this auction screen? You can join again later with the same room code.');
   if (!confirmed) return;
+  detachSpectatorPollListener();
   if (isHost && hostPresenceRef) {
     hostPresenceRef.remove().catch(() => {});
   }
@@ -2920,6 +3135,7 @@ function hideResultBanner() {
 
 // ---- CLEANUP ----
 window.addEventListener('beforeunload', () => {
+  detachSpectatorPollListener();
   removeSpectatorPresence();
   if (isHost && hostPresenceRef) {
     try { hostPresenceRef.remove(); } catch (_) {}

@@ -1498,6 +1498,182 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--blue);
 }
 
+.spectator-poll-card {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(29,160,255,0.35);
+  background:
+    radial-gradient(circle at 14% 12%, rgba(29,160,255,0.16), transparent 44%),
+    linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+}
+
+.spectator-poll-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.spectator-poll-total {
+  font-size: 0.72rem;
+  color: #bfe6ff;
+  background: rgba(29,160,255,0.18);
+  border: 1px solid rgba(29,160,255,0.35);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  letter-spacing: 0.6px;
+}
+
+.spectator-poll-sub {
+  color: var(--text-sec);
+  font-size: 0.8rem;
+  margin-bottom: 0.55rem;
+}
+
+.spectator-poll-graph {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.55rem;
+}
+
+.spectator-poll-empty {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-align: center;
+  padding: 0.45rem 0.2rem;
+}
+
+.spectator-poll-graph-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.spectator-poll-graph-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--text-sec);
+}
+
+.spectator-poll-graph-row.leader .spectator-poll-graph-meta {
+  color: #d5ecff;
+}
+
+.spectator-poll-bar-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+}
+
+.spectator-poll-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  min-width: 0;
+  transition: width 0.45s ease;
+  box-shadow: 0 0 10px rgba(29,160,255,0.36);
+}
+
+.spectator-poll-team-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.42rem;
+}
+
+.spectator-poll-team-btn {
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  padding: 0.42rem 0.46rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.spectator-poll-team-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(29,160,255,0.6);
+  background: rgba(29,160,255,0.13);
+}
+
+.spectator-poll-team-btn.selected {
+  border-color: rgba(255,203,48,0.62);
+  background: rgba(255,203,48,0.15);
+  color: #ffe7a7;
+}
+
+.spectator-poll-team-btn:disabled {
+  opacity: 0.75;
+}
+
+.spectator-poll-team-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.spectator-poll-team-left img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.spectator-poll-team-right {
+  color: var(--text-sec);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.spectator-poll-card.prediction-hit {
+  animation: pollPredictionHit 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+  border-color: rgba(0,196,140,0.72);
+  box-shadow: 0 0 34px rgba(0,196,140,0.24);
+}
+
+.spectator-poll-card.prediction-miss {
+  animation: pollPredictionMiss 0.55s ease;
+}
+
+.spectator-poll-card.prediction-hit::after {
+  content: 'Prediction Hit';
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #b7ffe8;
+  background: rgba(0,196,140,0.2);
+  border: 1px solid rgba(0,196,140,0.5);
+  border-radius: 999px;
+  padding: 0.14rem 0.45rem;
+}
+
+@keyframes pollPredictionHit {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pollPredictionMiss {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  80% { transform: translateX(-1px); }
+}
+
 .top-pick-modal {
   max-width: 860px;
 }
@@ -3742,6 +3918,10 @@ body.spectator-mode #voiceStatusBadge {
     font-size: 1.35rem;
   }
 
+  .spectator-poll-team-list {
+    grid-template-columns: 1fr;
+  }
+
   .result-team-header {
     grid-template-columns: 42px minmax(0, 1fr) auto;
     grid-template-areas:
@@ -3847,6 +4027,15 @@ body.spectator-mode #voiceStatusBadge {
     padding: 0.66rem 0.7rem;
   }
 
+  body.spectator-mode .spectator-poll-sub {
+    font-size: 0.76rem;
+  }
+
+  body.spectator-mode .spectator-poll-team-btn {
+    padding: 0.38rem 0.44rem;
+    font-size: 0.72rem;
+  }
+
   body.spectator-mode .spectator-value {
     font-size: 1.78rem;
   }
@@ -3869,6 +4058,19 @@ body.spectator-mode #voiceStatusBadge {
   }
   .highlight-moment-card {
     min-height: 170px;
+  }
+
+  .spectator-poll-head {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .spectator-poll-total {
+    font-size: 0.67rem;
+  }
+
+  .spectator-poll-graph-meta {
+    font-size: 0.68rem;
   }
 
   body.spectator-mode .player-spotlight {

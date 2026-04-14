@@ -3062,7 +3062,8 @@ body.spectator-mode #voiceStatusBadge {
   font-size: 0.9rem;
 }
 
-.highlights-reel-grid {
+.highlights-reel-grid,
+.highlights-carousel-track {
   position: relative;
   z-index: 1;
   display: flex;

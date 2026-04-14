@@ -1042,6 +1042,20 @@ async function loadResults() {
 
     const room = roomSnap.val();
     const isManualAuction = room.config?.auctionType === 'manual';
+    const teamPowerToggleBtn = document.getElementById('teamPowerToggleBtn');
+    const teamPowerHint = document.getElementById('teamPowerHint');
+    const teamPowerSection = document.getElementById('teamPowerSection');
+    if (isManualAuction) {
+      if (teamPowerSection) teamPowerSection.style.display = 'none';
+      if (teamPowerToggleBtn) teamPowerToggleBtn.style.display = 'none';
+      if (teamPowerHint) teamPowerHint.style.display = 'none';
+      teamPowerUiState.visible = false;
+      teamPowerUiState.data = null;
+    } else {
+      if (teamPowerToggleBtn) teamPowerToggleBtn.style.display = '';
+      if (teamPowerHint) teamPowerHint.style.display = '';
+    }
+
     const playersData = isManualAuction ? (room.manualPlayers || []) : await loadPlayers();
     const roomTeamCatalog = isManualAuction
       ? (room.manualTeams || {})
@@ -1132,14 +1146,17 @@ async function loadResults() {
 
     resultsExportState.roomMinSquadSize = Number(room.config?.minSquadSize || 1);
 
-    // Build Team Power Rankings using Playing XI + bench depth.
-    const playing11Snap = await db.ref(`rooms/${roomCode}/playing11`).get();
-    const playing11Map = playing11Snap.exists() ? (playing11Snap.val() || {}) : {};
-    const teamModels = Object.entries(teams).map(([teamId, team]) =>
-      buildTeamPowerModel(teamId, team, teamSquads[teamId] || [], playing11Map[teamId])
-    );
-    const teamPowerData = rankTeams(teamModels);
-    renderTeamPowerInsights(teamPowerData);
+    let teamPowerData = null;
+    if (!isManualAuction) {
+      // Build Team Power Rankings using Playing XI + bench depth.
+      const playing11Snap = await db.ref(`rooms/${roomCode}/playing11`).get();
+      const playing11Map = playing11Snap.exists() ? (playing11Snap.val() || {}) : {};
+      const teamModels = Object.entries(teams).map(([teamId, team]) =>
+        buildTeamPowerModel(teamId, team, teamSquads[teamId] || [], playing11Map[teamId])
+      );
+      teamPowerData = rankTeams(teamModels);
+      renderTeamPowerInsights(teamPowerData);
+    }
 
     const highlightsMoments = buildAuctionMoments({
       soldPlayers,
@@ -1151,22 +1168,30 @@ async function loadResults() {
     });
     renderHighlightsReel(highlightsMoments, roomCode);
 
-    const rankingOrderIds = teamPowerData.rankings.map(r => r.teamId);
-    const rankedSet = new Set(rankingOrderIds);
-    const unranked = Object.entries(teams)
-      .filter(([teamId]) => !rankedSet.has(teamId))
-      .sort((a, b) => {
-        const spendA = (teamSquads[a[0]] || []).reduce((s, x) => s + x.price, 0);
-        const spendB = (teamSquads[b[0]] || []).reduce((s, x) => s + x.price, 0);
-        return spendB - spendA;
-      });
+    const sortedTeams = isManualAuction
+      ? Object.entries(teams)
+        .sort((a, b) => {
+          const spendA = (teamSquads[a[0]] || []).reduce((s, x) => s + x.price, 0);
+          const spendB = (teamSquads[b[0]] || []).reduce((s, x) => s + x.price, 0);
+          return spendB - spendA;
+        })
+      : (() => {
+          const rankingOrderIds = teamPowerData.rankings.map(r => r.teamId);
+          const rankedSet = new Set(rankingOrderIds);
+          const unranked = Object.entries(teams)
+            .filter(([teamId]) => !rankedSet.has(teamId))
+            .sort((a, b) => {
+              const spendA = (teamSquads[a[0]] || []).reduce((s, x) => s + x.price, 0);
+              const spendB = (teamSquads[b[0]] || []).reduce((s, x) => s + x.price, 0);
+              return spendB - spendA;
+            });
+          return [
+            ...rankingOrderIds.map((teamId) => [teamId, teams[teamId]]),
+            ...unranked
+          ].filter(([, team]) => !!team);
+        })();
 
-    const sortedTeams = [
-      ...rankingOrderIds.map((teamId) => [teamId, teams[teamId]]),
-      ...unranked
-    ].filter(([, team]) => !!team);
-
-    const teamScoreMap = new Map(teamPowerData.rankings.map((entry) => [entry.teamId, entry.score]));
+    const teamScoreMap = new Map((teamPowerData?.rankings || []).map((entry) => [entry.teamId, entry.score]));
 
     resultsExportState.roomCode = roomCode;
     resultsExportState.teams = teams;
@@ -1211,10 +1236,11 @@ async function loadResults() {
                   <span class="result-stat-val">${squad.length}</span>
                   <span class="result-stat-label">Players</span>
                 </div>
+                ${!isManualAuction ? `
                 <div>
                   <span class="result-stat-val">${teamScoreMap.has(tId) ? teamScoreMap.get(tId) : '-'}</span>
                   <span class="result-stat-label">Power</span>
-                </div>
+                </div>` : ''}
               </div>
             </div>
           </div>
@@ -1245,8 +1271,9 @@ async function loadResults() {
     }).join('');
 
     // Update subtitle
-    document.getElementById('resultsSub').textContent =
-      `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams · #1 ${teamPowerData.rankings[0]?.team || '-'}`;
+    document.getElementById('resultsSub').textContent = isManualAuction
+      ? `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams`
+      : `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams · #1 ${teamPowerData.rankings[0]?.team || '-'}`;
 
     setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers);
     setupPlaying11(roomCode, session, teams, teamSquads);

@@ -3065,9 +3065,82 @@ body.spectator-mode #voiceStatusBadge {
 .highlights-reel-grid {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 0.82rem;
+  display: flex;
+  width: 100%;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.highlights-carousel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.highlights-carousel-viewport {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.highlights-carousel-slide {
+  min-width: 100%;
+  padding: 0.1rem;
+}
+
+.highlights-carousel-nav {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.24);
+  background: rgba(255,255,255,0.08);
+  color: #ffe5a3;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.45rem;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.highlights-carousel-nav:hover:not(:disabled) {
+  transform: scale(1.05);
+  border-color: rgba(255,203,48,0.6);
+  background: rgba(255,203,48,0.16);
+}
+
+.highlights-carousel-nav:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.highlights-carousel-dots {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.7rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.highlights-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.22);
+  transition: width 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+}
+
+.highlights-dot.active {
+  width: 20px;
+  background: rgba(255,203,48,0.88);
+  border-color: rgba(255,203,48,0.92);
 }
 
 .highlight-moment-card {
@@ -3906,9 +3979,10 @@ body.spectator-mode #voiceStatusBadge {
   .highlights-reel-head {
     gap: 0.7rem;
   }
-  .highlights-reel-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.65rem;
+  .highlights-carousel-nav {
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
   }
   .highlight-moment-card {
     min-height: 194px;
@@ -4050,8 +4124,13 @@ body.spectator-mode #voiceStatusBadge {
 }
 
 @media (max-width: 500px) {
-  .highlights-reel-grid {
-    grid-template-columns: 1fr;
+  .highlights-carousel {
+    gap: 0.35rem;
+  }
+  .highlights-carousel-nav {
+    width: 30px;
+    height: 30px;
+    font-size: 1.1rem;
   }
   .highlights-reel-head h2 {
     font-size: 1.45rem;

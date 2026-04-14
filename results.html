@@ -45,7 +45,14 @@
           </div>
           <button class="btn btn-secondary" id="copyHighlightsBtn" onclick="copyHighlightsSummary()">Copy Highlights</button>
         </div>
-        <div class="highlights-reel-grid" id="highlightsReelGrid"></div>
+        <div class="highlights-carousel" id="highlightsCarousel">
+          <button class="highlights-carousel-nav prev" id="highlightsPrevBtn" onclick="prevHighlightsSlide()" aria-label="Previous highlight">‹</button>
+          <div class="highlights-carousel-viewport" id="highlightsViewport">
+            <div class="highlights-carousel-track" id="highlightsReelGrid"></div>
+          </div>
+          <button class="highlights-carousel-nav next" id="highlightsNextBtn" onclick="nextHighlightsSlide()" aria-label="Next highlight">›</button>
+        </div>
+        <div class="highlights-carousel-dots" id="highlightsDots"></div>
       </section>
 
       <!-- Team Power Ranking -->

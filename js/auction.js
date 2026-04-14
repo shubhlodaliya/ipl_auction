@@ -681,7 +681,7 @@ function renderSpectatorPredictionPoll(data = null) {
       subEl.textContent = `${currentPlayer.name}: Manager mode cannot vote. Watching live graph only.`;
     } else if (myVoteTeamId) {
       const myTeam = getRoomTeamMeta(myVoteTeamId) || teamsData[myVoteTeamId] || {};
-      subEl.textContent = `${currentPlayer.name}: You voted ${myTeam.short || myTeam.name || myVoteTeamId}.`;
+      subEl.textContent = `${currentPlayer.name}: You voted ${myTeam.short || myTeam.name || myVoteTeamId}. Vote is locked.`;
     } else {
       subEl.textContent = `${currentPlayer.name}: Vote now before this player is sold.`;
     }
@@ -727,7 +727,7 @@ function renderSpectatorPredictionPoll(data = null) {
     const votes = voteRow?.votes || 0;
     const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
     const isMyVote = myVoteTeamId === teamId;
-    const disabled = voteClosed || isHostManager;
+    const disabled = voteClosed || isHostManager || !!myVoteTeamId;
     return `
       <button class="spectator-poll-team-btn ${isMyVote ? 'selected' : ''}" ${disabled ? 'disabled' : ''} onclick="castSpectatorPollVote('${teamId}')">
         <span class="spectator-poll-team-left">
@@ -761,13 +761,26 @@ async function castSpectatorPollVote(teamId) {
   if (!teamId || !currentAuctionData || currentAuctionData.status !== 'bidding') return;
   if (!currentAuctionData.playerId || spectatorPollPlayerId !== String(currentAuctionData.playerId)) return;
 
+  const { myVoteTeamId } = getSpectatorPollStats();
+  if (myVoteTeamId) {
+    showToast('Your prediction is already locked for this player.', 'error');
+    return;
+  }
+
   try {
     const voteRef = db.ref(`rooms/${roomCode}/spectatorPolls/${spectatorPollPlayerId}/votes/${spectatorSessionId}`);
-    await voteRef.set({
-      teamId,
-      viewerName: playerName || 'Viewer',
-      ts: firebase.database.ServerValue.TIMESTAMP
+    const result = await voteRef.transaction((existing) => {
+      if (existing) return; // Already voted; abort change.
+      return {
+        teamId,
+        viewerName: playerName || 'Viewer',
+        ts: firebase.database.ServerValue.TIMESTAMP
+      };
     });
+
+    if (!result.committed) {
+      showToast('Your prediction is already locked for this player.', 'error');
+    }
   } catch (err) {
     console.error('Spectator poll vote failed:', err);
     showToast('Vote failed. Please retry.', 'error');

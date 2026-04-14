@@ -59,7 +59,10 @@ const topPickUiState = {
 const highlightsUiState = {
   visible: false,
   moments: [],
-  summaryText: ''
+  summaryText: '',
+  currentIndex: 0,
+  autoplayTimer: null,
+  autoplayDelayMs: 3400
 };
 
 const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
@@ -857,18 +860,27 @@ function renderHighlightsReel(moments, roomCode = '') {
   const section = document.getElementById('highlightsReelSection');
   const grid = document.getElementById('highlightsReelGrid');
   const sub = document.getElementById('highlightsReelSub');
-  if (!section || !grid) return;
+  const dots = document.getElementById('highlightsDots');
+  const prevBtn = document.getElementById('highlightsPrevBtn');
+  const nextBtn = document.getElementById('highlightsNextBtn');
+  const viewport = document.getElementById('highlightsViewport');
+  if (!section || !grid || !dots || !prevBtn || !nextBtn || !viewport) return;
 
   if (!Array.isArray(moments) || !moments.length) {
+    stopHighlightsAutoplay();
     highlightsUiState.visible = false;
     highlightsUiState.moments = [];
     highlightsUiState.summaryText = '';
+    highlightsUiState.currentIndex = 0;
     section.style.display = 'none';
     return;
   }
 
+  stopHighlightsAutoplay();
+
   highlightsUiState.visible = true;
   highlightsUiState.moments = moments.slice(0, 5);
+  highlightsUiState.currentIndex = 0;
   highlightsUiState.summaryText = [
     `Top 5 Auction Moments${roomCode ? ` (Room ${roomCode})` : ''}`,
     ...highlightsUiState.moments.map((m, idx) => `${idx + 1}. ${m.title}: ${m.subtitle} | ${m.value} | ${m.meta}`)
@@ -881,18 +893,95 @@ function renderHighlightsReel(moments, roomCode = '') {
   }
 
   grid.innerHTML = highlightsUiState.moments.map((m, idx) => `
-    <article class="highlight-moment-card ${escHtml(m.accent || 'gold')}" style="--moment-delay:${idx * 0.1}s;">
-      <div class="highlight-moment-rank">#${idx + 1}</div>
-      <div class="highlight-moment-icon">${escHtml(m.icon || '⭐')}</div>
-      <div class="highlight-moment-title">${escHtml(m.title)}</div>
-      <div class="highlight-moment-sub">${escHtml(m.subtitle)}</div>
-      <div class="highlight-moment-value">${escHtml(m.value)}</div>
-      <div class="highlight-moment-meta">${escHtml(m.meta)}</div>
-      <div class="highlight-moment-glow" aria-hidden="true"></div>
-    </article>
+    <div class="highlights-carousel-slide" data-index="${idx}">
+      <article class="highlight-moment-card ${escHtml(m.accent || 'gold')}" style="--moment-delay:${idx * 0.1}s;">
+        <div class="highlight-moment-rank">#${idx + 1}</div>
+        <div class="highlight-moment-icon">${escHtml(m.icon || '⭐')}</div>
+        <div class="highlight-moment-title">${escHtml(m.title)}</div>
+        <div class="highlight-moment-sub">${escHtml(m.subtitle)}</div>
+        <div class="highlight-moment-value">${escHtml(m.value)}</div>
+        <div class="highlight-moment-meta">${escHtml(m.meta)}</div>
+        <div class="highlight-moment-glow" aria-hidden="true"></div>
+      </article>
+    </div>
   `).join('');
 
+  dots.innerHTML = highlightsUiState.moments.map((m, idx) => `
+    <button class="highlights-dot" aria-label="Go to slide ${idx + 1}" onclick="goToHighlightsSlide(${idx})"></button>
+  `).join('');
+
+  const singleSlide = highlightsUiState.moments.length <= 1;
+  prevBtn.disabled = singleSlide;
+  nextBtn.disabled = singleSlide;
+  dots.style.display = singleSlide ? 'none' : 'flex';
+
+  viewport.onmouseenter = () => stopHighlightsAutoplay();
+  viewport.onmouseleave = () => startHighlightsAutoplay();
+  viewport.ontouchstart = () => stopHighlightsAutoplay();
+  viewport.ontouchend = () => startHighlightsAutoplay();
+
+  updateHighlightsCarouselUi();
+  startHighlightsAutoplay();
+
   section.style.display = 'block';
+}
+
+function updateHighlightsCarouselUi() {
+  const track = document.getElementById('highlightsReelGrid');
+  const dotButtons = Array.from(document.querySelectorAll('#highlightsDots .highlights-dot'));
+  if (!track) return;
+
+  const total = highlightsUiState.moments.length;
+  if (!total) {
+    track.style.transform = 'translateX(0%)';
+    return;
+  }
+
+  const safeIndex = ((highlightsUiState.currentIndex % total) + total) % total;
+  highlightsUiState.currentIndex = safeIndex;
+  track.style.transform = `translateX(-${safeIndex * 100}%)`;
+
+  dotButtons.forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === safeIndex);
+  });
+}
+
+function stopHighlightsAutoplay() {
+  if (highlightsUiState.autoplayTimer) {
+    clearInterval(highlightsUiState.autoplayTimer);
+    highlightsUiState.autoplayTimer = null;
+  }
+}
+
+function startHighlightsAutoplay() {
+  stopHighlightsAutoplay();
+  if (!highlightsUiState.visible || highlightsUiState.moments.length <= 1) return;
+  highlightsUiState.autoplayTimer = setInterval(() => {
+    nextHighlightsSlide(true);
+  }, highlightsUiState.autoplayDelayMs);
+}
+
+function nextHighlightsSlide(fromAuto = false) {
+  if (!highlightsUiState.moments.length) return;
+  highlightsUiState.currentIndex = (highlightsUiState.currentIndex + 1) % highlightsUiState.moments.length;
+  updateHighlightsCarouselUi();
+  if (!fromAuto) startHighlightsAutoplay();
+}
+
+function prevHighlightsSlide() {
+  if (!highlightsUiState.moments.length) return;
+  highlightsUiState.currentIndex = (highlightsUiState.currentIndex - 1 + highlightsUiState.moments.length) % highlightsUiState.moments.length;
+  updateHighlightsCarouselUi();
+  startHighlightsAutoplay();
+}
+
+function goToHighlightsSlide(index) {
+  const n = Number(index);
+  if (!Number.isFinite(n) || !highlightsUiState.moments.length) return;
+  const safe = Math.max(0, Math.min(highlightsUiState.moments.length - 1, Math.floor(n)));
+  highlightsUiState.currentIndex = safe;
+  updateHighlightsCarouselUi();
+  startHighlightsAutoplay();
 }
 
 async function copyHighlightsSummary() {
@@ -2449,3 +2538,6 @@ window.exportSelectedTeamPdf = exportSelectedTeamPdf;
 window.copyAnalystPrompt = copyAnalystPrompt;
 window.toggleTeamPowerRankings = toggleTeamPowerRankings;
 window.copyHighlightsSummary = copyHighlightsSummary;
+window.nextHighlightsSlide = nextHighlightsSlide;
+window.prevHighlightsSlide = prevHighlightsSlide;
+window.goToHighlightsSlide = goToHighlightsSlide;

@@ -35,6 +35,19 @@
       <!-- Summary Stats -->
       <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;" id="summaryStats"></div>
 
+      <!-- Highlights Reel -->
+      <section class="highlights-reel-section" id="highlightsReelSection" style="display:none;">
+        <div class="highlights-reel-head">
+          <div>
+            <p class="highlights-reel-kicker">Cinematic Recap</p>
+            <h2>Top 5 Auction Moments</h2>
+            <p id="highlightsReelSub">Biggest swings, smartest steals, and pressure moments from this room.</p>
+          </div>
+          <button class="btn btn-secondary" id="copyHighlightsBtn" onclick="copyHighlightsSummary()">Copy Highlights</button>
+        </div>
+        <div class="highlights-reel-grid" id="highlightsReelGrid"></div>
+      </section>
+
       <!-- Team Power Ranking -->
       <section class="team-power-section glass" id="teamPowerSection" style="display:none;">
         <div class="team-power-head">

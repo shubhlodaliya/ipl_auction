@@ -2828,6 +2828,201 @@ body.spectator-mode #voiceStatusBadge {
   margin-bottom: 1.2rem;
 }
 
+.highlights-reel-section {
+  position: relative;
+  margin-bottom: 1.7rem;
+  padding: 1.05rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 203, 48, 0.28);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(255, 203, 48, 0.16), transparent 42%),
+    radial-gradient(circle at 92% 18%, rgba(29, 160, 255, 0.14), transparent 44%),
+    linear-gradient(140deg, rgba(11, 18, 32, 0.98), rgba(14, 26, 44, 0.96));
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.38), inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.highlights-reel-section::before {
+  content: '';
+  position: absolute;
+  inset: -38% -20% auto;
+  height: 230px;
+  background: radial-gradient(circle, rgba(255, 203, 48, 0.24), transparent 63%);
+  filter: blur(20px);
+  pointer-events: none;
+  animation: highlightsAurora 9s ease-in-out infinite alternate;
+}
+
+.highlights-reel-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.95rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.95rem;
+}
+
+.highlights-reel-kicker {
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  color: #ffe8a3;
+  margin-bottom: 0.15rem;
+}
+
+.highlights-reel-head h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(1.7rem, 3.1vw, 2.2rem);
+  color: var(--gold);
+  letter-spacing: 0.2px;
+  line-height: 1.06;
+  margin-bottom: 0.2rem;
+}
+
+.highlights-reel-head p {
+  color: var(--text-sec);
+  font-size: 0.9rem;
+}
+
+.highlights-reel-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.82rem;
+}
+
+.highlight-moment-card {
+  position: relative;
+  isolation: isolate;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.11);
+  background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  padding: 0.82rem 0.82rem 0.74rem;
+  min-height: 210px;
+  overflow: hidden;
+  transform: translateY(12px) scale(0.985);
+  opacity: 0;
+  animation: momentReveal 0.65s cubic-bezier(0.2, 0.82, 0.2, 1) forwards;
+  animation-delay: var(--moment-delay, 0s);
+}
+
+.highlight-moment-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: linear-gradient(125deg, rgba(255,255,255,0.22), transparent 45%) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.highlight-moment-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: rgba(255, 203, 48, 0.2);
+  color: #ffe18a;
+  border: 1px solid rgba(255, 203, 48, 0.35);
+}
+
+.highlight-moment-icon {
+  font-size: 1.4rem;
+  margin-top: 0.5rem;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.18));
+}
+
+.highlight-moment-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--text);
+  margin-top: 0.35rem;
+}
+
+.highlight-moment-sub {
+  margin-top: 0.3rem;
+  color: var(--text-sec);
+  font-size: 0.86rem;
+  min-height: 2.2em;
+}
+
+.highlight-moment-value {
+  font-family: 'Rajdhani', sans-serif;
+  margin-top: 0.55rem;
+  font-size: 1.52rem;
+  font-weight: 700;
+  color: #fff2c2;
+  letter-spacing: 0.2px;
+}
+
+.highlight-moment-meta {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.72);
+  line-height: 1.35;
+}
+
+.highlight-moment-glow {
+  position: absolute;
+  right: -42px;
+  bottom: -48px;
+  width: 135px;
+  height: 135px;
+  border-radius: 50%;
+  filter: blur(8px);
+  opacity: 0.52;
+  pointer-events: none;
+}
+
+.highlight-moment-card.gold .highlight-moment-glow {
+  background: radial-gradient(circle, rgba(255,203,48,0.62), transparent 66%);
+}
+.highlight-moment-card.blue .highlight-moment-glow {
+  background: radial-gradient(circle, rgba(29,160,255,0.56), transparent 66%);
+}
+.highlight-moment-card.green .highlight-moment-glow {
+  background: radial-gradient(circle, rgba(0,196,140,0.58), transparent 66%);
+}
+.highlight-moment-card.pink .highlight-moment-glow {
+  background: radial-gradient(circle, rgba(255,109,196,0.54), transparent 66%);
+}
+.highlight-moment-card.orange .highlight-moment-glow {
+  background: radial-gradient(circle, rgba(255,140,0,0.58), transparent 66%);
+}
+
+@keyframes highlightsAurora {
+  0% { transform: translate(-4%, -8%) scale(1); opacity: 0.45; }
+  100% { transform: translate(5%, 10%) scale(1.08); opacity: 0.72; }
+}
+
+@keyframes momentReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    filter: blur(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
 .team-power-section {
   margin-bottom: 1.6rem;
   padding: 1rem;
@@ -3529,6 +3724,24 @@ body.spectator-mode #voiceStatusBadge {
 .result-no-squad { color: var(--text-dim); font-size: 0.85rem; padding: 1rem; text-align: center; }
 
 @media (max-width: 760px) {
+  .highlights-reel-section {
+    padding: 0.85rem;
+  }
+  .highlights-reel-head {
+    gap: 0.7rem;
+  }
+  .highlights-reel-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+  .highlight-moment-card {
+    min-height: 194px;
+    padding: 0.75rem 0.72rem 0.66rem;
+  }
+  .highlight-moment-value {
+    font-size: 1.35rem;
+  }
+
   .result-team-header {
     grid-template-columns: 42px minmax(0, 1fr) auto;
     grid-template-areas:
@@ -3648,6 +3861,16 @@ body.spectator-mode #voiceStatusBadge {
 }
 
 @media (max-width: 500px) {
+  .highlights-reel-grid {
+    grid-template-columns: 1fr;
+  }
+  .highlights-reel-head h2 {
+    font-size: 1.45rem;
+  }
+  .highlight-moment-card {
+    min-height: 170px;
+  }
+
   body.spectator-mode .player-spotlight {
     grid-template-columns: 106px minmax(0, 1fr);
     gap: 0.62rem;

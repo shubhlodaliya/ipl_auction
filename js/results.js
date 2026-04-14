@@ -56,6 +56,12 @@ const topPickUiState = {
   playerMap: {}
 };
 
+const highlightsUiState = {
+  visible: false,
+  moments: [],
+  summaryText: ''
+};
+
 const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
 
 I will provide a PDF generated from an IPL auction game.
@@ -620,6 +626,303 @@ function toggleTeamPowerRankings() {
   toggleBtn.textContent = teamPowerUiState.visible ? 'Hide Team Power Ranking' : 'Show Team Power Ranking';
 }
 
+function escHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toTitleCase(value) {
+  return String(value || '').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function getTeamLabelById(teamId, teams, roomTeamCatalog) {
+  const team = teams?.[teamId] || roomTeamCatalog?.[teamId] || getTeam(teamId);
+  return {
+    name: team?.name || team?.short || teamId || 'Unknown Team',
+    short: team?.short || teamId || '—'
+  };
+}
+
+function buildAuctionMoments(payload) {
+  const soldPlayers = payload?.soldPlayers || {};
+  const teams = payload?.teams || {};
+  const playerMap = payload?.playerMap || {};
+  const roomTeamCatalog = payload?.roomTeamCatalog || {};
+  const playerQueue = Array.isArray(payload?.playerQueue) ? payload.playerQueue : [];
+  const teamPowerData = payload?.teamPowerData || null;
+
+  const queueIndexMap = new Map(playerQueue.map((pid, idx) => [String(pid), idx]));
+  const events = Object.entries(soldPlayers).map(([pid, sale]) => {
+    const player = playerMap[pid] || playerMap[String(pid)] || null;
+    const teamLabel = getTeamLabelById(sale?.teamId, teams, roomTeamCatalog);
+    const basePrice = Number(player?.base_price_lakh) || 0;
+    const soldPrice = Number(sale?.soldPrice) || 0;
+    const soldAt = Number(sale?.soldAt) || 0;
+    const role = String(player?.role || 'Player').trim();
+    return {
+      playerId: String(pid),
+      playerName: player?.name || String(pid),
+      role,
+      roleBucket: normalizeRoleBucket(role),
+      teamId: sale?.teamId || '',
+      teamName: teamLabel.name,
+      teamShort: teamLabel.short,
+      basePrice,
+      soldPrice,
+      soldAt,
+      queueIndex: queueIndexMap.has(String(pid)) ? queueIndexMap.get(String(pid)) : Number.MAX_SAFE_INTEGER,
+      ratioToBase: basePrice > 0 ? (soldPrice / basePrice) : 0
+    };
+  }).filter((e) => e.soldPrice > 0);
+
+  if (!events.length) return [];
+
+  events.sort((a, b) => {
+    if (a.soldAt && b.soldAt) return a.soldAt - b.soldAt;
+    if (a.soldAt) return -1;
+    if (b.soldAt) return 1;
+    return a.queueIndex - b.queueIndex;
+  });
+
+  const roleGroups = events.reduce((acc, e) => {
+    if (!acc[e.roleBucket]) acc[e.roleBucket] = [];
+    acc[e.roleBucket].push(e.soldPrice);
+    return acc;
+  }, {});
+  const roleMedianMap = {};
+  Object.keys(roleGroups).forEach((bucket) => {
+    const values = roleGroups[bucket].slice().sort((a, b) => a - b);
+    const mid = Math.floor(values.length / 2);
+    roleMedianMap[bucket] = values.length % 2 === 0
+      ? (values[mid - 1] + values[mid]) / 2
+      : values[mid];
+  });
+
+  const highestBid = events.slice().sort((a, b) => b.soldPrice - a.soldPrice)[0];
+
+  const bestSteal = events
+    .map((e) => {
+      const roleMedian = Number(roleMedianMap[e.roleBucket]) || e.soldPrice;
+      const roleDiscount = roleMedian > 0 ? ((roleMedian - e.soldPrice) / roleMedian) : 0;
+      const pressureDiscount = e.ratioToBase > 0 ? ((1.8 - e.ratioToBase) / 1.8) : 0;
+      const stealScore = (roleDiscount * 0.75) + (pressureDiscount * 0.25);
+      return { ...e, stealScore, roleMedian };
+    })
+    .sort((a, b) => b.stealScore - a.stealScore)[0];
+
+  let fastestSell = null;
+  for (let i = 1; i < events.length; i += 1) {
+    const prev = events[i - 1];
+    const cur = events[i];
+    if (!prev.soldAt || !cur.soldAt) continue;
+    const gapMs = cur.soldAt - prev.soldAt;
+    if (gapMs <= 0) continue;
+    if (!fastestSell || gapMs < fastestSell.gapMs) {
+      fastestSell = { ...cur, gapMs };
+    }
+  }
+  if (!fastestSell) {
+    fastestSell = { ...events[0], gapMs: 0 };
+  }
+
+  const biddingWar = events
+    .slice()
+    .sort((a, b) => b.ratioToBase - a.ratioToBase || b.soldPrice - a.soldPrice)[0];
+
+  const allTeamIds = new Set(Object.keys(teams));
+  events.forEach((e) => { if (e.teamId) allTeamIds.add(e.teamId); });
+
+  const teamIds = Array.from(allTeamIds);
+  const earlyCutoff = Math.max(1, Math.ceil(events.length * 0.35));
+  const earlyEvents = events.slice(0, earlyCutoff);
+  const lateEvents = events.slice(Math.floor(events.length * 0.7));
+
+  const earlySpend = Object.fromEntries(teamIds.map((id) => [id, 0]));
+  earlyEvents.forEach((e) => { earlySpend[e.teamId] = (earlySpend[e.teamId] || 0) + e.soldPrice; });
+
+  const finalSpend = Object.fromEntries(teamIds.map((id) => [id, 0]));
+  events.forEach((e) => { finalSpend[e.teamId] = (finalSpend[e.teamId] || 0) + e.soldPrice; });
+
+  const buildRankMapFromMetric = (metricMap) => {
+    const ordered = teamIds.slice().sort((a, b) => {
+      const d = (metricMap[b] || 0) - (metricMap[a] || 0);
+      if (d !== 0) return d;
+      return String(a).localeCompare(String(b));
+    });
+    return new Map(ordered.map((teamId, idx) => [teamId, idx + 1]));
+  };
+
+  const earlyRankMap = buildRankMapFromMetric(earlySpend);
+  let finalRankMap = null;
+  if (teamPowerData?.rankings?.length) {
+    finalRankMap = new Map(teamPowerData.rankings.map((r) => [r.teamId, r.rank]));
+  } else {
+    finalRankMap = buildRankMapFromMetric(finalSpend);
+  }
+
+  let comebackEntry = null;
+  teamIds.forEach((teamId) => {
+    const earlyRank = Number(earlyRankMap.get(teamId) || teamIds.length);
+    const finalRank = Number(finalRankMap.get(teamId) || teamIds.length);
+    const gain = earlyRank - finalRank;
+    if (!comebackEntry || gain > comebackEntry.gain) {
+      const teamLabel = getTeamLabelById(teamId, teams, roomTeamCatalog);
+      comebackEntry = {
+        teamId,
+        teamName: teamLabel.name,
+        earlyRank,
+        finalRank,
+        gain
+      };
+    }
+  });
+
+  const lateCounts = {};
+  lateEvents.forEach((e) => { lateCounts[e.teamId] = (lateCounts[e.teamId] || 0) + 1; });
+  const lateChargeTeamId = Object.keys(lateCounts).sort((a, b) => (lateCounts[b] || 0) - (lateCounts[a] || 0))[0] || null;
+  const lateChargeLabel = lateChargeTeamId ? getTeamLabelById(lateChargeTeamId, teams, roomTeamCatalog) : null;
+
+  const moments = [];
+
+  moments.push({
+    key: 'highest-bid',
+    icon: '💥',
+    title: 'Highest Bid Detonation',
+    subtitle: `${highestBid.playerName} joined ${highestBid.teamName}`,
+    value: formatPrice(highestBid.soldPrice),
+    meta: `${toTitleCase(highestBid.role)} · Base ${formatPrice(highestBid.basePrice || 0)}`,
+    accent: 'gold'
+  });
+
+  moments.push({
+    key: 'best-steal',
+    icon: '🎯',
+    title: 'Best Value Steal',
+    subtitle: `${bestSteal.playerName} to ${bestSteal.teamName}`,
+    value: formatPrice(bestSteal.soldPrice),
+    meta: `Role median ${formatPrice(bestSteal.roleMedian || bestSteal.soldPrice)} · ${toTitleCase(bestSteal.role)}`,
+    accent: 'blue'
+  });
+
+  moments.push({
+    key: 'fastest-sell',
+    icon: '⚡',
+    title: 'Fastest Sell',
+    subtitle: `${fastestSell.playerName} snapped up by ${fastestSell.teamName}`,
+    value: fastestSell.gapMs > 0 ? `${Math.max(1, Math.round(fastestSell.gapMs / 1000))}s` : 'Instant',
+    meta: fastestSell.gapMs > 0 ? 'Gap from previous sale' : 'First completed sale',
+    accent: 'green'
+  });
+
+  if (comebackEntry && comebackEntry.gain > 0) {
+    moments.push({
+      key: 'biggest-comeback',
+      icon: '🚀',
+      title: 'Biggest Comeback',
+      subtitle: `${comebackEntry.teamName} surged late`,
+      value: `#${comebackEntry.earlyRank} → #${comebackEntry.finalRank}`,
+      meta: `${comebackEntry.gain} place climb after early phase`,
+      accent: 'pink'
+    });
+  } else {
+    moments.push({
+      key: 'late-charge',
+      icon: '🔥',
+      title: 'Late Charge',
+      subtitle: `${lateChargeLabel?.name || 'Top team'} dominated the final phase`,
+      value: `${lateChargeTeamId ? (lateCounts[lateChargeTeamId] || 0) : 0} signings`,
+      meta: 'Players bought in final 30% of auction',
+      accent: 'pink'
+    });
+  }
+
+  moments.push({
+    key: 'bidding-war',
+    icon: '⚔️',
+    title: 'Bidding War Peak',
+    subtitle: `${biddingWar.playerName} won by ${biddingWar.teamName}`,
+    value: `${biddingWar.ratioToBase > 0 ? biddingWar.ratioToBase.toFixed(2) : '1.00'}x`,
+    meta: `Sold ${formatPrice(biddingWar.soldPrice)} from base ${formatPrice(biddingWar.basePrice || 0)}`,
+    accent: 'orange'
+  });
+
+  return moments.slice(0, 5);
+}
+
+function renderHighlightsReel(moments, roomCode = '') {
+  const section = document.getElementById('highlightsReelSection');
+  const grid = document.getElementById('highlightsReelGrid');
+  const sub = document.getElementById('highlightsReelSub');
+  if (!section || !grid) return;
+
+  if (!Array.isArray(moments) || !moments.length) {
+    highlightsUiState.visible = false;
+    highlightsUiState.moments = [];
+    highlightsUiState.summaryText = '';
+    section.style.display = 'none';
+    return;
+  }
+
+  highlightsUiState.visible = true;
+  highlightsUiState.moments = moments.slice(0, 5);
+  highlightsUiState.summaryText = [
+    `Top 5 Auction Moments${roomCode ? ` (Room ${roomCode})` : ''}`,
+    ...highlightsUiState.moments.map((m, idx) => `${idx + 1}. ${m.title}: ${m.subtitle} | ${m.value} | ${m.meta}`)
+  ].join('\n');
+
+  if (sub) {
+    sub.textContent = roomCode
+      ? `Share-worthy recap from Room ${roomCode}.`
+      : 'Share-worthy recap from this auction.';
+  }
+
+  grid.innerHTML = highlightsUiState.moments.map((m, idx) => `
+    <article class="highlight-moment-card ${escHtml(m.accent || 'gold')}" style="--moment-delay:${idx * 0.1}s;">
+      <div class="highlight-moment-rank">#${idx + 1}</div>
+      <div class="highlight-moment-icon">${escHtml(m.icon || '⭐')}</div>
+      <div class="highlight-moment-title">${escHtml(m.title)}</div>
+      <div class="highlight-moment-sub">${escHtml(m.subtitle)}</div>
+      <div class="highlight-moment-value">${escHtml(m.value)}</div>
+      <div class="highlight-moment-meta">${escHtml(m.meta)}</div>
+      <div class="highlight-moment-glow" aria-hidden="true"></div>
+    </article>
+  `).join('');
+
+  section.style.display = 'block';
+}
+
+async function copyHighlightsSummary() {
+  if (!highlightsUiState.summaryText) {
+    showToast('Highlights are not ready yet.', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(highlightsUiState.summaryText);
+    showToast('Highlights copied. Share it anywhere!', 'success');
+  } catch (err) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = highlightsUiState.summaryText;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Highlights copied. Share it anywhere!', 'success');
+    } catch (copyErr) {
+      console.error(copyErr);
+      showToast('Copy failed. Please allow clipboard access.', 'error');
+    }
+    if (err) console.error(err);
+  }
+}
+
 async function loadResults() {
   // Try to get roomCode from session, or from URL param
   const session = getSession();
@@ -745,6 +1048,16 @@ async function loadResults() {
     );
     const teamPowerData = rankTeams(teamModels);
     renderTeamPowerInsights(teamPowerData);
+
+    const highlightsMoments = buildAuctionMoments({
+      soldPlayers,
+      teams,
+      playerMap,
+      roomTeamCatalog,
+      playerQueue,
+      teamPowerData
+    });
+    renderHighlightsReel(highlightsMoments, roomCode);
 
     const rankingOrderIds = teamPowerData.rankings.map(r => r.teamId);
     const rankedSet = new Set(rankingOrderIds);
@@ -2135,3 +2448,4 @@ window.exportTeamPdfById = exportTeamPdfById;
 window.exportSelectedTeamPdf = exportSelectedTeamPdf;
 window.copyAnalystPrompt = copyAnalystPrompt;
 window.toggleTeamPowerRankings = toggleTeamPowerRankings;
+window.copyHighlightsSummary = copyHighlightsSummary;

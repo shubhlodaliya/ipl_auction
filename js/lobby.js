@@ -18,6 +18,57 @@ let liveTeams = {};
 let iconPicks = {};
 let iconPicksListener = null;
 let hasMyTeam = false;
+let iconPickTeamId = null;
+
+function isPaddleMode() {
+  return !!(roomConfig && roomConfig.auctionType === 'manual' && roomConfig.hostBidsForAllTeams);
+}
+
+function canPickIconsWithoutTeam() {
+  return !!(isHost && isPaddleMode());
+}
+
+function getDefaultIconPickTeamId() {
+  if (myTeamId) return myTeamId;
+  const ids = Object.keys(roomTeamCatalog || {});
+  return ids[0] || null;
+}
+
+function getActingIconPickTeamId() {
+  if (canPickIconsWithoutTeam()) {
+    return iconPickTeamId || getDefaultIconPickTeamId();
+  }
+  return myTeamId;
+}
+
+function setIconPickTeam(teamId) {
+  iconPickTeamId = teamId;
+  renderIconPickerModal();
+}
+
+function renderIconPickTeamSelect() {
+  const sel = document.getElementById('iconPickTeamSelect');
+  if (!sel) return;
+
+  if (!canPickIconsWithoutTeam()) {
+    sel.style.display = 'none';
+    return;
+  }
+
+  const teams = Object.values(roomTeamCatalog || {});
+  if (!teams.length) {
+    sel.style.display = 'none';
+    return;
+  }
+
+  const actingTeamId = getActingIconPickTeamId();
+  sel.innerHTML = teams
+    .slice()
+    .sort((a, b) => String(a.short || a.name || a.id).localeCompare(String(b.short || b.name || b.id)))
+    .map((t) => `<option value="${t.id}" ${t.id === actingTeamId ? 'selected' : ''}>${t.short || t.name || t.id}</option>`)
+    .join('');
+  sel.style.display = 'inline-flex';
+}
 
 function shufflePoolOrder(items) {
   const arr = [...items];
@@ -167,7 +218,7 @@ function initLobby() {
       ${roomConfig.auctionType === 'manual' ? `
       <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Host Role</div>
-        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${roomConfig.hostManagerOnly ? 'Manager Only' : 'Playing Host'}</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${roomConfig.hostBidsForAllTeams ? 'Paddle Mode' : (roomConfig.hostManagerOnly ? 'Manager Only' : 'Playing Host')}</div>
       </div>` : ''}
       ${roomConfig.auctionType === 'manual' && Number(roomConfig.maxIconPlayers || 0) > 0 ? `
       <div class="glass" style="padding:0.7rem 1.2rem;text-align:center;">
@@ -179,6 +230,9 @@ function initLobby() {
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;color:var(--gold)">${Number(roomConfig.maxIconPlayers || 0)}</div>
       </div>` : ''}
     `;
+
+    iconPickTeamId = getDefaultIconPickTeamId();
+    renderIconPickTeamSelect();
 
     toggleIconPickerButtons();
 
@@ -236,16 +290,16 @@ function initLobby() {
 }
 
 function toggleIconPickerButtons() {
-  const enabled = hasMyTeam && roomConfig?.auctionType === 'manual' && Number(roomConfig?.maxIconPlayers || 0) > 0;
+  const enabled = (hasMyTeam || canPickIconsWithoutTeam()) && roomConfig?.auctionType === 'manual' && Number(roomConfig?.maxIconPlayers || 0) > 0;
   const hostBtn = document.getElementById('iconPickBtnHost');
   const guestBtn = document.getElementById('iconPickBtnGuest');
   if (hostBtn) hostBtn.style.display = enabled ? 'inline-flex' : 'none';
-  if (guestBtn) guestBtn.style.display = enabled ? 'inline-flex' : 'none';
+  if (guestBtn) guestBtn.style.display = hasMyTeam && enabled ? 'inline-flex' : 'none';
 }
 
 function openIconPickerModal() {
-  if (!hasMyTeam) {
-    showToast('Host manager mode has no team to select icon players.', 'error');
+  if (!hasMyTeam && !canPickIconsWithoutTeam()) {
+    showToast('No team available to select icon players.', 'error');
     return;
   }
   if (!(roomConfig?.auctionType === 'manual')) {
@@ -262,6 +316,7 @@ function openIconPickerModal() {
   if (!overlay) return;
   const search = document.getElementById('iconPickerSearch');
   if (search) search.value = '';
+  renderIconPickTeamSelect();
   renderIconPickerModal();
   overlay.classList.add('visible');
 }
@@ -281,9 +336,12 @@ function renderIconPickerModal() {
   const fixedPrice = Number(roomConfig?.iconPlayerPrice || 0);
   const maxIconPlayers = Number(roomConfig?.maxIconPlayers || 0);
   const search = String(searchEl?.value || '').trim().toLowerCase();
-  const myPickCount = Object.values(iconPicks).filter((x) => x?.teamId === myTeamId).length;
+  const actingTeamId = getActingIconPickTeamId();
+  const actingTeam = actingTeamId ? (liveTeams[actingTeamId] || roomTeamCatalog[actingTeamId] || {}) : null;
+  const actingShort = actingTeam?.short || actingTeamId || '';
+  const myPickCount = Object.values(iconPicks).filter((x) => x?.teamId === actingTeamId).length;
   countLabel.textContent = `${myPickCount}/${maxIconPlayers} icon selected`;
-  help.textContent = `Pick up to ${maxIconPlayers} players at fixed icon price ${formatPrice(fixedPrice)} before host starts auction.`;
+  help.textContent = `${canPickIconsWithoutTeam() ? `Picking for ${actingShort}. ` : ''}Pick up to ${maxIconPlayers} players at fixed icon price ${formatPrice(fixedPrice)} before host starts auction.`;
 
   const sortedPlayers = [...allPlayers].sort((a, b) => {
     if ((b.base_price_lakh || 0) !== (a.base_price_lakh || 0)) return (b.base_price_lakh || 0) - (a.base_price_lakh || 0);
@@ -301,10 +359,10 @@ function renderIconPickerModal() {
       const picked = iconPicks[pid] || iconPicks[player.id] || null;
       const pickedByTeamId = picked?.teamId || null;
       const pickedByTeam = pickedByTeamId ? (liveTeams[pickedByTeamId] || roomTeamCatalog[pickedByTeamId] || {}) : null;
-      const isMine = pickedByTeamId === myTeamId;
+      const isMine = pickedByTeamId === actingTeamId;
       const limitReached = !isMine && !pickedByTeamId && myPickCount >= maxIconPlayers;
       const statusText = isMine
-        ? `Picked by you (${formatPrice(picked?.priceLakh || fixedPrice)})`
+        ? `${canPickIconsWithoutTeam() ? `Picked for ${actingShort}` : 'Picked by you'} (${formatPrice(picked?.priceLakh || fixedPrice)})`
         : (pickedByTeamId
           ? `Taken by ${pickedByTeam?.short || pickedByTeamId}`
           : (limitReached ? `Limit reached (${myPickCount}/${maxIconPlayers})` : `Fixed ${formatPrice(fixedPrice)}`));
@@ -337,6 +395,17 @@ async function toggleIconPlayer(playerId) {
   const maxIconPlayers = Number(roomConfig?.maxIconPlayers || 0);
   if (maxIconPlayers <= 0 || fixedPrice < 0) return;
 
+  const actingTeamId = getActingIconPickTeamId();
+  if (!actingTeamId) {
+    showToast('Select a team first.', 'error');
+    return;
+  }
+
+  if (!hasMyTeam && !canPickIconsWithoutTeam()) {
+    showToast('No team available to select icon players.', 'error');
+    return;
+  }
+
   const roomSnap = await db.ref(`rooms/${roomCode}`).get();
   if (!roomSnap.exists()) return;
   const room = roomSnap.val() || {};
@@ -346,9 +415,9 @@ async function toggleIconPlayer(playerId) {
   }
 
   const teams = room.teams || {};
-  const team = teams[myTeamId];
+  const team = teams[actingTeamId];
   if (!team) {
-    showToast('Your team was not found in this room.', 'error');
+    showToast('Selected team was not found in this room.', 'error');
     return;
   }
 
@@ -356,9 +425,9 @@ async function toggleIconPlayer(playerId) {
   const existing = picks[playerId] || picks[String(playerId)] || null;
   const maxSquadSize = Number(room?.config?.maxSquadSize || 0);
   const squadCount = (team.squad || []).length;
-  const myIconCount = Object.values(picks).filter((pick) => pick?.teamId === myTeamId).length;
+  const myIconCount = Object.values(picks).filter((pick) => pick?.teamId === actingTeamId).length;
 
-  if (existing && existing.teamId !== myTeamId) {
+  if (existing && existing.teamId !== actingTeamId) {
     const pickedTeam = teams[existing.teamId] || roomTeamCatalog[existing.teamId] || {};
     showToast(`Already taken by ${pickedTeam.short || existing.teamId}.`, 'error');
     return;
@@ -386,14 +455,14 @@ async function toggleIconPlayer(playerId) {
     curr.iconPicks = curr.iconPicks || {};
     curr.soldPlayers = curr.soldPlayers || {};
     curr.teams = curr.teams || {};
-    const txTeam = curr.teams[myTeamId];
+    const txTeam = curr.teams[actingTeamId];
     if (!txTeam) return;
     txTeam.squad = txTeam.squad || [];
 
     const txExisting = curr.iconPicks[playerId] || curr.iconPicks[String(playerId)] || null;
     const txMaxIcons = Number(curr?.config?.maxIconPlayers || 0);
 
-    if (txExisting && txExisting.teamId === myTeamId) {
+    if (txExisting && txExisting.teamId === actingTeamId) {
       delete curr.iconPicks[playerId];
       delete curr.iconPicks[String(playerId)];
       delete curr.soldPlayers[playerId];
@@ -403,11 +472,11 @@ async function toggleIconPlayer(playerId) {
       return curr;
     }
 
-    if (txExisting && txExisting.teamId !== myTeamId) {
+    if (txExisting && txExisting.teamId !== actingTeamId) {
       return;
     }
 
-    const txMyIconCount = Object.values(curr.iconPicks).filter((pick) => pick?.teamId === myTeamId).length;
+    const txMyIconCount = Object.values(curr.iconPicks).filter((pick) => pick?.teamId === actingTeamId).length;
     if (txMaxIcons > 0 && txMyIconCount >= txMaxIcons) return;
 
     const txMaxSquad = Number(curr?.config?.maxSquadSize || 0);
@@ -426,14 +495,14 @@ async function toggleIconPlayer(playerId) {
     });
 
     curr.iconPicks[playerId] = {
-      teamId: myTeamId,
+      teamId: actingTeamId,
       priceLakh: fixedPrice,
       type: 'icon',
       playerName: player.name,
       pickedAt: Date.now()
     };
     curr.soldPlayers[playerId] = {
-      teamId: myTeamId,
+      teamId: actingTeamId,
       soldPrice: fixedPrice,
       soldAt: Date.now(),
       via: 'icon'
@@ -448,7 +517,7 @@ async function toggleIconPlayer(playerId) {
   }
 
   const after = tx.snapshot.val() || {};
-  const nowPicked = !!(after.iconPicks?.[playerId] && after.iconPicks[playerId].teamId === myTeamId);
+  const nowPicked = !!(after.iconPicks?.[playerId] && after.iconPicks[playerId].teamId === actingTeamId);
   showToast(nowPicked ? 'Icon player selected.' : 'Icon player removed.', 'success');
 }
 
@@ -567,7 +636,12 @@ function renderTeamSlots(teams) {
     const startBtn = document.getElementById('startBtn');
     const hint = document.getElementById('waitingHint');
 
-    if (count < 2) {
+    if (isPaddleMode()) {
+      startBtn.disabled = count < 1;
+      hint.textContent = count < 1
+        ? 'Preparing teams for paddle mode...'
+        : `Paddle mode ready (${count} teams). You can start now.`;
+    } else if (count < 2) {
       startBtn.disabled = true;
       hint.textContent = `Waiting for at least 1 more player to join...`;
     } else {
@@ -678,3 +752,4 @@ window.openIconPickerModal = openIconPickerModal;
 window.closeIconPickerModal = closeIconPickerModal;
 window.renderIconPickerModal = renderIconPickerModal;
 window.toggleIconPlayer = toggleIconPlayer;
+window.setIconPickTeam = setIconPickTeam;

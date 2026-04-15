@@ -105,6 +105,7 @@
       <p class="watchlist-help" id="iconPickerHelp">Pick players at fixed icon price before auction starts.</p>
       <div class="watchlist-toolbar iconpick-toolbar">
         <span id="iconPickerCountLabel">0 selected</span>
+        <select id="iconPickTeamSelect" class="form-input iconpick-team-select" onchange="setIconPickTeam(this.value)" style="display:none;"></select>
         <input id="iconPickerSearch" class="form-input iconpick-search" type="text" placeholder="Search player..." oninput="renderIconPickerModal()" />
       </div>
       <div class="watchlist-list" id="iconPickerList"></div>

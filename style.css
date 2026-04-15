@@ -217,6 +217,12 @@ img { display: block; }
 .form-input::placeholder { color: var(--text-dim); }
 .form-input option { background: var(--card); color: var(--text); }
 
+.iconpick-team-select {
+  max-width: 200px;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9rem;
+}
+
 .mode-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;

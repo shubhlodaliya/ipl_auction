@@ -96,14 +96,21 @@
         <div class="form-group">
           <label class="form-label">Host Team</label>
           <select class="form-input" id="hostTeamSelect"></select>
-          <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.85rem;color:var(--text-sec);margin-top:0.45rem;">
-            <input id="hostManagerOnly" type="checkbox" onchange="toggleHostManagerOnly(this.checked)" />
-            <span>Host manages only (does not play)</span>
-          </label>
-          <label style="display:flex;align-items:flex-start;gap:0.45rem;font-size:0.85rem;color:var(--text-sec);margin-top:0.45rem;line-height:1.25;">
-            <input id="hostBidsForAllTeams" type="checkbox" onchange="toggleHostBidsForAllTeams(this.checked)" />
-            <span>Host bids for all teams (paddle mode). Captains can bid physically and host clicks bids for any team.</span>
-          </label>
+
+          <div style="display:grid;gap:0.45rem;margin-top:0.55rem;">
+            <label style="display:flex;align-items:flex-start;gap:0.55rem;font-size:0.85rem;color:var(--text-sec);line-height:1.25;">
+              <input id="hostRolePlaying" name="hostRoleMode" type="radio" value="playing" checked onchange="toggleHostRoleMode(this.value)" />
+              <span>Playing Host (host also plays as a team)</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:0.55rem;font-size:0.85rem;color:var(--text-sec);line-height:1.25;">
+              <input id="hostRoleManagerOnly" name="hostRoleMode" type="radio" value="manager" onchange="toggleHostRoleMode(this.value)" />
+              <span>Host manages only (does not play)</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:0.55rem;font-size:0.85rem;color:var(--text-sec);line-height:1.25;">
+              <input id="hostRolePaddle" name="hostRoleMode" type="radio" value="paddle" onchange="toggleHostRoleMode(this.value)" />
+              <span>Host bids for all teams (paddle mode). Captains bid physically and host clicks bids for any team.</span>
+            </label>
+          </div>
         </div>
       </div>
 

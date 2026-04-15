@@ -33,14 +33,37 @@ function toggleHostBidsForAllTeams(enabled) {
   const bidOptionsInput = document.getElementById('bidOptions');
   if (bidOptionsInput) {
     if (enabled) {
+      bidOptionsInput.dataset.prevVal = bidOptionsInput.value;
       const options = parseBidOptions();
       const single = options[0] || 25;
       bidOptionsInput.value = String(single);
       bidOptionsInput.disabled = true;
     } else {
       bidOptionsInput.disabled = false;
+      if (bidOptionsInput.dataset.prevVal) {
+        bidOptionsInput.value = bidOptionsInput.dataset.prevVal;
+        delete bidOptionsInput.dataset.prevVal;
+      }
     }
   }
+}
+
+function toggleHostRoleMode(mode) {
+  const hostTeamSelect = document.getElementById('hostTeamSelect');
+  if (!hostTeamSelect) return;
+
+  const isPlaying = mode === 'playing';
+  const isPaddle = mode === 'paddle';
+
+  hostTeamSelect.disabled = !isPlaying;
+  toggleHostBidsForAllTeams(isPaddle);
+}
+
+function getSelectedHostRoleMode() {
+  const selected = document.querySelector('input[name="hostRoleMode"]:checked');
+  const mode = String(selected?.value || 'playing');
+  if (mode === 'manager' || mode === 'paddle' || mode === 'playing') return mode;
+  return 'playing';
 }
 
 function normalizeTeamShort(name) {
@@ -521,8 +544,9 @@ async function createManualRoom() {
   const bidOptions = parseBidOptions();
   const iconPlayerPrice = Number(document.getElementById('iconPlayerPrice').value || 0);
   const maxIconPlayers = Number(document.getElementById('maxIconPlayers').value || 0);
-  const hostManagerOnly = !!document.getElementById('hostManagerOnly')?.checked;
-  const hostBidsForAllTeams = !!document.getElementById('hostBidsForAllTeams')?.checked;
+  const hostRoleMode = getSelectedHostRoleMode();
+  const hostManagerOnly = hostRoleMode !== 'playing';
+  const hostBidsForAllTeams = hostRoleMode === 'paddle';
 
   const teams = collectTeams(true);
   const players = collectPlayers();
@@ -585,6 +609,36 @@ async function createManualRoom() {
 
     btn.textContent = 'Creating room...';
 
+    const initialTeams = {};
+    if (hostBidsForAllTeams) {
+      // Paddle mode: initialize all teams immediately so captains don't need to join.
+      teams.forEach((t) => {
+        initialTeams[t.id] = {
+          name: t.name,
+          short: t.short,
+          primary: t.primary,
+          logo: t.logo || '',
+          ownerName: hostName,
+          purse: budget,
+          squad: [],
+          isHost: false,
+          joinedAt: Date.now()
+        };
+      });
+    } else if (hostTeam) {
+      initialTeams[hostTeam.id] = {
+        name: hostTeam.name,
+        short: hostTeam.short,
+        primary: hostTeam.primary,
+        logo: hostTeam.logo || '',
+        ownerName: hostName,
+        purse: budget,
+        squad: [],
+        isHost: true,
+        joinedAt: Date.now()
+      };
+    }
+
     await db.ref(`rooms/${code}`).set({
       config: {
         auctionType: 'manual',
@@ -608,19 +662,7 @@ async function createManualRoom() {
       },
       manualTeams,
       manualPlayers: finalPlayers,
-      teams: hostTeam ? {
-        [hostTeam.id]: {
-          name: hostTeam.name,
-          short: hostTeam.short,
-          primary: hostTeam.primary,
-          logo: hostTeam.logo || '',
-          ownerName: hostName,
-          purse: budget,
-          squad: [],
-          isHost: true,
-          joinedAt: Date.now()
-        }
-      } : {},
+      teams: initialTeams,
       playerQueue
     });
 
@@ -647,3 +689,4 @@ async function createManualRoom() {
 
 window.toggleHostManagerOnly = toggleHostManagerOnly;
 window.toggleHostBidsForAllTeams = toggleHostBidsForAllTeams;
+window.toggleHostRoleMode = toggleHostRoleMode;

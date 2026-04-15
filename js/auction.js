@@ -123,6 +123,11 @@ async function handleHostProxyBidTeamClick(teamId) {
   if (!isHostProxyBidderActive()) return;
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
+  if (!currentAuctionData.highestBidder) {
+    await placeBid(0, true);
+    return;
+  }
+
   const currentPlayer = playerMap[currentAuctionData.playerId];
   if (!currentPlayer) return;
 
@@ -1127,7 +1132,7 @@ function renderBidDisplay(data, player = null) {
     if (quickBidRow) {
       quickBidRow.innerHTML = bidJumps.map(jump => {
         const canAffordThis = myTeam && myTeam.purse >= (data.currentBid + jump);
-        const disabledAttr = (!canTryBid || !canAffordThis) ? 'disabled' : '';
+        const disabledAttr = (!canTryBid || !data.highestBidder || !canAffordThis) ? 'disabled' : '';
         return `<button class="quick-bid-btn" onclick="placeBid(${jump})" ${disabledAttr}>+${formatPrice(jump)}</button>`;
       }).join('');
     }
@@ -1556,6 +1561,11 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
     return;
   }
 
+  if (!isBaseBid && !currentAuctionData.highestBidder) {
+    showToast('First bid must be at base price.', 'error');
+    return;
+  }
+
   const mySquadCount = (actingTeam.squad || []).length;
   if (mySquadCount >= roomConfig.maxSquadSize) {
     showToast('Your squad is full. You cannot bid.', 'error');
@@ -1581,6 +1591,7 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
       if (isBaseBid) {
         if (auction.highestBidder) return;
       } else {
+        if (!auction.highestBidder) return;
         const txnAllowedJumps = getBidJumpOptions(txnPlayer.base_price_lakh, roomConfig.bidOptions);
         if (!txnAllowedJumps.includes(jump)) return;
       }

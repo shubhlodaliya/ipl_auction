@@ -29,6 +29,20 @@ function toggleHostManagerOnly(enabled) {
   hostTeamSelect.disabled = !!enabled;
 }
 
+function toggleHostBidsForAllTeams(enabled) {
+  const bidOptionsInput = document.getElementById('bidOptions');
+  if (bidOptionsInput) {
+    if (enabled) {
+      const options = parseBidOptions();
+      const single = options[0] || 25;
+      bidOptionsInput.value = String(single);
+      bidOptionsInput.disabled = true;
+    } else {
+      bidOptionsInput.disabled = false;
+    }
+  }
+}
+
 function normalizeTeamShort(name) {
   const cleaned = String(name || '').trim().toUpperCase().replace(/[^A-Z0-9 ]/g, '');
   if (!cleaned) return '';
@@ -508,6 +522,7 @@ async function createManualRoom() {
   const iconPlayerPrice = Number(document.getElementById('iconPlayerPrice').value || 0);
   const maxIconPlayers = Number(document.getElementById('maxIconPlayers').value || 0);
   const hostManagerOnly = !!document.getElementById('hostManagerOnly')?.checked;
+  const hostBidsForAllTeams = !!document.getElementById('hostBidsForAllTeams')?.checked;
 
   const teams = collectTeams(true);
   const players = collectPlayers();
@@ -526,6 +541,9 @@ async function createManualRoom() {
   if (maxIconPlayers > maxSquadSize) return showError('Max icon players cannot exceed max players per team.');
   if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
+
+  // Paddle mode: keep bid UI simple by forcing a single bid button.
+  const effectiveBidOptions = hostBidsForAllTeams ? [bidOptions[0]] : bidOptions;
 
   const hostTeam = hostManagerOnly ? null : teams.find(t => t.id === hostTeamId);
   if (!hostManagerOnly && !hostTeam) return showError('Select host team.');
@@ -572,13 +590,14 @@ async function createManualRoom() {
         auctionType: 'manual',
         hostTeamId: hostTeam ? hostTeam.id : null,
         hostManagerOnly,
+        hostBidsForAllTeams,
         budget,
         maxSquadSize,
         minSquadSize,
         timerSeconds: timerUnlimited ? 0 : timerSeconds,
         timerMode: timerUnlimited ? 'unlimited' : 'countdown',
         unlimitedTimer: timerUnlimited,
-        bidOptions,
+        bidOptions: effectiveBidOptions,
         iconPlayerPrice,
         maxIconPlayers,
         manualPlayerFields: customPlayerFields,
@@ -627,3 +646,4 @@ async function createManualRoom() {
 }
 
 window.toggleHostManagerOnly = toggleHostManagerOnly;
+window.toggleHostBidsForAllTeams = toggleHostBidsForAllTeams;

@@ -11,6 +11,7 @@ const isSpectator = !!session.isSpectator || !session.teamId;
 const isHostManager = !!isHost && !myTeamId;
 
 let roomConfig = null;
+let hostProxyBidTeamId = null;
 let allPlayers = [];
 let playerMap = {};
 let currentAuctionData = null;
@@ -76,6 +77,86 @@ const voiceRtcConfig = {
 
 // ---- Firebase listeners ----
 let listeners = {};
+
+function isHostProxyBiddingEnabled() {
+  return !!isManualAuction && !!roomConfig?.hostBidsForAllTeams;
+}
+
+function isHostProxyBidderActive() {
+  return !!isHost && isHostProxyBiddingEnabled();
+}
+
+function isBidUiSpectator() {
+  return !!isSpectator && !isHostProxyBidderActive();
+}
+
+function getActingTeamIdForBidUi() {
+  return isHostProxyBidderActive() ? hostProxyBidTeamId : myTeamId;
+}
+
+function ensureHostProxyBidTeamSelected() {
+  if (!isHostProxyBidderActive()) return;
+  if (hostProxyBidTeamId && teamsData?.[hostProxyBidTeamId]) return;
+  if (myTeamId && teamsData?.[myTeamId]) {
+    hostProxyBidTeamId = myTeamId;
+    return;
+  }
+  const first = Object.keys(teamsData || {})[0];
+  hostProxyBidTeamId = first || null;
+}
+
+function selectHostProxyBidTeam(teamId) {
+  if (!teamId) return;
+  hostProxyBidTeamId = String(teamId);
+  renderHostProxyBidPanel();
+  updateMyPurse();
+  if (currentAuctionData) {
+    renderBidDisplay(currentAuctionData);
+  }
+}
+
+function renderHostProxyBidPanel() {
+  const wrap = document.getElementById('hostProxyBidWrap');
+  const list = document.getElementById('hostProxyBidTeams');
+  if (!wrap || !list) return;
+
+  if (!isHostProxyBidderActive()) {
+    wrap.style.display = 'none';
+    list.innerHTML = '';
+    return;
+  }
+
+  ensureHostProxyBidTeamSelected();
+  wrap.style.display = 'block';
+
+  const teamIds = Object.keys(teamsData || {});
+  if (!teamIds.length) {
+    list.innerHTML = '<div class="bid-history-empty">Waiting for teams...</div>';
+    return;
+  }
+
+  list.innerHTML = teamIds.map((teamId) => {
+    const meta = getRoomTeamMeta(teamId) || {};
+    const live = teamsData?.[teamId] || {};
+    const name = live.name || meta.name || teamId;
+    const short = meta.short || live.short || teamId;
+    const activeClass = teamId === hostProxyBidTeamId ? 'active' : '';
+    const logo = meta.logo
+      ? `<img class="host-proxy-team-logo" src="${meta.logo}" alt="${short} logo" />`
+      : '';
+    return `
+      <button type="button" class="host-proxy-team-btn ${activeClass}" onclick="selectHostProxyBidTeam('${teamId}')">
+        ${logo}
+        <span class="host-proxy-team-text">
+          <span class="host-proxy-team-short">${short}</span>
+          <span class="host-proxy-team-name">${name}</span>
+        </span>
+      </button>
+    `;
+  }).join('');
+}
+
+window.selectHostProxyBidTeam = selectHostProxyBidTeam;
 
 function getRoomTeamMeta(teamId) {
   return roomTeamCatalog[teamId] || teamsData[teamId] || getTeam(teamId);
@@ -405,7 +486,8 @@ async function initAuction() {
 
     renderSidebar();
     updateMyPurse();
-    if (isSpectator) renderSpectatorPredictionPoll(currentAuctionData);
+    renderHostProxyBidPanel();
+    if (isBidUiSpectator()) renderSpectatorPredictionPoll(currentAuctionData);
   });
 
   listeners.soldPlayers = db.ref(`rooms/${roomCode}/soldPlayers`).on('value', snap => {
@@ -496,7 +578,7 @@ async function initAuction() {
 }
 
 function applySpectatorUi() {
-  if (!isSpectator) return;
+  if (!isSpectator || isHostProxyBidderActive()) return;
 
   document.body.classList.add('spectator-mode');
 
@@ -788,7 +870,7 @@ async function castSpectatorPollVote(teamId) {
 }
 
 function maybeCelebrateSpectatorPollOutcome(data, player) {
-  if (!isSpectator || !data || data.status !== 'sold') return;
+  if (!isBidUiSpectator() || !data || data.status !== 'sold') return;
 
   const pollCard = document.getElementById('spectatorPollCard');
   if (!pollCard) return;
@@ -818,7 +900,7 @@ function renderAuction(data, prevData = null) {
   const player = playerMap[data.playerId];
   if (!player) return;
 
-  if (isSpectator && data.playerId) {
+  if (isBidUiSpectator() && data.playerId) {
     attachSpectatorPollListener(data.playerId);
     if (data.status === 'bidding') {
       const pollCard = document.getElementById('spectatorPollCard');
@@ -957,17 +1039,25 @@ function renderBidDisplay(data, player = null) {
   const bidPanelEl = document.querySelector('.bid-panel');
 
   if (data.status === 'bidding') {
-    if (isSpectator) {
+    if (isBidUiSpectator()) {
       updateSpectatorPanel(data);
       return;
     }
 
+    if (isHostProxyBidderActive()) {
+      renderHostProxyBidPanel();
+    }
+
+    ensureHostProxyBidTeamSelected();
+    const actingTeamId = getActingTeamIdForBidUi();
+    const myTeam = actingTeamId ? teamsData[actingTeamId] : null;
+    const canActAsTeam = !!(actingTeamId && myTeam);
+
     const bidJumps = getBidJumpOptions(resolvedPlayer.base_price_lakh, roomConfig.bidOptions);
-    const myTeam = teamsData[myTeamId];
-    const withdrawn = !!(data.withdrawnTeams && data.withdrawnTeams[myTeamId]);
+    const withdrawn = !!(canActAsTeam && data.withdrawnTeams && data.withdrawnTeams[actingTeamId]);
     const withdrawnTeamIds = Object.keys(data.withdrawnTeams || {});
-    const skipVoted = !!(data.skipVotes && data.skipVotes[myTeamId]);
-    const poolSkipVoted = !!(data.poolSkipVotes && data.poolSkipVotes[myTeamId]);
+    const skipVoted = !!(canActAsTeam && data.skipVotes && data.skipVotes[actingTeamId]);
+    const poolSkipVoted = !!(canActAsTeam && data.poolSkipVotes && data.poolSkipVotes[actingTeamId]);
     const totalTeams = Object.keys(teamsData).length;
     const skipCount = Object.keys(data.skipVotes || {}).length;
     const poolSkipCount = Object.keys(data.poolSkipVotes || {}).length;
@@ -976,14 +1066,14 @@ function renderBidDisplay(data, player = null) {
     const affordableJumps = bidJumps.filter(j => myTeam && (myTeam.purse >= data.currentBid + j));
     const canAffordAny = affordableJumps.length > 0;
     const canAffordBase = !!(myTeam && myTeam.purse >= data.currentBid);
-    const isLeading = data.highestBidder === myTeamId;
+    const isLeading = !!(canActAsTeam && data.highestBidder === actingTeamId);
     const squadFull = myTeam && myTeam.squad && myTeam.squad.length >= roomConfig.maxSquadSize;
 
-    if (squadFull) {
+    if (squadFull && !isHostProxyBidderActive()) {
       autoWithdrawFromCurrentPlayerIfNeeded(data);
     }
 
-    const canTryBid = !paused && !withdrawn && !isLeading && !squadFull;
+    const canTryBid = canActAsTeam && !paused && !withdrawn && !isLeading && !squadFull;
     const canBaseBid = canTryBid && !data.highestBidder && canAffordBase;
 
     if (baseBidBtn) {
@@ -1021,7 +1111,7 @@ function renderBidDisplay(data, player = null) {
       withdrawBtn.disabled = true;
       withdrawBtn.textContent = 'Leading Bidder';
     } else {
-      withdrawBtn.disabled = paused || squadFull;
+      withdrawBtn.disabled = paused || squadFull || !canActAsTeam;
       withdrawBtn.textContent = 'Withdraw For This Player';
     }
 
@@ -1035,7 +1125,7 @@ function renderBidDisplay(data, player = null) {
       passBtn.disabled = true;
       passBtn.textContent = `Skip Voted (${skipCount}/${totalTeams})`;
     } else {
-      passBtn.disabled = paused;
+      passBtn.disabled = paused || !canActAsTeam;
       passBtn.textContent = `Skip Player (${skipCount}/${totalTeams})`;
     }
 
@@ -1049,11 +1139,12 @@ function renderBidDisplay(data, player = null) {
       skipPoolBtn.disabled = true;
       skipPoolBtn.textContent = `Pool Skip Voted (${poolSkipCount}/${totalTeams})`;
     } else {
-      skipPoolBtn.disabled = paused;
+      skipPoolBtn.disabled = paused || !canActAsTeam;
       skipPoolBtn.textContent = `Skip Current Pool (${poolSkipCount}/${totalTeams})`;
     }
 
-    if (paused) { warnEl.textContent = '⏸️ Auction is paused by host'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--orange)'; }
+    if (!canActAsTeam) { warnEl.textContent = '👆 Select a team to bid'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--text-sec)'; }
+    else if (paused) { warnEl.textContent = '⏸️ Auction is paused by host'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--orange)'; }
     else if (squadFull) { warnEl.textContent = '✅ Your squad is complete. Bidding is disabled.'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--green)'; }
     else if (withdrawn) { warnEl.textContent = '⏭️ You withdrew for this player'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--text-sec)'; }
     else if (!canAffordAny) { warnEl.textContent = '⚠️ Not enough purse for available bid jumps!'; warnEl.style.display = 'block'; warnEl.style.color = 'var(--red)'; }
@@ -1343,13 +1434,21 @@ function updateTimerDisplay(secondsLeft, total) {
 
 // ---- PLACE BID ----
 async function placeBid(selectedJump = null, useBaseBid = false) {
-  if (isSpectator) {
+  if (isBidUiSpectator()) {
     showToast('Viewer mode: bidding is disabled.', 'error');
     return;
   }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding') return;
   if (paused) {
     showToast('Auction is paused.', 'error');
+    return;
+  }
+
+  ensureHostProxyBidTeamSelected();
+  const actingTeamId = getActingTeamIdForBidUi();
+  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  if (!actingTeamId || !actingTeam) {
+    showToast('Select a team to bid.', 'error');
     return;
   }
 
@@ -1362,30 +1461,28 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
     ? 0
     : (selectedJump && allowedJumps.includes(selectedJump) ? selectedJump : allowedJumps[0]);
   const nextBid = isBaseBid ? currentAuctionData.currentBid : (currentAuctionData.currentBid + jump);
-  const myTeam = teamsData[myTeamId];
-  if (currentAuctionData.withdrawnTeams && currentAuctionData.withdrawnTeams[myTeamId]) {
+  if (currentAuctionData.withdrawnTeams && currentAuctionData.withdrawnTeams[actingTeamId]) {
     showToast('You withdrew for this player.', 'error');
     return;
   }
-  if (!myTeam) return;
 
   if (isBaseBid && currentAuctionData.highestBidder) {
     showToast('Base bid is available only before first bid.', 'error');
     return;
   }
 
-  const mySquadCount = (myTeam.squad || []).length;
+  const mySquadCount = (actingTeam.squad || []).length;
   if (mySquadCount >= roomConfig.maxSquadSize) {
     showToast('Your squad is full. You cannot bid.', 'error');
     return;
   }
 
-  if (myTeam.purse < nextBid) {
+  if (actingTeam.purse < nextBid) {
     showToast('You do not have enough purse for this bid.', 'error');
     return;
   }
 
-  if (currentAuctionData.highestBidder === myTeamId) {
+  if (currentAuctionData.highestBidder === actingTeamId) {
     showToast('You are already the highest bidder.', 'error');
     return;
   }
@@ -1405,12 +1502,12 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
 
       const txnNextBid = isBaseBid ? auction.currentBid : (auction.currentBid + jump);
       if (txnNextBid !== nextBid) return; // stale UI value, abort and let client refresh
-      if (auction.withdrawnTeams && auction.withdrawnTeams[myTeamId]) return;
+      if (auction.withdrawnTeams && auction.withdrawnTeams[actingTeamId]) return;
       auction.currentBid = txnNextBid;
-      auction.highestBidder = myTeamId;
+      auction.highestBidder = actingTeamId;
       auction.bidHistory = Array.isArray(auction.bidHistory) ? auction.bidHistory : [];
       auction.bidHistory.push({
-        teamId: myTeamId,
+        teamId: actingTeamId,
         bid: txnNextBid,
         jump: isBaseBid ? 0 : jump,
         isBaseBid,
@@ -1432,14 +1529,21 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
 
 // ---- PASS PLAYER (host only) ----
 async function passPlayer() {
-  if (isSpectator) {
+  if (isBidUiSpectator()) {
     showToast('Viewer mode: skip vote is disabled.', 'error');
     return;
   }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
-  const myTeam = teamsData[myTeamId];
-  if (myTeam && (myTeam.squad || []).length >= roomConfig.maxSquadSize) {
+  ensureHostProxyBidTeamSelected();
+  const actingTeamId = getActingTeamIdForBidUi();
+  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  if (!actingTeamId || !actingTeam) {
+    showToast('Select a team first.', 'error');
+    return;
+  }
+
+  if (actingTeam && (actingTeam.squad || []).length >= roomConfig.maxSquadSize) {
     showToast('Your squad is complete. Skip is disabled.', 'error');
     return;
   }
@@ -1454,7 +1558,7 @@ async function passPlayer() {
       if (!auction || auction.status !== 'bidding') return;
       if (auction.highestBidder) return;
       auction.skipVotes = auction.skipVotes || {};
-      auction.skipVotes[myTeamId] = true;
+      auction.skipVotes[actingTeamId] = true;
       return auction;
     });
   } catch (err) {
@@ -1463,14 +1567,21 @@ async function passPlayer() {
 }
 
 async function skipCurrentPool() {
-  if (isSpectator) {
+  if (isBidUiSpectator()) {
     showToast('Viewer mode: pool skip is disabled.', 'error');
     return;
   }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
-  const myTeam = teamsData[myTeamId];
-  if (myTeam && (myTeam.squad || []).length >= roomConfig.maxSquadSize) {
+  ensureHostProxyBidTeamSelected();
+  const actingTeamId = getActingTeamIdForBidUi();
+  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  if (!actingTeamId || !actingTeam) {
+    showToast('Select a team first.', 'error');
+    return;
+  }
+
+  if (actingTeam && (actingTeam.squad || []).length >= roomConfig.maxSquadSize) {
     showToast('Your squad is complete. Pool skip is disabled.', 'error');
     return;
   }
@@ -1487,7 +1598,7 @@ async function skipCurrentPool() {
       const poolId = auction.poolId || currentPool.poolId;
       if (!poolId) return;
       auction.poolSkipVotes = auction.poolSkipVotes || {};
-      auction.poolSkipVotes[myTeamId] = true;
+      auction.poolSkipVotes[actingTeamId] = true;
       return auction;
     });
   } catch (err) {
@@ -1496,19 +1607,26 @@ async function skipCurrentPool() {
 }
 
 async function withdrawFromPlayer() {
-  if (isSpectator) {
+  if (isBidUiSpectator()) {
     showToast('Viewer mode: withdraw is disabled.', 'error');
     return;
   }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
-  const myTeam = teamsData[myTeamId];
-  if (myTeam && (myTeam.squad || []).length >= roomConfig.maxSquadSize) {
+  ensureHostProxyBidTeamSelected();
+  const actingTeamId = getActingTeamIdForBidUi();
+  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  if (!actingTeamId || !actingTeam) {
+    showToast('Select a team first.', 'error');
+    return;
+  }
+
+  if (actingTeam && (actingTeam.squad || []).length >= roomConfig.maxSquadSize) {
     showToast('Your squad is complete. No manual action needed.', 'error');
     return;
   }
 
-  if (currentAuctionData.highestBidder === myTeamId) {
+  if (currentAuctionData.highestBidder === actingTeamId) {
     showToast('Leading bidder cannot withdraw.', 'error');
     return;
   }
@@ -1516,9 +1634,9 @@ async function withdrawFromPlayer() {
   try {
     await db.ref(`rooms/${roomCode}/currentAuction`).transaction(auction => {
       if (!auction || auction.status !== 'bidding') return;
-      if (auction.highestBidder === myTeamId) return;
+      if (auction.highestBidder === actingTeamId) return;
       auction.withdrawnTeams = auction.withdrawnTeams || {};
-      auction.withdrawnTeams[myTeamId] = true;
+      auction.withdrawnTeams[actingTeamId] = true;
       return auction;
     });
   } catch (err) {
@@ -3112,14 +3230,23 @@ async function kickTeamFromChat(teamId) {
 }
 
 function updateMyPurse() {
-  if (isSpectator) {
-    const viewerEl = document.getElementById('myPurseDisplay');
-    if (viewerEl) viewerEl.textContent = 'Viewer';
+  const el = document.getElementById('myPurseDisplay');
+  if (!el) return;
+
+  if (isBidUiSpectator()) {
+    el.textContent = 'Viewer';
     return;
   }
-  const myTeam = teamsData[myTeamId];
-  const el = document.getElementById('myPurseDisplay');
-  if (el && myTeam) el.textContent = formatPrice(myTeam.purse);
+
+  ensureHostProxyBidTeamSelected();
+  const actingTeamId = getActingTeamIdForBidUi();
+  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  if (!actingTeam) {
+    el.textContent = isHostProxyBidderActive() ? 'Select Team' : '—';
+    return;
+  }
+
+  el.textContent = formatPrice(actingTeam.purse);
 }
 
 function updateProgressBar() {

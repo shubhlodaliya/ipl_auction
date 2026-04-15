@@ -115,6 +115,34 @@ function selectHostProxyBidTeam(teamId) {
   }
 }
 
+async function handleHostProxyBidTeamClick(teamId) {
+  if (!teamId) return;
+  const nextTeamId = String(teamId);
+  selectHostProxyBidTeam(nextTeamId);
+
+  if (!isHostProxyBidderActive()) return;
+  if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
+
+  const currentPlayer = playerMap[currentAuctionData.playerId];
+  if (!currentPlayer) return;
+
+  const allowedJumps = getBidJumpOptions(currentPlayer.base_price_lakh, roomConfig?.bidOptions);
+  if (allowedJumps.length !== 1) return;
+
+  const jump = allowedJumps[0];
+  const actingTeam = teamsData?.[nextTeamId];
+  if (!actingTeam) return;
+
+  const nextBid = currentAuctionData.currentBid + jump;
+  const isWithdrawn = !!currentAuctionData.withdrawnTeams?.[nextTeamId];
+  const isLeading = currentAuctionData.highestBidder === nextTeamId;
+  const squadFull = (actingTeam.squad || []).length >= roomConfig.maxSquadSize;
+  const canAfford = actingTeam.purse >= nextBid;
+  if (isWithdrawn || isLeading || squadFull || !canAfford) return;
+
+  await placeBid(jump);
+}
+
 function renderHostProxyBidPanel() {
   const wrap = document.getElementById('hostProxyBidWrap');
   const list = document.getElementById('hostProxyBidTeams');
@@ -145,7 +173,7 @@ function renderHostProxyBidPanel() {
       ? `<img class="host-proxy-team-logo" src="${meta.logo}" alt="${short} logo" />`
       : '';
     return `
-      <button type="button" class="host-proxy-team-btn ${activeClass}" onclick="selectHostProxyBidTeam('${teamId}')">
+      <button type="button" class="host-proxy-team-btn ${activeClass}" onclick="handleHostProxyBidTeamClick('${teamId}')">
         ${logo}
         <span class="host-proxy-team-text">
           <span class="host-proxy-team-short">${short}</span>
@@ -157,6 +185,7 @@ function renderHostProxyBidPanel() {
 }
 
 window.selectHostProxyBidTeam = selectHostProxyBidTeam;
+window.handleHostProxyBidTeamClick = handleHostProxyBidTeamClick;
 
 function getRoomTeamMeta(teamId) {
   return roomTeamCatalog[teamId] || teamsData[teamId] || getTeam(teamId);

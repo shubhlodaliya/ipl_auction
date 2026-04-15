@@ -1113,7 +1113,7 @@ function renderBidDisplay(data, player = null) {
     const canBaseBid = canTryBid && !data.highestBidder && canAffordBase;
 
     if (sellNowBtn) {
-      const canUseSellNow = !!(isHost && canDriveAuctionEngine() && !paused && data.highestBidder);
+      const canUseSellNow = !!(isManualAuction && isHost && canDriveAuctionEngine() && !paused && data.highestBidder);
       sellNowBtn.style.display = canUseSellNow ? 'block' : 'none';
       sellNowBtn.disabled = !canUseSellNow;
       if (canUseSellNow) {
@@ -1126,7 +1126,7 @@ function renderBidDisplay(data, player = null) {
     }
 
     if (undoActionBtn) {
-      const canUseUndo = !!(isHost && canDriveAuctionEngine());
+      const canUseUndo = !!(isManualAuction && isHost && canDriveAuctionEngine());
       undoActionBtn.style.display = canUseUndo ? 'block' : 'none';
       undoActionBtn.disabled = !canUseUndo;
       undoActionBtn.textContent = '↩ Undo Bid / Reopen Player';
@@ -1224,7 +1224,7 @@ function renderBidDisplay(data, player = null) {
       sellNowBtn.textContent = '✅ SOLD NOW';
     }
     if (undoActionBtn) {
-      const canUseUndo = !!(isHost && canDriveAuctionEngine());
+      const canUseUndo = !!(isManualAuction && isHost && canDriveAuctionEngine());
       undoActionBtn.style.display = canUseUndo ? 'block' : 'none';
       undoActionBtn.disabled = !canUseUndo;
       undoActionBtn.textContent = '↩ Undo Bid / Reopen Player';
@@ -1240,6 +1240,10 @@ function renderBidDisplay(data, player = null) {
 }
 
 async function sellNow() {
+  if (!isManualAuction) {
+    showToast('SOLD NOW is only available in manual auction.', 'error');
+    return;
+  }
   if (isBidUiSpectator()) {
     showToast('Viewer mode: host actions are disabled.', 'error');
     return;
@@ -1277,6 +1281,10 @@ async function sellNow() {
 }
 
 async function undoAuctionAction() {
+  if (!isManualAuction) {
+    showToast('Undo is only available in manual auction.', 'error');
+    return;
+  }
   if (isBidUiSpectator()) {
     showToast('Viewer mode: host actions are disabled.', 'error');
     return;

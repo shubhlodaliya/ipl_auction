@@ -1033,6 +1033,7 @@ function renderBidDisplay(data, player = null) {
   const withdrawBtn = document.getElementById('withdrawBtn');
   const withdrawnTeamsWrap = document.getElementById('withdrawnTeamsWrap');
   const withdrawnTeamsList = document.getElementById('withdrawnTeamsList');
+  const sellNowBtn = document.getElementById('sellNowBtn');
   const passBtn = document.getElementById('passBtn');
   const skipPoolBtn = document.getElementById('skipPoolBtn');
   const warnEl = document.getElementById('noPurseWarn');
@@ -1075,6 +1076,19 @@ function renderBidDisplay(data, player = null) {
 
     const canTryBid = canActAsTeam && !paused && !withdrawn && !isLeading && !squadFull;
     const canBaseBid = canTryBid && !data.highestBidder && canAffordBase;
+
+    if (sellNowBtn) {
+      const canUseSellNow = !!(isHost && canDriveAuctionEngine() && !paused && data.highestBidder);
+      sellNowBtn.style.display = canUseSellNow ? 'block' : 'none';
+      sellNowBtn.disabled = !canUseSellNow;
+      if (canUseSellNow) {
+        const winnerMeta = data.highestBidder ? (teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {}) : {};
+        const winnerName = winnerMeta.short || winnerMeta.name || data.highestBidder;
+        sellNowBtn.textContent = `✅ SOLD NOW (${winnerName} · ${formatPrice(data.currentBid)})`;
+      } else {
+        sellNowBtn.textContent = '✅ SOLD NOW';
+      }
+    }
 
     if (baseBidBtn) {
       baseBidBtn.disabled = !canBaseBid;
@@ -1162,6 +1176,11 @@ function renderBidDisplay(data, player = null) {
     if (withdrawnTeamsList) withdrawnTeamsList.innerHTML = '';
     withdrawBtn.disabled = true;
     withdrawBtn.textContent = 'Withdraw For This Player';
+    if (sellNowBtn) {
+      sellNowBtn.style.display = 'none';
+      sellNowBtn.disabled = true;
+      sellNowBtn.textContent = '✅ SOLD NOW';
+    }
     passBtn.disabled = true;
     passBtn.textContent = 'Skip Player';
     skipPoolBtn.disabled = true;
@@ -1169,6 +1188,43 @@ function renderBidDisplay(data, player = null) {
     warnEl.style.display = 'none';
 
     if (bidPanelEl) bidPanelEl.classList.remove('motion-stagger');
+  }
+}
+
+async function sellNow() {
+  if (isBidUiSpectator()) {
+    showToast('Viewer mode: host actions are disabled.', 'error');
+    return;
+  }
+  if (!isHost || !canDriveAuctionEngine()) return;
+  if (paused) {
+    showToast('Auction is paused.', 'error');
+    return;
+  }
+  if (!currentAuctionData || currentAuctionData.status !== 'bidding') return;
+  if (!currentAuctionData.highestBidder) {
+    showToast('No bids yet. Cannot sell.', 'error');
+    return;
+  }
+
+  const player = playerMap[currentAuctionData.playerId];
+  const winnerId = currentAuctionData.highestBidder;
+  const winner = teamsData[winnerId] || getRoomTeamMeta(winnerId) || {};
+  const winnerName = winner.name || winner.short || winnerId;
+  const priceText = formatPrice(currentAuctionData.currentBid || 0);
+  const playerNameText = player?.name || 'this player';
+
+  const confirmed = window.confirm(`Confirm SOLD?\n\n${playerNameText}\n→ ${winnerName}\nFor ${priceText}\n\nThis will end bidding immediately.`);
+  if (!confirmed) return;
+
+  if (processingRound) return;
+  processingRound = true;
+  try {
+    await processAuctionRound();
+  } catch (err) {
+    console.error('Sell now failed:', err);
+    showToast('Failed to mark SOLD. Try again.', 'error');
+    processingRound = false;
   }
 }
 

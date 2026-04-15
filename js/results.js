@@ -396,9 +396,24 @@ function calculateTeamBalanceScore(playingXI) {
   return tpRound(tpClamp(10 - (penalty * 1.5), 0, 10));
 }
 
-function calculateMatchWinnerScore(playingXI) {
-  const elite = (playingXI || []).filter(p => p.t20ImpactRating > 85).length;
-  return tpRound(tpClamp((elite / 4) * 100, 0, 100));
+function calculateMatchWinnerScore(playingXI, benchPlayers) {
+  const players = [...(Array.isArray(playingXI) ? playingXI : []), ...(Array.isArray(benchPlayers) ? benchPlayers : [])]
+    .filter(Boolean);
+  if (!players.length) return 0;
+
+  const impacts = players
+    .map((p) => getPlayerImpact(p))
+    .filter((n) => Number.isFinite(n) && n > 0)
+    .sort((a, b) => b - a);
+
+  if (!impacts.length) return 0;
+
+  // Use top impact players from the full squad to reflect "match-winner" quality.
+  // Map avg(top4 impact) to a 0..100 score, where 70 => 0 and 90 => 100.
+  const topCount = Math.min(4, impacts.length);
+  const topAvg = impacts.slice(0, topCount).reduce((sum, v) => sum + v, 0) / topCount;
+  const score = ((topAvg - 70) / 20) * 100;
+  return tpRound(tpClamp(score, 0, 100));
 }
 
 function calculateBenchStrength(benchPlayers) {
@@ -439,7 +454,7 @@ function calculateTeamPowerScore(teamModel) {
   const BOWLING_SCORE = calculateBowlingScore(teamModel.playingXI);
   const ALL_ROUNDER_SCORE = calculateAllRounderScore(teamModel.playingXI);
   const TEAM_BALANCE_SCORE = calculateTeamBalanceScore(teamModel.playingXI);
-  const MATCH_WINNER_SCORE = calculateMatchWinnerScore(teamModel.playingXI);
+  const MATCH_WINNER_SCORE = calculateMatchWinnerScore(teamModel.playingXI, teamModel.benchPlayers);
   const BENCH_STRENGTH_SCORE = calculateBenchStrength(teamModel.benchPlayers);
 
   const battingScore = ((TOP_ORDER_SCORE + MIDDLE_ORDER_SCORE) / 2) * 0.20;

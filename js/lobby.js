@@ -696,7 +696,7 @@ async function startAuction() {
     const eligiblePlayers = players.filter((p) => !soldPlayers[p.id] && !soldPlayers[String(p.id)]);
 
     const built = isManual
-      ? { queue: eligiblePlayers.map(p => p.id), poolByIndex: {} }
+      ? { queue: shufflePoolOrder(eligiblePlayers.map(p => p.id)), poolByIndex: {} }
       : buildPlayerQueue(eligiblePlayers, mode);
     const { queue, poolByIndex } = built;
     if (!queue.length) throw new Error('No players available for auction queue');

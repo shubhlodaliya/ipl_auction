@@ -602,7 +602,9 @@ async function initAuction() {
   listeners.status = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
     if (snap.val() === 'finished') {
       if (voiceFeatureEnabled) leaveVoiceChat();
-      requestCloudinaryCleanup();
+      // NOTE: Do NOT cleanup Cloudinary here.
+      // Re-auction uses the same room and still needs manual player images.
+      // Cleanup is triggered when the host clicks "New Auction" from results.
       setTimeout(() => { window.location.href = `results.html?room=${encodeURIComponent(roomCode)}`; }, 2000);
     }
   });
@@ -2664,7 +2666,9 @@ async function terminateAuction() {
   const actorId = myTeamId || 'host-manager';
   if (!confirm('Terminate auction now and show results?')) return;
   await db.ref(`rooms/${roomCode}/config`).update({ status: 'finished', terminatedAt: Date.now(), terminatedBy: actorId });
-  await requestCloudinaryCleanup();
+  // NOTE: Do NOT cleanup Cloudinary here.
+  // Re-auction uses the same room and still needs manual player images.
+  // Cleanup is triggered when the host clicks "New Auction" from results.
 }
 
 function showToast(msg, type = '') {

@@ -40,6 +40,7 @@
         <button class="btn btn-secondary" onclick="copyInviteLink()">Copy Invite Link</button>
         <button class="btn btn-secondary" onclick="copyPrivateInviteLink()">Copy Private Invite</button>
         <button class="btn btn-ghost" onclick="shareInviteWhatsApp()">Share on WhatsApp</button>
+        <button class="btn btn-secondary" id="downloadPlayersPdfBtn" onclick="downloadPlayersPdf()" style="display:none;">⬇️ Players List (PDF)</button>
       </div>
 
       <!-- Config Info -->
@@ -127,6 +128,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/auth.js"></script>

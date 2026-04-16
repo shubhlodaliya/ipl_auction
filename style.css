@@ -2071,7 +2071,6 @@ body.spectator-mode #voiceStatusBadge {
 .bid-panel.motion-stagger .quick-bid-row .quick-bid-btn,
 .bid-panel.motion-stagger .withdraw-btn,
 .bid-panel.motion-stagger .sell-now-btn,
-.bid-panel.motion-stagger .unsold-now-btn,
 .bid-panel.motion-stagger .undo-action-btn,
 .bid-panel.motion-stagger .pass-btn,
 .bid-panel.motion-stagger .skip-pool-btn,
@@ -2091,10 +2090,9 @@ body.spectator-mode #voiceStatusBadge {
 .bid-panel.motion-stagger .withdrawn-teams-wrap { animation-delay: 0.32s; }
 .bid-panel.motion-stagger .no-purse-warning { animation-delay: 0.36s; }
 .bid-panel.motion-stagger .sell-now-btn { animation-delay: 0.4s; }
-.bid-panel.motion-stagger .unsold-now-btn { animation-delay: 0.43s; }
-.bid-panel.motion-stagger .undo-action-btn { animation-delay: 0.46s; }
-.bid-panel.motion-stagger .pass-btn { animation-delay: 0.5s; }
-.bid-panel.motion-stagger .skip-pool-btn { animation-delay: 0.54s; }
+.bid-panel.motion-stagger .undo-action-btn { animation-delay: 0.44s; }
+.bid-panel.motion-stagger .pass-btn { animation-delay: 0.48s; }
+.bid-panel.motion-stagger .skip-pool-btn { animation-delay: 0.52s; }
 
 .withdraw-btn {
   width: 100%;
@@ -2139,31 +2137,6 @@ body.spectator-mode #voiceStatusBadge {
 }
 
 .sell-now-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.unsold-now-btn {
-  width: 100%;
-  min-height: 44px;
-  padding: 0.7rem;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 77, 77, 0.12);
-  border: 1px solid rgba(255, 77, 77, 0.32);
-  color: #ffb3b3;
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-  transition: var(--transition);
-}
-
-.unsold-now-btn:hover:not(:disabled) {
-  background: rgba(255, 77, 77, 0.18);
-  border-color: rgba(255, 77, 77, 0.52);
-  color: #ffe1e1;
-}
-
-.unsold-now-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }

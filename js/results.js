@@ -1772,6 +1772,7 @@ function renderReAuctionSection() {
   const teams = room?.teams || {};
   const myTeamId = session?.teamId;
   const amHost = !!session?.isHost;
+  const isHostControlledMode = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && amHost);
   const myEligible = !!myTeamId && eligibleTeamIds.includes(myTeamId);
 
   if (!unsoldQueue.length) {
@@ -1790,15 +1791,24 @@ function renderReAuctionSection() {
   const readyMap = data.ready || {};
 
   const selectedUnion = new Set();
-  eligibleTeamIds.forEach(teamId => {
-    const teamSel = selections[teamId] || {};
-    Object.keys(teamSel).forEach(pid => {
-      if (teamSel[pid]) selectedUnion.add(String(pid));
+  if (isHostControlledMode) {
+    const hostSelections = selections.__host__ || {};
+    Object.keys(hostSelections).forEach(pid => {
+      if (hostSelections[pid]) selectedUnion.add(String(pid));
     });
-  });
+  } else {
+    eligibleTeamIds.forEach(teamId => {
+      const teamSel = selections[teamId] || {};
+      Object.keys(teamSel).forEach(pid => {
+        if (teamSel[pid]) selectedUnion.add(String(pid));
+      });
+    });
+  }
 
   const selectedQueue = unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
-  const allReady = eligibleTeamIds.every(teamId => !!readyMap[teamId]);
+  const allReady = isHostControlledMode
+    ? selectedQueue.length > 0
+    : eligibleTeamIds.every(teamId => !!readyMap[teamId]);
 
   const teamReadyHtml = eligibleTeamIds.map(teamId => {
     const team = teams[teamId];
@@ -1813,7 +1823,9 @@ function renderReAuctionSection() {
     `;
   }).join('');
 
-  const mySelection = selections[myTeamId] || {};
+  const mySelection = isHostControlledMode
+    ? (selections.__host__ || {})
+    : (selections[myTeamId] || {});
   const mySelectedCount = Object.keys(mySelection).filter(pid => mySelection[pid]).length;
   const myReady = !!readyMap[myTeamId];
 
@@ -1852,7 +1864,7 @@ function renderReAuctionSection() {
       <label class="reauction-player-row ${checked ? 'selected' : ''}">
         <input type="checkbox" ${checked ? 'checked' : ''}
           onchange="toggleReAuctionPlayer('${String(pid)}')"
-          ${myEligible ? '' : 'disabled'} />
+          ${(myEligible || isHostControlledMode) ? '' : 'disabled'} />
         <span class="reauction-player-name">${player.name}</span>
         <span class="reauction-player-meta">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</span>
       </label>
@@ -1877,12 +1889,13 @@ function renderReAuctionSection() {
 
     <div class="reauction-team-ready-list">${teamReadyHtml}</div>
 
-    ${myEligible ? `
+    ${(myEligible || isHostControlledMode) ? `
       <div class="reauction-controls">
-        <span>Your selection: ${mySelectedCount}</span>
+        <span>${isHostControlledMode ? 'Host selection' : 'Your selection'}: ${mySelectedCount}</span>
+        ${isHostControlledMode ? '<span>Host can start once at least 1 player is selected.</span>' : `
         <button class="btn ${myReady ? 'btn-secondary' : 'btn-primary'}" onclick="toggleReAuctionReady()">
           ${myReady ? 'Mark Pending' : 'Mark Ready'}
-        </button>
+        </button>`}
       </div>
     ` : `<div class="reauction-note">Only teams with empty slots can select players.</div>`}
 
@@ -1903,7 +1916,7 @@ function renderReAuctionSection() {
 
     ${amHost ? `
       <div class="reauction-host-actions">
-        <p>All teams ready: <strong>${allReady ? 'Yes' : 'No'}</strong></p>
+        <p>${isHostControlledMode ? `Host controlled mode: <strong>${selectedQueue.length > 0 ? 'Ready to start' : 'Select players'}</strong>` : `All teams ready: <strong>${allReady ? 'Yes' : 'No'}</strong>`}</p>
         <button class="btn btn-primary btn-lg" onclick="startReAuctionFromResults()" ${(!allReady || selectedQueue.length === 0) ? 'disabled' : ''}>
           Start Re-Auction (${selectedQueue.length} players)
         </button>
@@ -1932,19 +1945,26 @@ function renderReAuctionSection() {
   reAuctionState.searchWasFocused = false;
   reAuctionState.searchCaret = null;
 
-  hint.textContent = 'Teams with empty slots select unsold players, mark ready, then host starts re-auction.';
+  hint.textContent = isHostControlledMode
+    ? 'Host selects unsold players and starts re-auction.'
+    : 'Teams with empty slots select unsold players, mark ready, then host starts re-auction.';
 }
 
 async function toggleReAuctionPlayer(playerId) {
-  const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
-  if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
+  const { roomCode, room, session, eligibleTeamIds, data } = reAuctionState;
+  const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && session?.isHost);
+  if (!roomCode) return;
+
+  const selectionOwner = hostControlled ? '__host__' : session?.teamId;
+  if (!selectionOwner) return;
+  if (!hostControlled && !eligibleTeamIds.includes(selectionOwner)) return;
 
   const listEl = document.getElementById('reAuctionPlayerList');
   if (listEl) {
     reAuctionState.playerListScrollTop = listEl.scrollTop;
   }
 
-  const teamId = session.teamId;
+  const teamId = selectionOwner;
   const teamSelections = data.selections?.[teamId] || {};
   const isSelected = !!teamSelections[playerId];
 
@@ -1997,20 +2017,30 @@ async function startReAuctionFromResults() {
   const reAuction = room.reAuction || {};
   const selections = reAuction.selections || {};
   const readyMap = reAuction.ready || {};
+  const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.hostBidsForAllTeams);
 
-  const allReady = eligibleTeamIds.length > 0 && eligibleTeamIds.every(teamId => !!readyMap[teamId]);
+  const allReady = hostControlled
+    ? true
+    : (eligibleTeamIds.length > 0 && eligibleTeamIds.every(teamId => !!readyMap[teamId]));
   if (!allReady) {
     showToast('All eligible teams must be ready.', 'error');
     return;
   }
 
   const selectedUnion = new Set();
-  eligibleTeamIds.forEach(teamId => {
-    const teamSel = selections[teamId] || {};
-    Object.keys(teamSel).forEach(pid => {
-      if (teamSel[pid]) selectedUnion.add(String(pid));
+  if (hostControlled) {
+    const hostSelections = selections.__host__ || {};
+    Object.keys(hostSelections).forEach(pid => {
+      if (hostSelections[pid]) selectedUnion.add(String(pid));
     });
-  });
+  } else {
+    eligibleTeamIds.forEach(teamId => {
+      const teamSel = selections[teamId] || {};
+      Object.keys(teamSel).forEach(pid => {
+        if (teamSel[pid]) selectedUnion.add(String(pid));
+      });
+    });
+  }
 
   const selectedQueue = unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
   if (!selectedQueue.length) {

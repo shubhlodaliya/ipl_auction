@@ -1068,6 +1068,7 @@ function renderBidDisplay(data, player = null) {
   const withdrawnTeamsWrap = document.getElementById('withdrawnTeamsWrap');
   const withdrawnTeamsList = document.getElementById('withdrawnTeamsList');
   const sellNowBtn = document.getElementById('sellNowBtn');
+  const undoActionBtn = document.getElementById('undoActionBtn');
   const passBtn = document.getElementById('passBtn');
   const skipPoolBtn = document.getElementById('skipPoolBtn');
   const warnEl = document.getElementById('noPurseWarn');
@@ -1112,7 +1113,7 @@ function renderBidDisplay(data, player = null) {
     const canBaseBid = canTryBid && !data.highestBidder && canAffordBase;
 
     if (sellNowBtn) {
-      const canUseSellNow = !!(isHost && canDriveAuctionEngine() && !paused && data.highestBidder);
+      const canUseSellNow = !!(isManualAuction && isHost && canDriveAuctionEngine() && !paused && data.highestBidder);
       sellNowBtn.style.display = canUseSellNow ? 'block' : 'none';
       sellNowBtn.disabled = !canUseSellNow;
       if (canUseSellNow) {
@@ -1122,6 +1123,13 @@ function renderBidDisplay(data, player = null) {
       } else {
         sellNowBtn.textContent = '✅ SOLD NOW';
       }
+    }
+
+    if (undoActionBtn) {
+      const canUseUndo = !!(isManualAuction && isHost && canDriveAuctionEngine());
+      undoActionBtn.style.display = canUseUndo ? 'block' : 'none';
+      undoActionBtn.disabled = !canUseUndo;
+      undoActionBtn.textContent = '↩ Undo Bid / Reopen Player';
     }
 
     if (baseBidBtn) {
@@ -1215,6 +1223,12 @@ function renderBidDisplay(data, player = null) {
       sellNowBtn.disabled = true;
       sellNowBtn.textContent = '✅ SOLD NOW';
     }
+    if (undoActionBtn) {
+      const canUseUndo = !!(isManualAuction && isHost && canDriveAuctionEngine());
+      undoActionBtn.style.display = canUseUndo ? 'block' : 'none';
+      undoActionBtn.disabled = !canUseUndo;
+      undoActionBtn.textContent = '↩ Undo Bid / Reopen Player';
+    }
     passBtn.disabled = true;
     passBtn.textContent = 'Skip Player';
     skipPoolBtn.disabled = true;
@@ -1226,6 +1240,10 @@ function renderBidDisplay(data, player = null) {
 }
 
 async function sellNow() {
+  if (!isManualAuction) {
+    showToast('SOLD NOW is only available in manual auction.', 'error');
+    return;
+  }
   if (isBidUiSpectator()) {
     showToast('Viewer mode: host actions are disabled.', 'error');
     return;
@@ -1261,6 +1279,200 @@ async function sellNow() {
     processingRound = false;
   }
 }
+
+async function undoAuctionAction() {
+  if (!isManualAuction) {
+    showToast('Undo is only available in manual auction.', 'error');
+    return;
+  }
+  if (isBidUiSpectator()) {
+    showToast('Viewer mode: host actions are disabled.', 'error');
+    return;
+  }
+  if (!isHost || !canDriveAuctionEngine()) return;
+
+  const mode = String(window.prompt(
+    'Undo Options:\n1 = Undo last bid (current player)\n2 = Reopen player (sold/unsold)\n\nEnter 1 or 2',
+    '1'
+  ) || '').trim();
+  if (!mode) return;
+
+  if (mode === '1') {
+    await undoLastBidForCurrentPlayer();
+    return;
+  }
+
+  if (mode === '2') {
+    const rawInput = String(window.prompt('Enter player name or ID to reopen for bidding:') || '').trim();
+    if (!rawInput) return;
+    const resolved = resolvePlayerIdForUndo(rawInput);
+    if (!resolved) {
+      showToast('Player not found. Use exact name or ID.', 'error');
+      return;
+    }
+    await reopenPlayerForRebid(resolved.playerId, resolved.playerName);
+    return;
+  }
+
+  showToast('Invalid option. Enter 1 or 2.', 'error');
+}
+
+async function undoLastBidForCurrentPlayer() {
+  if (!currentAuctionData || currentAuctionData.status !== 'bidding') {
+    showToast('No live bidding round to undo.', 'error');
+    return;
+  }
+
+  try {
+    const result = await db.ref(`rooms/${roomCode}/currentAuction`).transaction((auction) => {
+      if (!auction || auction.status !== 'bidding') return;
+
+      const history = Array.isArray(auction.bidHistory) ? [...auction.bidHistory] : [];
+      if (!history.length) return;
+
+      history.pop();
+      const txnPlayer = playerMap[auction.playerId] || playerMap[String(auction.playerId)];
+      if (!txnPlayer) return;
+
+      auction.bidHistory = history;
+      if (history.length) {
+        const previousBid = history[history.length - 1] || {};
+        auction.currentBid = Number(previousBid.bid) || txnPlayer.base_price_lakh;
+        auction.highestBidder = previousBid.teamId || null;
+      } else {
+        auction.currentBid = txnPlayer.base_price_lakh;
+        auction.highestBidder = null;
+      }
+
+      if (!unlimitedTimer) {
+        auction.timerEnd = getSyncedNowMs() + timerSeconds * 1000;
+      }
+      return auction;
+    });
+
+    if (!result.committed) {
+      showToast('No bid to undo for current player.', 'error');
+      return;
+    }
+
+    showToast('Last bid undone successfully.', 'success');
+  } catch (err) {
+    console.error('Undo last bid failed:', err);
+    showToast('Failed to undo bid.', 'error');
+  }
+}
+
+function resolvePlayerIdForUndo(rawInput) {
+  const query = String(rawInput || '').trim();
+  if (!query) return null;
+  const lowerQuery = query.toLowerCase();
+
+  const byId = allPlayers.find((p) => String(p.id) === query);
+  if (byId) return { playerId: String(byId.id), playerName: byId.name };
+
+  const byExactName = allPlayers.find((p) => String(p.name || '').toLowerCase() === lowerQuery);
+  if (byExactName) return { playerId: String(byExactName.id), playerName: byExactName.name };
+
+  const partialMatches = allPlayers.filter((p) => String(p.name || '').toLowerCase().includes(lowerQuery));
+  if (partialMatches.length === 1) {
+    return { playerId: String(partialMatches[0].id), playerName: partialMatches[0].name };
+  }
+
+  if (partialMatches.length > 1) {
+    const preview = partialMatches
+      .slice(0, 6)
+      .map((p) => `${p.id}: ${p.name}`)
+      .join('\n');
+    alert(`Multiple players matched. Please enter exact name or ID.\n\n${preview}`);
+  }
+
+  return null;
+}
+
+async function reopenPlayerForRebid(playerId, playerName = 'Player') {
+  const targetIndex = playerQueue.findIndex((queuedPlayerId) => String(queuedPlayerId) === String(playerId));
+  if (targetIndex < 0) {
+    showToast('That player is not part of this auction queue.', 'error');
+    return;
+  }
+
+  if (targetIndex > currentIndex) {
+    showToast('Cannot reopen a future player. Bid them when their turn starts.', 'error');
+    return;
+  }
+
+  const queuedPlayerId = playerQueue[targetIndex];
+  const targetPlayer = playerMap[queuedPlayerId] || playerMap[String(queuedPlayerId)] || playerMap[playerId] || playerMap[String(playerId)];
+  if (!targetPlayer) {
+    showToast('Player data missing. Cannot reopen.', 'error');
+    return;
+  }
+
+  const soldRef = db.ref(`rooms/${roomCode}/soldPlayers/${queuedPlayerId}`);
+
+  try {
+    const soldSnap = await soldRef.get();
+    const soldEntry = soldSnap.exists() ? (soldSnap.val() || {}) : null;
+
+    if (soldEntry) {
+      await rollbackSoldPlayerEntry(String(queuedPlayerId), soldEntry);
+    }
+
+    const targetPool = getPoolMetaAtIndex(targetIndex);
+    await db.ref(`rooms/${roomCode}/currentAuction`).set({
+      playerId: queuedPlayerId,
+      currentBid: targetPlayer.base_price_lakh,
+      highestBidder: null,
+      bidHistory: [],
+      poolId: targetPool?.poolId || null,
+      poolLabel: targetPool?.poolLabel || null,
+      skipVotes: {},
+      poolSkipVotes: {},
+      withdrawnTeams: {},
+      timerEnd: unlimitedTimer ? null : (getSyncedNowMs() + timerSeconds * 1000),
+      status: 'bidding'
+    });
+
+    processingRound = false;
+    showToast(`${playerName} reopened. Finish this round to continue flow.`, 'success');
+  } catch (err) {
+    console.error('Reopen player failed:', err);
+    showToast('Failed to reopen player.', 'error');
+  }
+}
+
+async function rollbackSoldPlayerEntry(playerId, soldEntry) {
+  const winnerTeamId = String(soldEntry?.teamId || '').trim();
+  const soldPrice = Number(soldEntry?.soldPrice || 0);
+  const refund = Number.isFinite(soldPrice) && soldPrice > 0 ? soldPrice : 0;
+
+  if (winnerTeamId) {
+    await db.ref(`rooms/${roomCode}/teams/${winnerTeamId}/purse`).transaction((purse) => {
+      const current = Number(purse || 0);
+      return current + refund;
+    });
+
+    await db.ref(`rooms/${roomCode}/teams/${winnerTeamId}/squad`).transaction((squad) => {
+      const list = Array.isArray(squad) ? [...squad] : [];
+      const idx = list.findIndex((entry) => {
+        if (entry && typeof entry === 'object') {
+          const entryPlayerId = String(entry.playerId || entry.id || '').trim();
+          return entryPlayerId === String(playerId);
+        }
+        return String(entry) === String(playerId);
+      });
+
+      if (idx >= 0) {
+        list.splice(idx, 1);
+      }
+      return list;
+    });
+  }
+
+  await db.ref(`rooms/${roomCode}/soldPlayers/${playerId}`).remove();
+}
+
+window.undoAuctionAction = undoAuctionAction;
 
 async function autoWithdrawFromCurrentPlayerIfNeeded(data) {
   if (isSpectator) return;

@@ -523,6 +523,63 @@ async function uploadFileToCloudinary(fileOrSource, signPayload) {
   return uploadJson.secure_url;
 }
 
+function extractGoogleDriveFileId(url) {
+  const source = String(url || '').trim();
+  if (!source) return '';
+
+  let parsed;
+  try {
+    parsed = new URL(source);
+  } catch (_) {
+    return '';
+  }
+
+  if (!/drive\.google\.com$/i.test(parsed.hostname)) return '';
+
+  const byQuery = parsed.searchParams.get('id');
+  if (byQuery) return byQuery;
+
+  const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/i);
+  if (fileMatch?.[1]) return fileMatch[1];
+
+  const dMatch = parsed.pathname.match(/\/d\/([^/]+)/i);
+  if (dMatch?.[1]) return dMatch[1];
+
+  return '';
+}
+
+function buildDriveUploadCandidates(source) {
+  const fileId = extractGoogleDriveFileId(source);
+  if (!fileId) return [source];
+
+  // Cloudinary needs a direct resource URL, not a Drive preview page.
+  return [
+    `https://drive.google.com/uc?export=download&id=${fileId}`,
+    `https://drive.google.com/uc?export=view&id=${fileId}`,
+    source
+  ];
+}
+
+async function uploadRemoteSourceWithFallback(source, signPayload) {
+  const candidates = buildDriveUploadCandidates(source);
+  let lastErr = null;
+
+  for (const candidate of candidates) {
+    try {
+      return await uploadFileToCloudinary(candidate, signPayload);
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+
+  const fileId = extractGoogleDriveFileId(source);
+  if (fileId) {
+    throw new Error('Google Drive image could not be fetched. Make the file public (Anyone with the link) and try again.');
+  }
+
+  throw lastErr || new Error('Image URL could not be uploaded.');
+}
+
 async function uploadManualAssets(roomCode, teams, players) {
   for (const team of teams) {
     if (!team.logoFile) continue;
@@ -554,6 +611,7 @@ async function uploadManualAssets(roomCode, teams, players) {
     const isDataUrl = /^data:image\//i.test(normalized);
     if (!isRemoteUrl && !isDataUrl) continue;
 
+<<<<<<< HEAD
     try {
       player.photo_url = await uploadFileToCloudinary(normalized, {
         roomCode,
@@ -568,6 +626,18 @@ async function uploadManualAssets(roomCode, teams, players) {
       }
       throw e;
     }
+=======
+    const signPayload = {
+      roomCode,
+      entityType: 'player',
+      entityId: player.id,
+      fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
+    };
+
+    player.photo_url = isRemoteUrl
+      ? await uploadRemoteSourceWithFallback(source, signPayload)
+      : await uploadFileToCloudinary(source, signPayload);
+>>>>>>> 959fcf93d59e19a0610d2511df32eecf648a4b8c
   }
 }
 

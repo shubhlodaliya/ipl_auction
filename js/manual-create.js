@@ -461,10 +461,35 @@ async function getSignedUploadParams(payload) {
   }
 
   const json = await resp.json();
-  if (!resp.ok || !json?.signature) {
-    throw new Error(json?.error || 'Failed to sign Cloudinary upload');
+  if (!resp.ok) {
+    throw new Error(json?.error || `Failed to sign Cloudinary upload (HTTP ${resp.status})`);
   }
+
+  const requiredKeys = ['signature', 'cloudName', 'apiKey', 'timestamp', 'folder', 'publicId'];
+  for (const key of requiredKeys) {
+    if (!json?.[key]) {
+      throw new Error('Cloudinary signing API misconfigured. Missing required fields from /api/cloudinary-sign-upload.');
+    }
+  }
+
   return json;
+}
+
+function normalizeRemoteImageUrl(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  // Convert common Google Drive share links to a direct-download link.
+  // Note: the file still MUST be shared as "Anyone with the link".
+  const driveIdMatch = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=|uc\?export=download&id=)([a-zA-Z0-9_-]+)/i)
+    || raw.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
+
+  if (driveIdMatch && driveIdMatch[1]) {
+    const id = driveIdMatch[1];
+    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
+  }
+
+  return raw;
 }
 
 async function uploadFileToCloudinary(fileOrSource, signPayload) {
@@ -484,9 +509,15 @@ async function uploadFileToCloudinary(fileOrSource, signPayload) {
     body: form
   });
 
+  const uploadCt = uploadResp.headers.get('content-type') || '';
+  if (!uploadCt.toLowerCase().includes('application/json')) {
+    const text = await uploadResp.text();
+    throw new Error(`Cloudinary upload failed (HTTP ${uploadResp.status}). ${text ? text.slice(0, 180) : ''}`.trim());
+  }
+
   const uploadJson = await uploadResp.json();
   if (!uploadResp.ok || !uploadJson?.secure_url) {
-    throw new Error(uploadJson?.error?.message || 'Cloudinary upload failed');
+    throw new Error(uploadJson?.error?.message || `Cloudinary upload failed (HTTP ${uploadResp.status})`);
   }
 
   return uploadJson.secure_url;
@@ -517,16 +548,26 @@ async function uploadManualAssets(roomCode, teams, players) {
     const source = String(player.photo_url || '').trim();
     if (!source) continue;
 
-    const isRemoteUrl = /^https?:\/\//i.test(source);
-    const isDataUrl = /^data:image\//i.test(source);
+    const normalized = normalizeRemoteImageUrl(source);
+
+    const isRemoteUrl = /^https?:\/\//i.test(normalized);
+    const isDataUrl = /^data:image\//i.test(normalized);
     if (!isRemoteUrl && !isDataUrl) continue;
 
-    player.photo_url = await uploadFileToCloudinary(source, {
-      roomCode,
-      entityType: 'player',
-      entityId: player.id,
-      fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
-    });
+    try {
+      player.photo_url = await uploadFileToCloudinary(normalized, {
+        roomCode,
+        entityType: 'player',
+        entityId: player.id,
+        fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
+      });
+    } catch (e) {
+      const msg = String(e?.message || 'Cloudinary upload failed');
+      if (/drive\.google\.com/i.test(source)) {
+        throw new Error(`${msg}\n\nGoogle Drive tip: open the image in Drive → Share → General access: "Anyone with the link" (Viewer).`);
+      }
+      throw e;
+    }
   }
 }
 

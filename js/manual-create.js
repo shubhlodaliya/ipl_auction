@@ -696,7 +696,10 @@ async function createManualRoom() {
       photo_url: p.photo_url || null
     }));
 
-    const playerQueue = finalPlayers.map(p => p.id);
+    const baseQueue = finalPlayers.map(p => p.id);
+    const playerQueue = hostBidsForAllTeams
+      ? (typeof shuffleArray === 'function' ? shuffleArray(baseQueue) : [...baseQueue].sort(() => Math.random() - 0.5))
+      : baseQueue;
 
     btn.textContent = 'Creating room...';
 

@@ -492,6 +492,7 @@ async function uploadFileToCloudinary(fileOrSource, signPayload) {
   return uploadJson.secure_url;
 }
 
+<<<<<<< HEAD
 function extractGoogleDriveFileId(url) {
   const source = String(url || '').trim();
   if (!source) return '';
@@ -576,6 +577,8 @@ async function uploadRemoteSourceWithFallback(source, signPayload) {
   throw lastErr || new Error('Image URL could not be uploaded.');
 }
 
+=======
+>>>>>>> 2a1f9716b8f6ea4051fd54548b3582cfec95fb00
 async function uploadManualAssets(roomCode, teams, players) {
   const failedPlayerImages = [];
 
@@ -607,11 +610,12 @@ async function uploadManualAssets(roomCode, teams, players) {
     const isDataUrl = /^data:image\//i.test(source);
     if (!isRemoteUrl && !isDataUrl) continue;
 
-    const signPayload = {
+    player.photo_url = await uploadFileToCloudinary(source, {
       roomCode,
       entityType: 'player',
       entityId: player.id,
       fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
+<<<<<<< HEAD
     };
 
     try {
@@ -629,6 +633,9 @@ async function uploadManualAssets(roomCode, teams, players) {
     const preview = failedPlayerImages.slice(0, 3).join(', ');
     const extra = failedPlayerImages.length > 3 ? ` +${failedPlayerImages.length - 3} more` : '';
     showToast(`Some player images were skipped (${preview}${extra}). Room created without those photos.`, 'error');
+=======
+    });
+>>>>>>> 2a1f9716b8f6ea4051fd54548b3582cfec95fb00
   }
 }
 

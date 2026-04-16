@@ -461,35 +461,10 @@ async function getSignedUploadParams(payload) {
   }
 
   const json = await resp.json();
-  if (!resp.ok) {
-    throw new Error(json?.error || `Failed to sign Cloudinary upload (HTTP ${resp.status})`);
+  if (!resp.ok || !json?.signature) {
+    throw new Error(json?.error || 'Failed to sign Cloudinary upload');
   }
-
-  const requiredKeys = ['signature', 'cloudName', 'apiKey', 'timestamp', 'folder', 'publicId'];
-  for (const key of requiredKeys) {
-    if (!json?.[key]) {
-      throw new Error('Cloudinary signing API misconfigured. Missing required fields from /api/cloudinary-sign-upload.');
-    }
-  }
-
   return json;
-}
-
-function normalizeRemoteImageUrl(url) {
-  const raw = String(url || '').trim();
-  if (!raw) return '';
-
-  // Convert common Google Drive share links to a direct-download link.
-  // Note: the file still MUST be shared as "Anyone with the link".
-  const driveIdMatch = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=|uc\?export=download&id=)([a-zA-Z0-9_-]+)/i)
-    || raw.match(/[?&]id=([a-zA-Z0-9_-]+)/i);
-
-  if (driveIdMatch && driveIdMatch[1]) {
-    const id = driveIdMatch[1];
-    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(id)}`;
-  }
-
-  return raw;
 }
 
 async function uploadFileToCloudinary(fileOrSource, signPayload) {
@@ -509,75 +484,12 @@ async function uploadFileToCloudinary(fileOrSource, signPayload) {
     body: form
   });
 
-  const uploadCt = uploadResp.headers.get('content-type') || '';
-  if (!uploadCt.toLowerCase().includes('application/json')) {
-    const text = await uploadResp.text();
-    throw new Error(`Cloudinary upload failed (HTTP ${uploadResp.status}). ${text ? text.slice(0, 180) : ''}`.trim());
-  }
-
   const uploadJson = await uploadResp.json();
   if (!uploadResp.ok || !uploadJson?.secure_url) {
-    throw new Error(uploadJson?.error?.message || `Cloudinary upload failed (HTTP ${uploadResp.status})`);
+    throw new Error(uploadJson?.error?.message || 'Cloudinary upload failed');
   }
 
   return uploadJson.secure_url;
-}
-
-function extractGoogleDriveFileId(url) {
-  const source = String(url || '').trim();
-  if (!source) return '';
-
-  let parsed;
-  try {
-    parsed = new URL(source);
-  } catch (_) {
-    return '';
-  }
-
-  if (!/drive\.google\.com$/i.test(parsed.hostname)) return '';
-
-  const byQuery = parsed.searchParams.get('id');
-  if (byQuery) return byQuery;
-
-  const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/i);
-  if (fileMatch?.[1]) return fileMatch[1];
-
-  const dMatch = parsed.pathname.match(/\/d\/([^/]+)/i);
-  if (dMatch?.[1]) return dMatch[1];
-
-  return '';
-}
-
-function buildDriveUploadCandidates(source) {
-  const fileId = extractGoogleDriveFileId(source);
-  if (!fileId) return [source];
-
-  // Cloudinary needs a direct resource URL, not a Drive preview page.
-  return [
-    `https://drive.google.com/uc?export=download&id=${fileId}`,
-    `https://drive.google.com/uc?export=view&id=${fileId}`,
-    source
-  ];
-}
-
-async function uploadRemoteSourceWithFallback(source, signPayload) {
-  const candidates = buildDriveUploadCandidates(source);
-  let lastErr = null;
-
-  for (const candidate of candidates) {
-    try {
-      return await uploadFileToCloudinary(candidate, signPayload);
-    } catch (err) {
-      lastErr = err;
-    }
-  }
-
-  const fileId = extractGoogleDriveFileId(source);
-  if (fileId) {
-    throw new Error('Google Drive image could not be fetched. Make the file public (Anyone with the link) and try again.');
-  }
-
-  throw lastErr || new Error('Image URL could not be uploaded.');
 }
 
 async function uploadManualAssets(roomCode, teams, players) {
@@ -605,39 +517,16 @@ async function uploadManualAssets(roomCode, teams, players) {
     const source = String(player.photo_url || '').trim();
     if (!source) continue;
 
-    const normalized = normalizeRemoteImageUrl(source);
-
-    const isRemoteUrl = /^https?:\/\//i.test(normalized);
-    const isDataUrl = /^data:image\//i.test(normalized);
+    const isRemoteUrl = /^https?:\/\//i.test(source);
+    const isDataUrl = /^data:image\//i.test(source);
     if (!isRemoteUrl && !isDataUrl) continue;
 
-<<<<<<< HEAD
-    try {
-      player.photo_url = await uploadFileToCloudinary(normalized, {
-        roomCode,
-        entityType: 'player',
-        entityId: player.id,
-        fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
-      });
-    } catch (e) {
-      const msg = String(e?.message || 'Cloudinary upload failed');
-      if (/drive\.google\.com/i.test(source)) {
-        throw new Error(`${msg}\n\nGoogle Drive tip: open the image in Drive → Share → General access: "Anyone with the link" (Viewer).`);
-      }
-      throw e;
-    }
-=======
-    const signPayload = {
+    player.photo_url = await uploadFileToCloudinary(source, {
       roomCode,
       entityType: 'player',
       entityId: player.id,
       fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
-    };
-
-    player.photo_url = isRemoteUrl
-      ? await uploadRemoteSourceWithFallback(source, signPayload)
-      : await uploadFileToCloudinary(source, signPayload);
->>>>>>> 959fcf93d59e19a0610d2511df32eecf648a4b8c
+    });
   }
 }
 

@@ -1068,6 +1068,7 @@ function renderBidDisplay(data, player = null) {
   const withdrawnTeamsWrap = document.getElementById('withdrawnTeamsWrap');
   const withdrawnTeamsList = document.getElementById('withdrawnTeamsList');
   const sellNowBtn = document.getElementById('sellNowBtn');
+  const unsoldNowBtn = document.getElementById('unsoldNowBtn');
   const undoActionBtn = document.getElementById('undoActionBtn');
   const passBtn = document.getElementById('passBtn');
   const skipPoolBtn = document.getElementById('skipPoolBtn');
@@ -1123,6 +1124,13 @@ function renderBidDisplay(data, player = null) {
       } else {
         sellNowBtn.textContent = '✅ SOLD NOW';
       }
+    }
+
+    if (unsoldNowBtn) {
+      const canUseUnsoldNow = !!(isHostProxyBiddingEnabled() && isHost && canDriveAuctionEngine() && !paused && !data.highestBidder);
+      unsoldNowBtn.style.display = canUseUnsoldNow ? 'block' : 'none';
+      unsoldNowBtn.disabled = !canUseUnsoldNow;
+      unsoldNowBtn.textContent = '❌ UNSOLD NOW';
     }
 
     if (undoActionBtn) {
@@ -1216,13 +1224,22 @@ function renderBidDisplay(data, player = null) {
     if (quickBidRow) quickBidRow.innerHTML = '';
     if (withdrawnTeamsWrap) withdrawnTeamsWrap.style.display = 'none';
     if (withdrawnTeamsList) withdrawnTeamsList.innerHTML = '';
+
     withdrawBtn.disabled = true;
     withdrawBtn.textContent = 'Withdraw For This Player';
+
     if (sellNowBtn) {
       sellNowBtn.style.display = 'none';
       sellNowBtn.disabled = true;
       sellNowBtn.textContent = '✅ SOLD NOW';
     }
+
+    if (unsoldNowBtn) {
+      unsoldNowBtn.style.display = 'none';
+      unsoldNowBtn.disabled = true;
+      unsoldNowBtn.textContent = '❌ UNSOLD NOW';
+    }
+
     if (undoActionBtn) {
       const canUseUndo = !!(isManualAuction && isHost && canDriveAuctionEngine());
       undoActionBtn.style.display = canUseUndo ? 'block' : 'none';
@@ -1276,6 +1293,43 @@ async function sellNow() {
   } catch (err) {
     console.error('Sell now failed:', err);
     showToast('Failed to mark SOLD. Try again.', 'error');
+    processingRound = false;
+  }
+}
+
+async function unsoldNow() {
+  if (!isHostProxyBiddingEnabled()) {
+    showToast('UNSOLD NOW is only available in paddle mode.', 'error');
+    return;
+  }
+  if (isBidUiSpectator()) {
+    showToast('Viewer mode: host actions are disabled.', 'error');
+    return;
+  }
+  if (!isHost || !canDriveAuctionEngine()) return;
+  if (paused) {
+    showToast('Auction is paused.', 'error');
+    return;
+  }
+  if (!currentAuctionData || currentAuctionData.status !== 'bidding') return;
+  if (currentAuctionData.highestBidder) {
+    showToast('There is already a bid. Use SOLD NOW instead.', 'error');
+    return;
+  }
+
+  const player = playerMap[currentAuctionData.playerId];
+  const playerNameText = player?.name || 'this player';
+
+  const confirmed = window.confirm(`Mark UNSOLD?\n\n${playerNameText}\n\nThis will end bidding immediately.`);
+  if (!confirmed) return;
+
+  if (processingRound) return;
+  processingRound = true;
+  try {
+    await processAuctionRound();
+  } catch (err) {
+    console.error('Unsold now failed:', err);
+    showToast('Failed to mark UNSOLD. Try again.', 'error');
     processingRound = false;
   }
 }

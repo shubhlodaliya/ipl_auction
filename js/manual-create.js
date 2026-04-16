@@ -166,6 +166,34 @@ function parseNumber(value) {
   return Number.isFinite(num) ? num : null;
 }
 
+function parseHyperlinkFormulaUrl(formula) {
+  const f = String(formula || '').trim();
+  if (!/^HYPERLINK\(/i.test(f)) return '';
+  const m = f.match(/^HYPERLINK\(\s*"([^"]+)"/i);
+  return m?.[1] ? String(m[1]).trim() : '';
+}
+
+function getExcelCellHyperlink(sheet, rowIndex, colIndex) {
+  if (!sheet || rowIndex < 0 || colIndex < 0) return '';
+  const ref = XLSX.utils.encode_cell({ r: rowIndex, c: colIndex });
+  const cell = sheet[ref];
+  if (!cell) return '';
+
+  const link = String(cell?.l?.Target || '').trim();
+  if (link) return link;
+
+  return parseHyperlinkFormulaUrl(cell?.f);
+}
+
+function normalizeImageSource(rawSource) {
+  const source = String(rawSource || '').trim();
+  if (!source) return '';
+
+  // Excel hyperlinks often show only display text unless we read cell metadata.
+  if (/^www\./i.test(source)) return `https://${source}`;
+  return source;
+}
+
 async function importExcelPlayers() {
   if (typeof XLSX === 'undefined') {
     showToast('Excel parser failed to load. Refresh and try again.', 'error');
@@ -235,7 +263,9 @@ async function importExcelPlayers() {
       const category = idxCategory >= 0 ? normalizeCategory(row[idxCategory]) : 'Batsman';
       const baseFromExcel = idxBase >= 0 ? parseNumber(row[idxBase]) : null;
       const basePrice = baseFromExcel && baseFromExcel > 0 ? baseFromExcel : baseFallback;
-      const photoUrl = idxPhoto >= 0 ? String(row[idxPhoto] || '').trim() : '';
+      const rawPhotoUrl = idxPhoto >= 0 ? String(row[idxPhoto] || '').trim() : '';
+      const photoLink = idxPhoto >= 0 ? getExcelCellHyperlink(sheet, i, idxPhoto) : '';
+      const photoUrl = normalizeImageSource(photoLink || rawPhotoUrl);
 
       const extraFields = {};
       customPlayerFields.forEach((f) => {

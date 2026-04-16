@@ -492,7 +492,6 @@ async function uploadFileToCloudinary(fileOrSource, signPayload) {
   return uploadJson.secure_url;
 }
 
-<<<<<<< HEAD
 function extractGoogleDriveFileId(url) {
   const source = String(url || '').trim();
   if (!source) return '';
@@ -515,28 +514,7 @@ function extractGoogleDriveFileId(url) {
   const dMatch = parsed.pathname.match(/\/d\/([^/]+)/i);
   if (dMatch?.[1]) return dMatch[1];
 
-  const ucMatch = parsed.pathname.match(/\/uc$/i);
-  if (ucMatch) {
-    const id = parsed.searchParams.get('id');
-    if (id) return id;
-  }
-
   return '';
-}
-
-function isGoogleFormUrl(url) {
-  const source = String(url || '').trim();
-  if (!source) return false;
-
-  let parsed;
-  try {
-    parsed = new URL(source);
-  } catch (_) {
-    return false;
-  }
-
-  const host = String(parsed.hostname || '').toLowerCase();
-  return host === 'forms.gle' || (host === 'docs.google.com' && /\/forms\//i.test(parsed.pathname));
 }
 
 function buildDriveUploadCandidates(source) {
@@ -547,17 +525,11 @@ function buildDriveUploadCandidates(source) {
   return [
     `https://drive.google.com/uc?export=download&id=${fileId}`,
     `https://drive.google.com/uc?export=view&id=${fileId}`,
-    `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`,
-    `https://lh3.googleusercontent.com/d/${fileId}=w1200`,
     source
   ];
 }
 
 async function uploadRemoteSourceWithFallback(source, signPayload) {
-  if (isGoogleFormUrl(source)) {
-    throw new Error('Image field has a Google Form link, not an image URL. Paste a direct image URL or Drive file link instead.');
-  }
-
   const candidates = buildDriveUploadCandidates(source);
   let lastErr = null;
 
@@ -577,11 +549,7 @@ async function uploadRemoteSourceWithFallback(source, signPayload) {
   throw lastErr || new Error('Image URL could not be uploaded.');
 }
 
-=======
->>>>>>> 2a1f9716b8f6ea4051fd54548b3582cfec95fb00
 async function uploadManualAssets(roomCode, teams, players) {
-  const failedPlayerImages = [];
-
   for (const team of teams) {
     if (!team.logoFile) continue;
     team.logo = await uploadFileToCloudinary(team.logoFile, {
@@ -610,32 +578,16 @@ async function uploadManualAssets(roomCode, teams, players) {
     const isDataUrl = /^data:image\//i.test(source);
     if (!isRemoteUrl && !isDataUrl) continue;
 
-    player.photo_url = await uploadFileToCloudinary(source, {
+    const signPayload = {
       roomCode,
       entityType: 'player',
       entityId: player.id,
       fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
-<<<<<<< HEAD
     };
 
-    try {
-      player.photo_url = isRemoteUrl
-        ? await uploadRemoteSourceWithFallback(source, signPayload)
-        : await uploadFileToCloudinary(source, signPayload);
-    } catch (err) {
-      console.warn('Player image upload failed:', player.name, source, err);
-      player.photo_url = '';
-      failedPlayerImages.push(player.name || `Player ${player.id}`);
-    }
-  }
-
-  if (failedPlayerImages.length) {
-    const preview = failedPlayerImages.slice(0, 3).join(', ');
-    const extra = failedPlayerImages.length > 3 ? ` +${failedPlayerImages.length - 3} more` : '';
-    showToast(`Some player images were skipped (${preview}${extra}). Room created without those photos.`, 'error');
-=======
-    });
->>>>>>> 2a1f9716b8f6ea4051fd54548b3582cfec95fb00
+    player.photo_url = isRemoteUrl
+      ? await uploadRemoteSourceWithFallback(source, signPayload)
+      : await uploadFileToCloudinary(source, signPayload);
   }
 }
 

@@ -697,9 +697,9 @@ async function createManualRoom() {
     }));
 
     const baseQueue = finalPlayers.map(p => p.id);
-    const playerQueue = hostBidsForAllTeams
-      ? (typeof shuffleArray === 'function' ? shuffleArray(baseQueue) : [...baseQueue].sort(() => Math.random() - 0.5))
-      : baseQueue;
+    const playerQueue = typeof shuffleArray === 'function'
+      ? shuffleArray(baseQueue)
+      : [...baseQueue].sort(() => Math.random() - 0.5);
 
     btn.textContent = 'Creating room...';
 

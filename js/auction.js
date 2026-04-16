@@ -908,25 +908,11 @@ async function castSpectatorPollVote(teamId) {
 function maybeCelebrateSpectatorPollOutcome(data, player) {
   if (!isBidUiSpectator() || !data || data.status !== 'sold') return;
 
+  // Prediction-hit banners are not reliable and can confuse users.
+  // Keep the spectator poll UI (votes/graph), but do not show extra overlays.
   const pollCard = document.getElementById('spectatorPollCard');
-  if (!pollCard) return;
-
-  const outcomeKey = `${data.playerId}:${data.highestBidder}:${data.status}`;
-  if (lastSpectatorPollOutcomeKey === outcomeKey) return;
-  lastSpectatorPollOutcomeKey = outcomeKey;
-
-  const { topTeamId, totalVotes, tie } = getSpectatorPollStats();
-  const wonByPrediction = !tie && !!topTeamId && topTeamId === data.highestBidder;
-
-  pollCard.classList.remove('prediction-hit', 'prediction-miss');
-  void pollCard.offsetWidth;
-
-  if (wonByPrediction && totalVotes > 0) {
-    pollCard.classList.add('prediction-hit');
-    showToast(`Prediction hit! Spectators called ${player?.name || 'this player'} correctly.`, 'success');
-    showResultBanner('sold', 'PREDICTION HIT', `${player?.name || 'Player'} sold to crowd favorite ${teamsData[data.highestBidder]?.name || data.highestBidder}`);
-  } else {
-    pollCard.classList.add('prediction-miss');
+  if (pollCard) {
+    pollCard.classList.remove('prediction-hit', 'prediction-miss');
   }
 }
 

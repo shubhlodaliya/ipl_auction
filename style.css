@@ -1329,8 +1329,9 @@ input[type=range]::-webkit-slider-thumb {
 
 .player-bid-team-name {
   display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
   font-family: 'Rajdhani', sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
@@ -1338,15 +1339,19 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .player-bid-team-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  padding: 4px;
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  padding: 5px;
   border: 1px solid rgba(255,255,255,0.2);
   background: rgba(255,255,255,0.07);
   object-fit: contain;
   object-position: center;
   flex-shrink: 0;
+}
+
+.player-bid-team-text {
+  display: block;
 }
 
 .watchlist-live-pill {

@@ -1042,7 +1042,7 @@ function renderBidDisplay(data, player = null) {
         <div class="player-bid-team-label">CURRENT BID TEAM</div>
         <div class="player-bid-team-name" style="color:${accent};">
           ${t?.logo ? `<img class="player-bid-team-logo" src="${t.logo}" alt="${t.short} logo" />` : ''}
-          <span>${team?.name || data.highestBidder}</span>
+          <span class="player-bid-team-text">${team?.name || data.highestBidder}</span>
         </div>
       `;
     }

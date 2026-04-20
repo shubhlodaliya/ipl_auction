@@ -158,6 +158,12 @@ function initLobby() {
     if (!snap.exists()) { alert('Room not found!'); window.location.href = 'index.html'; return; }
     const room = snap.val();
     roomConfig = room.config || {};
+
+    const pdfBtn = document.getElementById('downloadPlayersPdfBtn');
+    if (pdfBtn) {
+      pdfBtn.style.display = roomConfig.auctionType === 'manual' ? 'inline-flex' : 'none';
+    }
+
     roomTeamCatalog = roomConfig.auctionType === 'manual'
       ? (room.manualTeams || {})
       : Object.fromEntries(IPL_TEAMS.map(t => [t.id, t]));
@@ -741,6 +747,116 @@ async function startAuction() {
   }
 }
 
+async function downloadPlayersPdf() {
+  if (!(roomConfig?.auctionType === 'manual')) {
+    showToast('Players list PDF is only available for manual auctions.', 'error');
+    return;
+  }
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    showToast('PDF library failed to load. Please retry.', 'error');
+    return;
+  }
+
+  try {
+    const roomSnap = await db.ref(`rooms/${roomCode}`).get();
+    const room = roomSnap.exists() ? (roomSnap.val() || {}) : {};
+    const players = Array.isArray(room.manualPlayers) ? room.manualPlayers : (allPlayers || []);
+
+    if (!Array.isArray(players) || !players.length) {
+      showToast('No players found to export.', 'error');
+      return;
+    }
+
+    const meta = Array.isArray(room?.config?.manualPlayerFields) ? room.config.manualPlayerFields : [];
+    const labelByKey = Object.fromEntries(
+      meta
+        .map((f) => ({ key: String(f?.key || '').trim(), label: String(f?.label || f?.key || '').trim() }))
+        .filter((x) => x.key)
+        .map((x) => [x.key, x.label || x.key])
+    );
+
+    const formatExtra = (p) => {
+      const extra = p?.extraFields && typeof p.extraFields === 'object' ? p.extraFields : {};
+      const parts = Object.entries(extra)
+        .map(([k, v]) => {
+          const key = String(k || '').trim();
+          const val = String(v || '').trim();
+          if (!key || !val) return '';
+          const label = labelByKey[key] || key;
+          return `${label}: ${val}`;
+        })
+        .filter(Boolean);
+      return parts.join(' | ');
+    };
+
+    const sorted = players.slice().sort((a, b) => {
+      const ra = String(a?.role || a?.category || '').toLowerCase();
+      const rb = String(b?.role || b?.category || '').toLowerCase();
+      if (ra !== rb) return ra.localeCompare(rb);
+      const ba = Number(a?.base_price_lakh || 0);
+      const bb = Number(b?.base_price_lakh || 0);
+      if (ba !== bb) return bb - ba;
+      return String(a?.name || '').localeCompare(String(b?.name || ''));
+    });
+
+    const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    if (typeof doc.autoTable !== 'function') {
+      showToast('PDF table plugin failed to load. Please retry.', 'error');
+      return;
+    }
+
+    const generatedAt = new Date();
+    const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
+    const datePart = generatedAt.toISOString().slice(0, 10);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('IPL Auction — Players List', 40, 48);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Room: ${roomCode}`, 40, 66);
+    doc.text(`Generated: ${generatedAt.toLocaleString()}`, 40, 80);
+
+    const body = sorted.map((p, idx) => {
+      const role = String(p?.role || p?.category || '').trim();
+      const age = p?.age ? String(p.age) : '';
+      const base = formatPrice(Number(p?.base_price_lakh || 0));
+      return [
+        String(idx + 1),
+        String(p?.name || '').trim(),
+        role,
+        age,
+        base,
+        formatExtra(p)
+      ];
+    });
+
+    doc.autoTable({
+      startY: 96,
+      head: [['#', 'Player', 'Role', 'Age', 'Base', 'Extra']],
+      body,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak' },
+      headStyles: { fillColor: [20, 45, 45], textColor: 255 },
+      columnStyles: {
+        0: { cellWidth: 26 },
+        1: { cellWidth: 150 },
+        2: { cellWidth: 78 },
+        3: { cellWidth: 34 },
+        4: { cellWidth: 52 },
+        5: { cellWidth: 170 }
+      }
+    });
+
+    doc.save(`ipl-auction-${safeRoom}-players-${datePart}.pdf`);
+  } catch (err) {
+    console.error('Players PDF export failed:', err);
+    showToast('Failed to export players PDF. Try again.', 'error');
+  }
+}
+
 window.addEventListener('beforeunload', () => {
   if (teamsListener) db.ref(`rooms/${roomCode}/teams`).off('value', teamsListener);
   if (statusListener) db.ref(`rooms/${roomCode}/config/status`).off('value', statusListener);
@@ -753,3 +869,4 @@ window.closeIconPickerModal = closeIconPickerModal;
 window.renderIconPickerModal = renderIconPickerModal;
 window.toggleIconPlayer = toggleIconPlayer;
 window.setIconPickTeam = setIconPickTeam;
+window.downloadPlayersPdf = downloadPlayersPdf;

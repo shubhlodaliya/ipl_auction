@@ -695,7 +695,18 @@ function updateSpectatorPanel(data = null) {
   bidEl.textContent = formatPrice(current.currentBid);
   if (current.highestBidder) {
     const t = teamsData[current.highestBidder] || getRoomTeamMeta(current.highestBidder) || {};
-    leaderEl.textContent = t.name || t.short || current.highestBidder;
+    leaderEl.textContent = '';
+    if (t.logo) {
+      const logoEl = document.createElement('img');
+      logoEl.className = 'spectator-team-logo';
+      logoEl.src = t.logo;
+      logoEl.alt = `${t.short || t.name || current.highestBidder} logo`;
+      leaderEl.appendChild(logoEl);
+    }
+    const nameEl = document.createElement('span');
+    nameEl.className = 'spectator-team-name';
+    nameEl.textContent = t.name || t.short || current.highestBidder;
+    leaderEl.appendChild(nameEl);
   } else {
     leaderEl.textContent = 'No bids yet';
   }

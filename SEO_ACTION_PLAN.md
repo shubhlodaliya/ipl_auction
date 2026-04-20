@@ -11,9 +11,10 @@
 - Set transient room pages (`auction.html`, `lobby.html`, `results.html`) to `noindex,nofollow`.
 
 ## 2) Domain Finalization (Do this before submission)
-- If your production domain is not `https://ipl-auction.vercel.app`, update:
-  - `robots.txt` sitemap URL
-  - `sitemap.xml` all `<loc>` entries
+- Production domain configured: https://myiplauction.pro
+- Confirm these files in deployment:
+  - robots.txt sitemap URL points to https://myiplauction.pro/sitemap.xml
+  - sitemap.xml uses https://myiplauction.pro for all loc entries
 
 ## 3) Google Search Console Setup
 1. Open Google Search Console.
@@ -21,11 +22,11 @@
 3. Verify ownership (DNS recommended).
 4. Submit sitemap: `/sitemap.xml`.
 5. Request indexing for:
-   - `/index.html`
-   - `/guide.html`
-   - `/howto.html`
-   - `/faq.html`
-   - `/manual-setup.html`
+  - `https://myiplauction.pro/index.html`
+  - `https://myiplauction.pro/guide.html`
+  - `https://myiplauction.pro/howto.html`
+  - `https://myiplauction.pro/faq.html`
+  - `https://myiplauction.pro/manual-setup.html`
 
 ## 4) Content SEO Targets
 Primary keyword clusters:
@@ -53,9 +54,9 @@ Weekly tasks:
 ## 7) Performance and UX
 Monthly audits:
 - Run PageSpeed Insights for:
-  - Home page
-  - Guide page
-  - How-to page
+  - https://myiplauction.pro/index.html
+  - https://myiplauction.pro/guide.html
+  - https://myiplauction.pro/howto.html
 - Improve Core Web Vitals focus metrics:
   - LCP under 2.5s
   - INP under 200ms

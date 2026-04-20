@@ -6,4 +6,4 @@ Disallow: /auction.html
 Disallow: /lobby.html
 Disallow: /results.html
 
-Sitemap: https://ipl-auction.vercel.app/sitemap.xml
+Sitemap: https://myiplauction.pro/sitemap.xml

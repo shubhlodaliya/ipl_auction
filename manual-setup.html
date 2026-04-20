@@ -3,13 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Manual Auction Setup</title>
+  <title>Manual IPL Auction Setup - Custom Room Configuration</title>
+  <meta name="description" content="Create a fully manual IPL auction room with custom teams, player pools, bidding options, and timer controls." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="/manual-setup.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Manual IPL Auction Setup" />
+  <meta property="og:description" content="Configure custom teams, players, timer, icon picks, and bid controls for your fantasy auction room." />
+  <meta property="og:url" content="/manual-setup.html" />
+  <meta property="og:image" content="/assets/team-logos/csk.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Manual IPL Auction Setup" />
+  <meta name="twitter:description" content="Advanced room setup for mock IPL auctions with full manual control." />
+  <meta name="twitter:image" content="/assets/team-logos/csk.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "IPL Auction",
+        "url": "/index.html",
+        "logo": "/assets/team-logos/csk.png"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "/index.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Manual Setup",
+            "item": "/manual-setup.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="header">
     <div class="logo">🏏 Manual Auction Setup</div>
-    <button class="btn btn-ghost" onclick="window.location.href='index.html'">Back</button>
+    <div style="display:flex;align-items:center;gap:0.55rem;flex-wrap:wrap;justify-content:flex-end;">
+      <a class="btn btn-ghost" href="guide.html" style="text-decoration:none;">Auction Rules Guide</a>
+      <a class="btn btn-ghost" href="howto.html" style="text-decoration:none;">Room Setup Tutorial</a>
+      <a class="btn btn-ghost" href="faq.html" style="text-decoration:none;">FAQ</a>
+      <button class="btn btn-ghost" onclick="window.location.href='index.html'">Back</button>
+    </div>
   </header>
 
   <main class="results-layout" style="max-width:1280px;">
@@ -121,14 +172,14 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/firebase-config.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/manual-create.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script defer src="js/firebase-config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/manual-create.js"></script>
   <script>
     function showToast(msg, type = '') {
       const t = document.getElementById('toast');

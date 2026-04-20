@@ -64,7 +64,7 @@ function renderCreateTeamGrid() {
          onclick="selectCreateTeam('${t.id}')"
          title="${t.name}"
          style="--team-color:${t.primary}">
-      <img class="team-logo" src="${t.logo}" alt="${t.short} logo" />
+      <img class="team-logo" src="${t.logo}" alt="${t.short} logo" loading="lazy" decoding="async" />
       <div class="team-short" style="color:${t.primary}">${t.short}</div>
     </div>
   `).join('');
@@ -129,7 +129,7 @@ async function fetchRoomTeams(code) {
            onclick="${selectable ? `selectJoinTeam('${t.id}')` : ''}"
            title="${t.name}"
            style="--team-color:${t.primary}">
-        <img class="team-logo" src="${t.logo}" alt="${t.short} logo" />
+        <img class="team-logo" src="${t.logo}" alt="${t.short} logo" loading="lazy" decoding="async" />
         <div class="team-short" style="color:${t.primary}">${t.short}</div>
       </div>
     `;

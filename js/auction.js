@@ -175,7 +175,7 @@ function renderHostProxyBidPanel() {
     const short = meta.short || live.short || teamId;
     const activeClass = teamId === hostProxyBidTeamId ? 'active' : '';
     const logo = meta.logo
-      ? `<img class="host-proxy-team-logo" src="${meta.logo}" alt="${short} logo" />`
+      ? `<img class="host-proxy-team-logo" src="${meta.logo}" alt="${short} logo" loading="lazy" decoding="async" />`
       : '';
     return `
       <button type="button" class="host-proxy-team-btn ${activeClass}" onclick="handleHostProxyBidTeamClick('${teamId}')">
@@ -443,7 +443,7 @@ async function initAuction() {
     if (me) {
       const chip = document.getElementById('myTeamChip');
       chip.style.display = 'flex';
-      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" />` : ''} ${me.short}`;
+      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" loading="lazy" decoding="async" />` : ''} ${me.short}`;
       if (me.primary) {
         chip.style.borderColor = me.primary + '60';
         chip.style.color = me.primary;
@@ -703,6 +703,8 @@ function updateSpectatorPanel(data = null) {
       logoEl.className = 'spectator-team-logo';
       logoEl.src = t.logo;
       logoEl.alt = `${t.short || t.name || current.highestBidder} logo`;
+      logoEl.loading = 'lazy';
+      logoEl.decoding = 'async';
       leaderEl.appendChild(logoEl);
     }
     const nameEl = document.createElement('span');
@@ -860,7 +862,7 @@ function renderSpectatorPredictionPoll(data = null) {
     return `
       <button class="spectator-poll-team-btn ${isMyVote ? 'selected' : ''}" ${disabled ? 'disabled' : ''} onclick="castSpectatorPollVote('${teamId}')">
         <span class="spectator-poll-team-left">
-          ${team.logo ? `<img src="${team.logo}" alt="${team.short || teamId} logo" />` : ''}
+          ${team.logo ? `<img src="${team.logo}" alt="${team.short || teamId} logo" loading="lazy" decoding="async" />` : ''}
           <span>${team.short || team.name || teamId}</span>
         </span>
         <span class="spectator-poll-team-right">${votes} • ${pct}%</span>
@@ -987,7 +989,7 @@ function renderPlayerSpotlight(player) {
       return `<span class="badge badge-extra-field">${label}: ${safeVal}</span>`;
     }).join('');
   const avatarInner = player.photo_url
-    ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
+    ? `<img src="${player.photo_url}" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" onerror="handlePlayerImageError(this, '${initials}')" />`
     : initials;
 
   document.getElementById('playerSpotlight').innerHTML = `
@@ -1031,7 +1033,7 @@ function renderBidDisplay(data, player = null) {
     if (chipEl) {
       chipEl.style.borderColor = (t?.primary || '#FFD700') + '80';
       chipEl.style.color = t?.primary || 'var(--gold)';
-      chipEl.innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${t.short} logo" />` : ''} ${team?.name || data.highestBidder}`;
+      chipEl.innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${t.short} logo" loading="lazy" decoding="async" />` : ''} ${team?.name || data.highestBidder}`;
     }
 
     if (playerBidTeamTileEl) {
@@ -1041,7 +1043,7 @@ function renderBidDisplay(data, player = null) {
       playerBidTeamTileEl.innerHTML = `
         <div class="player-bid-team-label">CURRENT BID TEAM</div>
         <div class="player-bid-team-name" style="color:${accent};">
-          ${t?.logo ? `<img class="player-bid-team-logo" src="${t.logo}" alt="${t.short} logo" />` : ''}
+          ${t?.logo ? `<img class="player-bid-team-logo" src="${t.logo}" alt="${t.short} logo" loading="eager" decoding="async" />` : ''}
           <span class="player-bid-team-text">${team?.name || data.highestBidder}</span>
         </div>
       `;
@@ -1158,7 +1160,7 @@ function renderBidDisplay(data, player = null) {
         withdrawnTeamsList.innerHTML = withdrawnTeamIds.map((tId) => {
           const team = teamsData[tId] || getRoomTeamMeta(tId) || {};
           const short = team.short || tId;
-          const logo = team.logo ? `<img src="${team.logo}" alt="${short} logo" />` : '';
+          const logo = team.logo ? `<img src="${team.logo}" alt="${short} logo" loading="lazy" decoding="async" />` : '';
           return `<span class="withdrawn-team-chip">${logo}${short}</span>`;
         }).join('');
       } else {
@@ -2351,7 +2353,7 @@ function showCurrentPoolDetails() {
       ? formatPrice(soldInfo.soldPrice)
       : '';
     const avatarHtml = player.photo_url
-      ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
+      ? `<img src="${player.photo_url}" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
       : getPlayerInitials(player.name);
     return `
       <div class="pool-player-row">
@@ -2457,7 +2459,7 @@ function renderSidebar() {
            onclick="showTeamSquad('${tId}')"
            style="--team-color:${t?.primary || '#888'}">
         <div class="team-row-top">
-          <span class="team-short-badge">${t?.logo ? `<img class="sidebar-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.short}</span>
+          <span class="team-short-badge">${t?.logo ? `<img class="sidebar-team-logo" src="${t.logo}" alt="${team.short} logo" loading="lazy" decoding="async" />` : ''} ${team.short}</span>
           <span class="team-owner-name">${team.ownerName}</span>
           ${(isHost && !isMe) ? `<button class="team-remove-btn" onclick="event.stopPropagation(); removeTeamFromAuction('${tId}')" title="Remove ${team.ownerName}">Remove</button>` : ''}
           ${team.isHost ? '<span class="leading-crown">👑</span>' : ''}
@@ -2526,7 +2528,7 @@ function showTeamSquad(teamId) {
   const t = getRoomTeamMeta(teamId);
   const squadEntries = normalizeTeamSquadEntries(team);
 
-  document.getElementById('teamModalTitle').innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${team.short} logo" />` : ''} ${team.name} Squad`;
+  document.getElementById('teamModalTitle').innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${team.short} logo" loading="lazy" decoding="async" />` : ''} ${team.name} Squad`;
 
   const roleSections = [
     { key: 'Batsman', label: 'Batsman' },
@@ -2581,7 +2583,7 @@ function showTeamSquad(teamId) {
           const sold = soldPlayersData[entry.playerId] || soldPlayersData[String(entry.playerId)];
           const isIcon = !!entry.isIcon;
           const avatarHtml = p.photo_url
-            ? `<img src="${p.photo_url}" alt="${p.name}" onerror="handlePlayerImageError(this, '${getPlayerInitials(p.name)}')" />`
+            ? `<img src="${p.photo_url}" alt="${p.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${getPlayerInitials(p.name)}')" />`
             : getPlayerInitials(p.name);
           return `
             <div class="result-player-row">

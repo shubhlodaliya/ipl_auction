@@ -177,7 +177,7 @@ function initLobby() {
     if (me) {
       const chip = document.getElementById('myTeamChip');
       chip.style.display = 'flex';
-      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" />` : ''} ${me.short}`;
+      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" loading="lazy" decoding="async" />` : ''} ${me.short}`;
       hasMyTeam = true;
     } else if (isHost && roomConfig.auctionType === 'manual' && roomConfig.hostManagerOnly) {
       const chip = document.getElementById('myTeamChip');
@@ -628,7 +628,7 @@ function renderTeamSlots(teams) {
        <div class="${cls}" style="--team-color:${t.primary}"
          onclick="${(!isHost && !joined && !isMe) ? `joinTeamFromLobby('${t.id}')` : ''}">
         ${badge}
-        <img class="slot-logo" src="${t.logo}" alt="${t.short} logo" />
+        <img class="slot-logo" src="${t.logo}" alt="${t.short} logo" loading="lazy" decoding="async" />
         <div class="slot-name" style="color:${t.primary}">${t.short}</div>
         <div class="slot-owner">
           ${joined ? `<span style="color:var(--green)">✓ ${joined.ownerName}</span>` : `<span style="color:var(--text-dim)">Available</span>`}

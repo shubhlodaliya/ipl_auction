@@ -1230,7 +1230,7 @@ async function loadResults() {
         <div class="result-team-card fade-in" style="animation-delay:${idx * 0.07}s;--team-color:${t?.primary || '#888'}">
           <div class="result-team-header">
             <div class="result-team-emoji-wrap">
-              ${t?.logo ? `<img class="result-team-logo" src="${t.logo}" alt="${team.short} logo" />` : `<div class="result-team-emoji">${team.short}</div>`}
+              ${t?.logo ? `<img class="result-team-logo" src="${t.logo}" alt="${team.short} logo" loading="lazy" decoding="async" />` : `<div class="result-team-emoji">${team.short}</div>`}
               ${medal ? `<span class="result-medal">${medal}</span>` : ''}
             </div>
             <div class="result-team-info">
@@ -1266,7 +1266,7 @@ async function loadResults() {
                 const initials = getPlayerInitials(player.name);
                 const icon = getRoleIcon(player.role);
                 const avatarHtml = player.photo_url
-                  ? `<img src="${player.photo_url}" alt="${player.name}" onerror="handlePlayerImageError(this, '${initials}')" />`
+                  ? `<img src="${player.photo_url}" alt="${player.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
                   : initials;
                 return `
                   <div class="result-player-row">
@@ -1390,7 +1390,7 @@ function renderTopPickModal() {
     const player = topPickUiState.playerMap?.[pick.playerId] || topPickUiState.playerMap?.[String(pick.playerId)] || null;
     const initials = player ? getPlayerInitials(player.name) : getPlayerInitials(pick.playerName);
     const avatar = player?.photo_url
-      ? `<img class="top-pick-player-photo" src="${player.photo_url}" alt="${pick.playerName}" onerror="handlePlayerImageError(this, '${initials}')" />`
+      ? `<img class="top-pick-player-photo" src="${player.photo_url}" alt="${pick.playerName}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
       : `<div class="top-pick-player-fallback">${initials}</div>`;
     return `
       <div class="top-pick-row">

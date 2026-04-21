@@ -3976,4 +3976,8 @@ window.openTeamSquadModal = function(teamId) {
   showTeamSquad(teamId);
 };
 
+window.openLivePlayerListModal = openLivePlayerListModal;
+window.closeLivePlayerListModal = closeLivePlayerListModal;
+window.showTeamSquad = showTeamSquad;
+
 

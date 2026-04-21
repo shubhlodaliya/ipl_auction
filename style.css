@@ -5411,6 +5411,14 @@ body.spectator-mode .spectator-side-bid {
   overflow: hidden;
 }
 
+/* Ensure modals appear above full-screen broadcast layer */
+body.broadcast-mode .team-modal-overlay,
+body.broadcast-mode #livePlayerListModalOverlay,
+body.broadcast-mode #allTeamsModalOverlay,
+body.broadcast-mode #teamModalOverlay {
+  z-index: 12050 !important;
+}
+
 .broadcast-bg {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;

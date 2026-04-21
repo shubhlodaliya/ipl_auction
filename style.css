@@ -4560,17 +4560,20 @@ body.spectator-mode .my-team-chip {
 }
 
 body.spectator-mode .auction-layout {
-  grid-template-columns: 1fr 236px !important;
+  grid-template-columns: 1fr 340px !important;
+  gap: 2rem !important;
 }
 
 body.spectator-mode .auction-main {
   order: 1;
   position: relative;
   background:
-    radial-gradient(circle at 12% 24%, rgba(255,255,255,0.2), transparent 16%),
-    radial-gradient(circle at 78% 35%, rgba(255,255,255,0.14), transparent 14%),
-    radial-gradient(circle at 63% 20%, rgba(255,255,255,0.08), transparent 10%),
-    linear-gradient(180deg, #1f0b63 0%, #091a4d 56%, #0a5f2f 100%) !important;
+    radial-gradient(circle at 8% 28%, rgba(255,255,255,0.22), transparent 18%),
+    radial-gradient(circle at 82% 32%, rgba(255,255,255,0.18), transparent 16%),
+    radial-gradient(circle at 65% 18%, rgba(255,255,255,0.1), transparent 12%),
+    radial-gradient(ellipse at 45% 45%, rgba(255, 214, 46, 0.08), transparent 35%),
+    linear-gradient(180deg, #1f0b63 0%, #140e3a 28%, #091a4d 56%, #085a3b 85%, #0a5f2f 100%) !important;
+  overflow: hidden;
 }
 
 body.spectator-mode .auction-main::before {
@@ -4579,18 +4582,25 @@ body.spectator-mode .auction-main::before {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 0% 42%, rgba(255,255,255,0.18), transparent 28%),
-    radial-gradient(ellipse at 100% 40%, rgba(255,255,255,0.15), transparent 28%),
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+    radial-gradient(ellipse 80% 60% at 0% 45%, rgba(255,255,255,0.14), transparent 42%),
+    radial-gradient(ellipse 100% 50% at 100% 40%, rgba(255,255,255,0.12), transparent 40%),
+    radial-gradient(circle at 50% 0%, rgba(255, 214, 46, 0.05), transparent 45%),
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0), rgba(31, 11, 99, 0.2));
   mix-blend-mode: screen;
-  opacity: 0.65;
+  opacity: 0.72;
 }
 
 body.spectator-mode .teams-sidebar {
   order: 2;
   border-right: none !important;
-  border-left: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(8,16,30,0.95), rgba(8,16,30,0.88));
+  border-left: 2px solid rgba(255, 214, 46, 0.25) !important;
+  background: linear-gradient(180deg, rgba(8,16,30,0.92), rgba(8,16,30,0.85));
+  padding: 1.5rem !important;
+}
+
+body.spectator-mode .sidebar-title,
+body.spectator-mode #sidebarTeams {
+  display: none !important;
 }
 
 body.spectator-mode .auction-body {
@@ -4612,18 +4622,56 @@ body.spectator-mode .spectator-panel {
 
 body.spectator-mode #liveListActions {
   display: flex !important;
-  justify-content: flex-end;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-top: 2rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255,203,48,0.15);
+  flex-wrap: wrap;
 }
 
 body.spectator-mode .live-list-btn {
-  border-color: rgba(255, 203, 48, 0.42);
-  background: rgba(255, 203, 48, 0.17);
-  color: #ffe89b;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.8rem 1.8rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-body.spectator-mode .live-list-btn:hover {
-  border-color: rgba(255, 203, 48, 0.62);
-  background: rgba(255, 203, 48, 0.24);
+body.spectator-mode .live-list-btn:nth-child(1) {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  color: #ffffff;
+}
+
+body.spectator-mode .live-list-btn:nth-child(1):hover {
+  background: linear-gradient(135deg, #3dd980, #2ecc71);
+  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.35);
+}
+
+body.spectator-mode .live-list-btn:nth-child(2) {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: #ffffff;
+}
+
+body.spectator-mode .live-list-btn:nth-child(2):hover {
+  background: linear-gradient(135deg, #ec7063, #e74c3c);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.35);
+}
+
+body.spectator-mode .live-list-btn:nth-child(3) {
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  color: #102140;
+}
+
+body.spectator-mode .live-list-btn:nth-child(3):hover {
+  background: linear-gradient(135deg, #f9e79f, #f1c40f);
+  box-shadow: 0 6px 16px rgba(241, 196, 15, 0.35);
 }
 
 body.spectator-mode .player-spotlight {
@@ -4632,25 +4680,72 @@ body.spectator-mode .player-spotlight {
   border-right: none !important;
   background: transparent !important;
   box-shadow: none !important;
+  position: relative;
 }
 
 body.spectator-mode .player-avatar {
   width: 340px !important;
   height: 340px !important;
   border-radius: 50% !important;
-  border-width: 4px !important;
+  border-width: 5px !important;
+  border-color: rgba(255, 214, 46, 0.6) !important;
+  box-shadow: 
+    0 0 40px rgba(255, 214, 46, 0.35),
+    0 0 80px rgba(255, 214, 46, 0.15),
+    inset 0 0 40px rgba(255, 255, 255, 0.08) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+body.spectator-mode .player-avatar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), transparent 50%);
+  pointer-events: none;
 }
 
 body.spectator-mode .player-avatar img {
   object-fit: cover !important;
+  width: 100%;
+  height: 100%;
+}
+
+body.spectator-mode .player-spotlight::after {
+  content: attr(data-status);
+  position: absolute;
+  left: 26px;
+  top: 120px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #102140;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+  font-size: 2.2rem;
+  padding: 12px 32px;
+  border-radius: 6px;
+  transform: rotate(-15deg);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 3px dashed rgba(102, 102, 102, 0.6);
+  letter-spacing: 1.2px;
+  pointer-events: none;
+  z-index: 10;
+  display: none;
+}
+
+body.spectator-mode .player-spotlight[data-status]::after {
+  display: block;
 }
 
 body.spectator-mode .player-info-card {
-  max-width: 740px;
+  max-width: 100%;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
+  padding: 0 !important;
 }
 
 body.spectator-mode .player-name,
@@ -4659,34 +4754,47 @@ body.spectator-mode .player-badges,
 body.spectator-mode .player-extra-fields {
   background: linear-gradient(90deg, #ffd62e 0%, #f4bf11 100%);
   color: #102140;
-  border-radius: 12px;
-  padding: 0.5rem 0.9rem;
-  margin-bottom: 0.45rem;
+  border-radius: 14px;
+  padding: 0.65rem 1.1rem;
+  margin-bottom: 0.6rem;
+  box-shadow: 0 4px 12px rgba(255, 214, 46, 0.2);
+  font-weight: 700;
 }
 
 body.spectator-mode .player-name {
-  font-size: 2.05rem !important;
-  font-weight: 800;
+  font-size: 2.25rem !important;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
 }
 
 body.spectator-mode .player-badges .badge {
-  background: rgba(16,33,64,0.14);
+  background: rgba(16,33,64,0.16);
   color: #102140;
+  font-weight: 700;
+  font-size: 0.95rem;
 }
 
 body.spectator-mode .base-price span {
   color: #102140;
+  font-weight: 700;
+}
+
+body.spectator-mode .player-extra-fields {
+  font-size: 1.05rem;
 }
 
 .spectator-side-bid {
   display: none;
   flex-direction: column;
-  gap: 0.55rem;
-  padding: 0.72rem;
-  border: 1px solid rgba(255,203,48,0.32);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,203,48,0.12), rgba(255,203,48,0.05));
-  margin-bottom: 0.55rem;
+  gap: 1.2rem;
+  padding: 1.5rem;
+  border: 2px solid rgba(255,203,48,0.28);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(16,33,64,0.35), rgba(16,33,64,0.2));
+  margin-bottom: 1.2rem;
+  backdrop-filter: blur(8px);
 }
 
 body.spectator-mode .spectator-side-bid {
@@ -4694,53 +4802,60 @@ body.spectator-mode .spectator-side-bid {
 }
 
 .spectator-side-bid-label {
-  font-size: 0.7rem;
-  letter-spacing: 1.2px;
+  font-size: 0.68rem;
+  letter-spacing: 1.8px;
   text-transform: uppercase;
   color: #f7d67a;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .spectator-side-team {
   display: flex;
   align-items: center;
-  gap: 0.52rem;
+  gap: 1rem;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
 }
 
 .spectator-side-team-logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff0c8;
+  box-shadow: 0 8px 24px rgba(255,203,48,0.15);
 }
 
 .spectator-side-team-logo img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 5px;
+  padding: 8px;
 }
 
 .spectator-side-team-name {
   font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  font-size: 1.02rem;
-  color: #fff4cf;
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: #ffffff;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .spectator-side-bid-amount {
   font-family: 'Rajdhani', sans-serif;
-  font-weight: 800;
-  font-size: 2.05rem;
+  font-weight: 900;
+  font-size: 2.8rem;
   color: #ffd62e;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 3px 12px rgba(255,214,46,0.35);
 }
 
 /* ============================================================

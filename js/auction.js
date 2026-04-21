@@ -836,15 +836,12 @@ function updateBroadcastView(data) {
   let sold = 0;
   let unsold = 0;
   let available = 0;
-  allPlayers.forEach(p => {
-    if (p.auction_status === 'sold') sold++;
-    else if (p.auction_status === 'unsold') unsold++;
-    else available++;
+  allPlayers.forEach((playerEntry) => {
+    const status = getLivePlayerStatus(playerEntry.id);
+    if (status === 'sold') sold += 1;
+    else if (status === 'unsold') unsold += 1;
+    else available += 1;
   });
-  
-  // If the current player's state hasn't propagated to allPlayers yet but we know the outcome:
-  if (data.status === 'sold' && player && player.auction_status !== 'sold') { sold++; available--; }
-  if (data.status === 'unsold' && player && player.auction_status !== 'unsold') { unsold++; available--; }
 
   const sSold = document.getElementById('broadcastStatSold');
   const sUnsold = document.getElementById('broadcastStatUnsold');
@@ -1155,10 +1152,21 @@ function renderPlayerSpotlight(player) {
   const icon = getRoleIcon(player.role);
   const inWatchlist = !!watchlistForMe[player.id];
   const ageText = player.age ? ` · Age ${player.age}` : '';
-  const manualPlayer = isManualAuction || String(player.country || '').toLowerCase() === 'manual';
   const categoryText = String(player.category || '').trim();
   const roleText = String(player.role || '').trim();
   const showCategory = !!categoryText && categoryText.toLowerCase() !== roleText.toLowerCase();
+  const coreFieldKeys = new Set([
+    'id', 'name', 'role', 'country', 'base_price_lakh', 'category', 'photo_url',
+    'auction_status', 'extraFields', 'age', 'set_number', 'poolId', 'pool_id',
+    'team', 'teamId', 'team_id', 'soldPrice', 'sold_price', 'soldBy', 'sold_by'
+  ]);
+  const dynamicFieldChips = Object.entries(player || {})
+    .filter(([key, value]) => !coreFieldKeys.has(key) && String(value || '').trim())
+    .map(([key, value]) => {
+      const label = String(key || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
+      const safeValue = String(value || '').trim();
+      return `<span class="badge badge-extra-field">${label}: ${safeValue}</span>`;
+    }).join('');
   const extraFields = player.extraFields && typeof player.extraFields === 'object' ? player.extraFields : {};
   const extraFieldChips = Object.entries(extraFields)
     .filter(([, value]) => String(value || '').trim())
@@ -1179,9 +1187,10 @@ function renderPlayerSpotlight(player) {
       <h2 class="player-name">${player.name}</h2>
       <div class="player-badges">
         <span class="badge badge-role">${icon} ${player.role}</span>
-        ${manualPlayer ? (player.age ? `<span class="badge badge-country">Age ${player.age}</span>` : '') : `<span class="badge badge-country">${flag} ${player.country}${ageText}</span>`}
+        <span class="badge badge-country">${flag} ${player.country}${ageText}</span>
         ${showCategory ? `<span class="badge badge-category-${player.category}">${player.category}</span>` : ''}
       </div>
+      ${dynamicFieldChips ? `<div class="player-extra-fields">${dynamicFieldChips}</div>` : ''}
       ${extraFieldChips ? `<div class="player-extra-fields">${extraFieldChips}</div>` : ''}
       ${inWatchlist ? '<div class="watchlist-live-pill">⭐ Watchlist Player</div>' : ''}
       <div class="base-price">Base Price: <span>${formatPrice(player.base_price_lakh)}</span></div>

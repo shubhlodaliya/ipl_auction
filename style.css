@@ -5403,9 +5403,9 @@ body.spectator-mode .spectator-side-bid {
   width: 100vw;
   height: 100vh;
   z-index: 9999;
-  background: #111;
+  background: radial-gradient(circle at 50% 0%, #1e0b5f 0%, #090423 48%, #04020f 100%);
   color: #fff;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Rajdhani', system-ui, sans-serif;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -5414,8 +5414,13 @@ body.spectator-mode .spectator-side-bid {
 .broadcast-bg {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: url('/assets/stadium-bg.jpg') center/cover no-repeat;
-  filter: blur(4px) brightness(0.6);
+  background:
+    radial-gradient(circle at 10% 22%, rgba(255,255,255,0.32), transparent 13%),
+    radial-gradient(circle at 86% 20%, rgba(255,255,255,0.24), transparent 12%),
+    radial-gradient(circle at 70% 56%, rgba(255, 212, 84, 0.1), transparent 24%),
+    radial-gradient(ellipse at 50% 105%, #2f9828 0%, #0e6328 24%, #0b1e26 58%, transparent 78%),
+    linear-gradient(180deg, #1e0b5f 0%, #12093a 37%, #080621 67%, #070512 100%);
+  filter: saturate(1.1) contrast(1.05);
   z-index: 1;
 }
 
@@ -5424,12 +5429,19 @@ body.spectator-mode .spectator-side-bid {
   content: '';
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(135deg, rgba(10,10,30,0.9) 0%, rgba(30,10,60,0.7) 100%);
+  background:
+    repeating-radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06) 0 1px, transparent 1px 18px),
+    linear-gradient(180deg, rgba(2, 8, 20, 0.3), rgba(2, 8, 20, 0.58));
+  opacity: 0.5;
 }
 
 .broadcast-overlay {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
+  background:
+    radial-gradient(ellipse at 0% 40%, rgba(255,255,255,0.12), transparent 38%),
+    radial-gradient(ellipse at 100% 38%, rgba(255,255,255,0.11), transparent 38%),
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
   z-index: 2;
 }
 
@@ -5439,10 +5451,10 @@ body.spectator-mode .spectator-side-bid {
   z-index: 10;
   display: flex;
   align-items: center;
-  padding: 1rem 2rem;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.9rem 1.6rem;
+  background: linear-gradient(180deg, rgba(5, 9, 28, 0.9), rgba(5, 9, 28, 0.64));
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 209, 64, 0.24);
   justify-content: space-between;
 }
 
@@ -5456,14 +5468,14 @@ body.spectator-mode .spectator-side-bid {
 }
 
 .broadcast-banner {
-  background: linear-gradient(90deg, #1e3a8a, #3b82f6, #1e3a8a);
-  padding: 0.5rem 3rem;
+  background: linear-gradient(90deg, #214aa8, #4d86ff, #214aa8);
+  padding: 0.45rem 3rem;
   font-weight: 900;
   font-style: italic;
-  font-size: 1.2rem;
+  font-size: 1.18rem;
   transform: skewX(-15deg);
   border: 2px solid #facc15;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.15);
   text-transform: uppercase;
 }
 
@@ -5496,7 +5508,7 @@ body.spectator-mode .spectator-side-bid {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5rem;
+  padding: 0 4rem;
 }
 
 /* LEFT SIDE - PLAYER */
@@ -5511,7 +5523,7 @@ body.spectator-mode .spectator-side-bid {
   height: 350px;
   border-radius: 50%;
   z-index: 5;
-  box-shadow: 0 0 40px rgba(250, 204, 21, 0.3);
+  box-shadow: 0 0 56px rgba(250, 204, 21, 0.35), 0 20px 45px rgba(0,0,0,0.45);
 }
 
 .broadcast-photo-ring {
@@ -5591,20 +5603,22 @@ body.spectator-mode .spectator-side-bid {
 }
 
 .broadcast-name-ribbon {
-  background: #facc15;
+  background: linear-gradient(90deg, #ffd327 0%, #f0bb0f 70%, #dca105 100%);
   color: #1e3a8a;
   padding: 1rem 3rem 1rem 5rem;
   margin-left: -4rem; /* Tuck behind photo */
   z-index: 4;
   clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
-  min-width: 400px;
-  box-shadow: 10px 10px 20px rgba(0,0,0,0.5);
+  min-width: 450px;
+  box-shadow: 12px 14px 28px rgba(0,0,0,0.48);
+  border-top: 1px solid rgba(255,255,255,0.32);
 }
 
 .broadcast-name-text {
-  font-size: 2rem;
+  font-size: 2.3rem;
   font-weight: 900;
   line-height: 1.2;
+  text-transform: uppercase;
 }
 
 /* RIGHT SIDE - TEAM/BID */
@@ -5626,14 +5640,15 @@ body.spectator-mode .spectator-side-bid {
 }
 
 .broadcast-team-card {
-  background: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%);
   border-radius: 20px;
-  padding: 1rem;
+  padding: 1.15rem 1rem 0.9rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.5);
   width: 350px;
+  border: 1px solid rgba(255,255,255,0.75);
 }
 
 .broadcast-team-logo-wrap {
@@ -5659,7 +5674,7 @@ body.spectator-mode .spectator-side-bid {
 
 .broadcast-team-name {
   color: #1e3a8a;
-  font-size: 1.4rem;
+  font-size: 1.65rem;
   font-weight: 900;
   text-align: center;
   text-transform: uppercase;
@@ -5688,17 +5703,18 @@ body.spectator-mode .spectator-side-bid {
 }
 
 .broadcast-bid-amount {
-  font-size: 4.5rem;
+  font-size: 5rem;
   font-weight: 900;
   color: #facc15;
-  text-shadow: 3px 3px 0 #000, 0 10px 20px rgba(0,0,0,0.5);
-  font-family: 'Courier New', monospace;
+  text-shadow: 3px 3px 0 #000, 0 12px 24px rgba(0,0,0,0.52);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 1px;
 }
 
 /* FOOTER STATS */
 .broadcast-footer-stats {
   position: absolute;
-  bottom: 2rem;
+  bottom: 1.6rem;
   right: 2rem;
   z-index: 10;
   display: flex;
@@ -5732,18 +5748,20 @@ body.spectator-mode .spectator-side-bid {
 
 .broadcast-stat-pills {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.62rem;
 }
 
 .stat-pill {
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  padding: 0.56rem 1rem;
+  border-radius: 8px;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.34);
+  border: 1px solid rgba(255,255,255,0.22);
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .stat-pill span {
@@ -5754,6 +5772,11 @@ body.spectator-mode .spectator-side-bid {
 .stat-pill.unsold { background: #b91c1c; color: #fff; }
 .stat-pill.available { background: #b45309; color: #fff; }
 
+.stat-pill:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
 body.broadcast-mode {
   overflow: hidden;
 }
@@ -5762,7 +5785,9 @@ body.broadcast-mode {
   .broadcast-main { padding: 0 2rem; }
   .broadcast-photo-wrapper { width: 250px; height: 250px; }
   .broadcast-bid-amount { font-size: 3rem; }
-  .broadcast-name-text { font-size: 1.5rem; }
+  .broadcast-name-text { font-size: 1.6rem; }
+  .broadcast-name-ribbon { min-width: 320px; }
+  .broadcast-team-card { width: 280px; }
 }
 
 /* PLAYER META */

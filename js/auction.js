@@ -672,10 +672,7 @@ function applySpectatorUi() {
   if (bidPanel) bidPanel.style.display = 'none';
 
   const spectatorPanel = document.getElementById('spectatorPanel');
-  if (spectatorPanel) spectatorPanel.style.display = 'flex';
-
-  const quickToolbar = document.getElementById('quickChatToolbar');
-  if (quickToolbar) quickToolbar.style.display = isHostManager ? 'flex' : 'none';
+  if (spectatorPanel) spectatorPanel.style.display = 'none';
 
   updateLiveListButtonsVisibility();
 
@@ -701,10 +698,6 @@ function applySpectatorUi() {
 
   const chatSendBtn = document.getElementById('chatSendBtn');
   if (chatSendBtn) chatSendBtn.disabled = !isHostManager;
-
-  document.querySelectorAll('.chat-quick-btn').forEach((btn) => {
-    btn.disabled = !isHostManager;
-  });
 
   const voiceJoinBtn = document.getElementById('voiceJoinBtn');
   if (voiceJoinBtn) {
@@ -3640,13 +3633,6 @@ function renderChatMessages() {
   }).join('');
 
   el.scrollTop = el.scrollHeight;
-}
-
-async function sendQuickChat(message, sourceBtn = null) {
-  const sent = await sendChatMessage(message, { quick: true });
-  if (sent) {
-    animateQuickChatPulse(message, sourceBtn, { incoming: false });
-  }
 }
 
 async function sendChatMessage(presetText = '', options = {}) {

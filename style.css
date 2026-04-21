@@ -1858,6 +1858,70 @@ body.spectator-mode .my-team-chip {
   color: #9fd6ff;
 }
 
+body.spectator-mode .auction-layout {
+  grid-template-columns: 1fr 232px;
+}
+
+body.spectator-mode .auction-main {
+  order: 1;
+}
+
+body.spectator-mode .teams-sidebar {
+  order: 2;
+  border-right: none;
+  border-left: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(8,16,30,0.95), rgba(8,16,30,0.88));
+}
+
+body.spectator-mode .auction-body {
+  grid-template-columns: 1fr;
+}
+
+body.spectator-mode .player-spotlight {
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 1.25rem;
+  border-right: none;
+}
+
+body.spectator-mode .player-avatar {
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  border-width: 4px;
+}
+
+body.spectator-mode .player-avatar img {
+  object-fit: cover;
+}
+
+body.spectator-mode .player-info-card {
+  max-width: 680px;
+}
+
+body.spectator-mode .spectator-panel {
+  display: none !important;
+}
+
+body.spectator-mode .auction-topbar-actions {
+  display: none !important;
+}
+
+body.spectator-mode .auction-controls-stack {
+  align-items: flex-end;
+}
+
+body.spectator-mode .auction-progress {
+  gap: 0.7rem;
+}
+
+body.spectator-mode #auctionRoomCodeChip,
+body.spectator-mode #spectatorCountBadge,
+body.spectator-mode #hostAuctionControls,
+body.spectator-mode #auctionStatus,
+body.spectator-mode .auction-topbar .btn {
+  display: none !important;
+}
+
 body.spectator-mode #chatToggleBtn,
 body.spectator-mode #soundToggleBtn,
 body.spectator-mode #voiceStatusBadge {
@@ -4320,7 +4384,7 @@ body.spectator-mode #voiceStatusBadge {
 
   body.spectator-mode .player-spotlight {
     display: grid !important;
-    grid-template-columns: 126px minmax(0, 1fr);
+    grid-template-columns: 128px minmax(0, 1fr);
     gap: 0.75rem;
     padding: 0.82rem;
     border-right: none;
@@ -4329,9 +4393,9 @@ body.spectator-mode #voiceStatusBadge {
   }
 
   body.spectator-mode .player-avatar {
-    width: 126px;
-    height: 156px;
-    border-radius: 16px;
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
   }
 
   body.spectator-mode .player-name {
@@ -4442,15 +4506,15 @@ body.spectator-mode #voiceStatusBadge {
   }
 
   body.spectator-mode .player-spotlight {
-    grid-template-columns: 106px minmax(0, 1fr);
+    grid-template-columns: 104px minmax(0, 1fr);
     gap: 0.62rem;
     padding: 0.72rem;
   }
 
   body.spectator-mode .player-avatar {
-    width: 106px;
-    height: 132px;
-    border-radius: 14px;
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
   }
 
   body.spectator-mode .player-name {

@@ -90,6 +90,8 @@ function applyAuctionBranding() {
   const title = getAuctionBrandTitle();
   const logo = document.querySelector('.header .logo');
   if (logo) logo.textContent = `🏏 ${title}`;
+  const bannerTitle = document.getElementById('broadcastBannerTitle');
+  if (bannerTitle) bannerTitle.textContent = title;
   document.title = `Auction — ${title}`;
 }
 
@@ -1195,7 +1197,7 @@ function renderPlayerSpotlight(player) {
       <h2 class="player-name">${player.name}</h2>
       <div class="player-badges">
         <span class="badge badge-role">${icon} ${player.role}</span>
-        ${String(player.country || '').trim().toLowerCase() !== 'manual' ? `<span class="badge badge-country">${flag} ${player.country}${ageText}</span>` : ''}
+        ${String(player.country || '').trim() && String(player.country || '').trim().toLowerCase() !== 'manual' ? `<span class="badge badge-country">${flag} ${player.country}${ageText}</span>` : ''}
         ${showCategory ? `<span class="badge badge-category-${player.category}">${player.category}</span>` : ''}
       </div>
       ${dynamicFieldChips ? `<div class="player-extra-fields">${dynamicFieldChips}</div>` : ''}

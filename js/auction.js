@@ -590,6 +590,9 @@ async function initAuction() {
     currentAuctionData = snap.val();
     processingRound = false;
     renderAuction(currentAuctionData, prevAuctionData);
+    if (isSpectator && !isHostProxyBidderActive()) {
+      updateBroadcastView(currentAuctionData);
+    }
     hostEvaluateFastPath(currentAuctionData);
   });
 
@@ -656,6 +659,16 @@ function applySpectatorUi() {
   if (!isSpectator || isHostProxyBidderActive()) return;
 
   document.body.classList.add('spectator-mode');
+  document.body.classList.add('broadcast-mode');
+
+  const broadcastView = document.getElementById('broadcastView');
+  if (broadcastView) broadcastView.style.display = 'flex';
+
+  const auctionLayout = document.getElementById('auctionLayout');
+  if (auctionLayout) auctionLayout.style.display = 'none';
+
+  const header = document.querySelector('.header');
+  if (header) header.style.display = 'none';
 
   const statusBadge = document.getElementById('auctionStatus');
   if (statusBadge) {
@@ -747,6 +760,88 @@ function updateSpectatorSideBid(data = null) {
     logoEl.textContent = String(short).slice(0, 3).toUpperCase();
   }
   nameEl.textContent = team.name || short;
+}
+
+function updateBroadcastView(data) {
+  if (!data) return;
+  const player = playerMap[data.playerId];
+  
+  // Set badges and basic info
+  if (player) {
+    const pName = document.getElementById('broadcastPlayerName');
+    if (pName) pName.textContent = player.name;
+    const pImg = document.getElementById('broadcastPlayerImg');
+    if (pImg) pImg.src = player.image || 'assets/default-avatar.png';
+    const pSet = document.getElementById('broadcastSetBadge');
+    if (pSet) pSet.textContent = player.set_number || '1';
+  }
+
+  // Set pool badge
+  const poolBadge = document.getElementById('broadcastPoolBadge');
+  if (poolBadge && poolByIndex && poolByIndex[currentIndex] !== undefined) {
+    const currentPool = poolByIndex[currentIndex];
+    poolBadge.textContent = `PL. ${currentPool + 1}/${Object.keys(poolByIndex).length || 1}`;
+  }
+
+  // Set Team Logo, Name and Bid
+  const tLogoWrap = document.getElementById('broadcastTeamLogoWrap');
+  const tName = document.getElementById('broadcastTeamName');
+  const bidEl = document.getElementById('broadcastBidAmount');
+  
+  if (bidEl) bidEl.textContent = data.currentBid ? data.currentBid.toLocaleString() : '0';
+
+  if (data.highestBidder) {
+    const team = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {};
+    const short = team.short || team.name || data.highestBidder;
+    if (tName) tName.textContent = team.name || short;
+    
+    if (tLogoWrap) {
+      if (team.logo) {
+        tLogoWrap.innerHTML = `<img src="${team.logo}" alt="logo" loading="lazy">`;
+      } else {
+        tLogoWrap.innerHTML = `<div class="placeholder-logo">${short.slice(0,3).toUpperCase()}</div>`;
+      }
+    }
+  } else {
+    if (tName) tName.textContent = 'NO BIDS YET';
+    if (tLogoWrap) tLogoWrap.innerHTML = `<div class="placeholder-logo">--</div>`;
+  }
+
+  // Stamps
+  const stampSold = document.getElementById('broadcastStampSold');
+  const stampUnsold = document.getElementById('broadcastStampUnsold');
+  if (stampSold) stampSold.style.display = data.status === 'sold' ? 'block' : 'none';
+  if (stampUnsold) stampUnsold.style.display = data.status === 'unsold' ? 'block' : 'none';
+
+  // Stats
+  let maxPurse = 0;
+  for (const tId of Object.keys(teamsData)) {
+    if (teamsData[tId].purse > maxPurse) {
+      maxPurse = teamsData[tId].purse;
+    }
+  }
+  const maxBidEl = document.getElementById('broadcastMaxBid');
+  if (maxBidEl) maxBidEl.textContent = maxPurse.toLocaleString();
+
+  let sold = 0;
+  let unsold = 0;
+  let available = 0;
+  allPlayers.forEach(p => {
+    if (p.auction_status === 'sold') sold++;
+    else if (p.auction_status === 'unsold') unsold++;
+    else available++;
+  });
+  
+  // If the current player's state hasn't propagated to allPlayers yet but we know the outcome:
+  if (data.status === 'sold' && player && player.auction_status !== 'sold') { sold++; available--; }
+  if (data.status === 'unsold' && player && player.auction_status !== 'unsold') { unsold++; available--; }
+
+  const sSold = document.getElementById('broadcastStatSold');
+  const sUnsold = document.getElementById('broadcastStatUnsold');
+  const sAvail = document.getElementById('broadcastStatAvailable');
+  if (sSold) sSold.textContent = sold;
+  if (sUnsold) sUnsold.textContent = unsold;
+  if (sAvail) sAvail.textContent = Math.max(0, available);
 }
 
 function updateSpectatorPanel(data = null) {

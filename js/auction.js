@@ -772,8 +772,6 @@ function updateBroadcastView(data) {
     if (pName) pName.textContent = player.name;
     const pImg = document.getElementById('broadcastPlayerImg');
     if (pImg) pImg.src = player.image || 'assets/default-avatar.png';
-    const pSet = document.getElementById('broadcastSetBadge');
-    if (pSet) pSet.textContent = player.set_number || '1';
     
     const pMeta = document.getElementById('broadcastPlayerMeta');
     if (pMeta) {
@@ -783,13 +781,6 @@ function updateBroadcastView(data) {
         <span>Base: ${formatPrice(player.base_price_lakh)}</span>
       `;
     }
-  }
-
-  // Set pool badge
-  const poolBadge = document.getElementById('broadcastPoolBadge');
-  if (poolBadge && poolByIndex && poolByIndex[currentIndex] !== undefined) {
-    const currentPool = poolByIndex[currentIndex];
-    poolBadge.textContent = `PL. ${currentPool + 1}/${Object.keys(poolByIndex).length || 1}`;
   }
 
   // Set Team Logo, Name and Bid
@@ -3941,36 +3932,48 @@ window.openAllTeamsModal = function() {
   const teamIds = Object.keys(teamsData || {});
   if (teamIds.length === 0) {
     content.innerHTML = '<div style="color:var(--text-sec);padding:2rem;">No teams joined yet.</div>';
-    modal.style.display = 'flex';
+    modal.classList.add('visible');
     return;
   }
 
   content.innerHTML = teamIds.map(tId => {
     const team = teamsData[tId];
     const meta = getRoomTeamMeta(tId) || {};
-    const short = meta.short || team.name || tId;
-    const logo = meta.logo 
-      ? `<img src="${meta.logo}" alt="logo" style="width:70px;height:70px;object-fit:contain;margin-bottom:0.5rem">` 
-      : `<div style="font-size:2.5rem;font-weight:900;color:#ccc;margin-bottom:0.5rem">${short.slice(0,3).toUpperCase()}</div>`;
+    const short = meta.short || team.short || team.name || tId;
+    const owner = team.ownerName || 'Unknown owner';
+    const logo = meta.logo
+      ? `<img src="${meta.logo}" alt="${short} logo" class="sidebar-team-logo" loading="lazy" decoding="async" />`
+      : '';
+    const squadCount = normalizeTeamSquadEntries(team).length;
+    const minPlayers = Number(team.minPlayers) > 0 ? Number(team.minPlayers) : 0;
+    const purseText = formatPrice(team.purse);
     
     return `
-      <div class="broadcast-team-card" style="width:200px; cursor:pointer; padding:1.5rem; transition:transform 0.2s" 
-           onmouseover="this.style.transform='scale(1.05)'" 
-           onmouseout="this.style.transform='scale(1)'"
-           onclick="closeAllTeamsModal(); openTeamSquadModal('${tId}')">
-        ${logo}
-        <div style="font-weight:900;color:#1e3a8a;text-align:center;font-size:1.1rem">${team.name || short}</div>
-        <div style="margin-top:0.5rem;font-size:1rem;color:#15803d;font-weight:700">Purse: ${formatPrice(team.purse)}</div>
-      </div>
+      <button class="broadcast-team-list-card" onclick="closeAllTeamsModal(); showTeamSquad('${tId}')">
+        <div class="team-row-top">
+          <span class="team-short-badge">${short}</span>
+          ${logo}
+          <span class="team-owner-name">${owner}</span>
+        </div>
+        <div class="team-row-bottom">
+          <span class="team-stat">💰 <span>${purseText}</span></span>
+          <span class="team-stat">🏃 <span>${squadCount}/25 players</span></span>
+        </div>
+        <span class="team-min-note">min ${minPlayers} required</span>
+      </button>
     `;
   }).join('');
-  
-  modal.style.display = 'flex';
+
+  modal.classList.add('visible');
 };
 
 window.closeAllTeamsModal = function() {
   const modal = document.getElementById('allTeamsModalOverlay');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.classList.remove('visible');
+};
+
+window.openTeamSquadModal = function(teamId) {
+  showTeamSquad(teamId);
 };
 
 

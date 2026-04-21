@@ -5809,6 +5809,48 @@ body.broadcast-mode {
   border: 1px solid rgba(30, 58, 138, 0.3);
 }
 
+.broadcast-teams-modal-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.62rem;
+}
+
+.broadcast-team-list-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+  padding: 0.7rem 0.75rem;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.broadcast-team-list-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 203, 48, 0.42);
+  background: rgba(255, 203, 48, 0.09);
+}
+
+.broadcast-team-list-card .team-row-top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.24rem;
+}
+
+.broadcast-team-list-card .team-row-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Hide old badges if browser cache serves stale markup */
+.broadcast-set-badge,
+.broadcast-pool-badge {
+  display: none !important;
+}
+
 /* FIRECRACKER ANIMATION OVERLAY */
 .firecracker-container {
   position: fixed;

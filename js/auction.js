@@ -476,8 +476,7 @@ async function initAuction() {
     chip.textContent = 'HOST MANAGER';
   } else if (isSpectator) {
     const chip = document.getElementById('myTeamChip');
-    chip.style.display = 'flex';
-    chip.textContent = 'LIVE VIEWER';
+    chip.style.display = 'none';
   } else {
     const me = getRoomTeamMeta(myTeamId);
     if (me) {
@@ -674,6 +673,10 @@ function applySpectatorUi() {
   const spectatorPanel = document.getElementById('spectatorPanel');
   if (spectatorPanel) spectatorPanel.style.display = 'none';
 
+  const sideBid = document.getElementById('spectatorSideBid');
+  if (sideBid) sideBid.style.display = 'flex';
+  updateSpectatorSideBid(currentAuctionData);
+
   updateLiveListButtonsVisibility();
 
   const soundToggleBtn = document.getElementById('soundToggleBtn');
@@ -712,6 +715,40 @@ function applySpectatorUi() {
   }
 }
 
+function updateSpectatorSideBid(data = null) {
+  if (!isSpectator) return;
+
+  const wrap = document.getElementById('spectatorSideBid');
+  const logoEl = document.getElementById('spectatorSideTeamLogo');
+  const nameEl = document.getElementById('spectatorSideTeamName');
+  const bidEl = document.getElementById('spectatorSideBidAmount');
+  if (!wrap || !logoEl || !nameEl || !bidEl) return;
+
+  const current = data || currentAuctionData;
+  if (!current) {
+    logoEl.innerHTML = '--';
+    nameEl.textContent = 'No bids yet';
+    bidEl.textContent = '₹—';
+    return;
+  }
+
+  bidEl.textContent = formatPrice(current.currentBid);
+  if (!current.highestBidder) {
+    logoEl.innerHTML = '--';
+    nameEl.textContent = 'No bids yet';
+    return;
+  }
+
+  const team = teamsData[current.highestBidder] || getRoomTeamMeta(current.highestBidder) || {};
+  const short = team.short || team.name || current.highestBidder;
+  if (team.logo) {
+    logoEl.innerHTML = `<img src="${team.logo}" alt="${short} logo" loading="lazy" decoding="async" />`;
+  } else {
+    logoEl.textContent = String(short).slice(0, 3).toUpperCase();
+  }
+  nameEl.textContent = team.name || short;
+}
+
 function updateSpectatorPanel(data = null) {
   if (!isSpectator) return;
 
@@ -726,6 +763,7 @@ function updateSpectatorPanel(data = null) {
     leaderEl.textContent = 'No bids yet';
     timerEl.textContent = '—';
     renderSpectatorBidHistory(current);
+    updateSpectatorSideBid(current);
     return;
   }
 
@@ -751,6 +789,7 @@ function updateSpectatorPanel(data = null) {
   }
 
   renderSpectatorBidHistory(current);
+  updateSpectatorSideBid(current);
 
   if (paused || current.status !== 'bidding') {
     timerEl.textContent = paused ? 'Paused' : 'Closed';

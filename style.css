@@ -1917,8 +1917,7 @@ body.spectator-mode .auction-progress {
 body.spectator-mode #auctionRoomCodeChip,
 body.spectator-mode #spectatorCountBadge,
 body.spectator-mode #hostAuctionControls,
-body.spectator-mode #auctionStatus,
-body.spectator-mode .auction-topbar .btn {
+body.spectator-mode #auctionStatus {
   display: none !important;
 }
 
@@ -4553,6 +4552,195 @@ body.spectator-mode #voiceStatusBadge {
     font-size: 0.95rem;
     padding: 0.5rem 0.62rem;
   }
+}
+
+/* Spectator premium override: cricket-style layout */
+body.spectator-mode .my-team-chip {
+  display: none !important;
+}
+
+body.spectator-mode .auction-layout {
+  grid-template-columns: 1fr 236px !important;
+}
+
+body.spectator-mode .auction-main {
+  order: 1;
+  position: relative;
+  background:
+    radial-gradient(circle at 12% 24%, rgba(255,255,255,0.2), transparent 16%),
+    radial-gradient(circle at 78% 35%, rgba(255,255,255,0.14), transparent 14%),
+    radial-gradient(circle at 63% 20%, rgba(255,255,255,0.08), transparent 10%),
+    linear-gradient(180deg, #1f0b63 0%, #091a4d 56%, #0a5f2f 100%) !important;
+}
+
+body.spectator-mode .auction-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 0% 42%, rgba(255,255,255,0.18), transparent 28%),
+    radial-gradient(ellipse at 100% 40%, rgba(255,255,255,0.15), transparent 28%),
+    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+  mix-blend-mode: screen;
+  opacity: 0.65;
+}
+
+body.spectator-mode .teams-sidebar {
+  order: 2;
+  border-right: none !important;
+  border-left: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(8,16,30,0.95), rgba(8,16,30,0.88));
+}
+
+body.spectator-mode .auction-body {
+  grid-template-columns: 1fr !important;
+}
+
+body.spectator-mode .auction-progress {
+  display: none !important;
+}
+
+body.spectator-mode .auction-topbar-actions,
+body.spectator-mode #auctionRoomCodeChip,
+body.spectator-mode #spectatorCountBadge,
+body.spectator-mode #hostAuctionControls,
+body.spectator-mode #auctionStatus,
+body.spectator-mode .spectator-panel {
+  display: none !important;
+}
+
+body.spectator-mode #liveListActions {
+  display: flex !important;
+  justify-content: flex-end;
+}
+
+body.spectator-mode .live-list-btn {
+  border-color: rgba(255, 203, 48, 0.42);
+  background: rgba(255, 203, 48, 0.17);
+  color: #ffe89b;
+}
+
+body.spectator-mode .live-list-btn:hover {
+  border-color: rgba(255, 203, 48, 0.62);
+  background: rgba(255, 203, 48, 0.24);
+}
+
+body.spectator-mode .player-spotlight {
+  grid-template-columns: 340px minmax(0, 1fr) !important;
+  gap: 1.25rem !important;
+  border-right: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.spectator-mode .player-avatar {
+  width: 340px !important;
+  height: 340px !important;
+  border-radius: 50% !important;
+  border-width: 4px !important;
+}
+
+body.spectator-mode .player-avatar img {
+  object-fit: cover !important;
+}
+
+body.spectator-mode .player-info-card {
+  max-width: 740px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+body.spectator-mode .player-name,
+body.spectator-mode .base-price,
+body.spectator-mode .player-badges,
+body.spectator-mode .player-extra-fields {
+  background: linear-gradient(90deg, #ffd62e 0%, #f4bf11 100%);
+  color: #102140;
+  border-radius: 12px;
+  padding: 0.5rem 0.9rem;
+  margin-bottom: 0.45rem;
+}
+
+body.spectator-mode .player-name {
+  font-size: 2.05rem !important;
+  font-weight: 800;
+}
+
+body.spectator-mode .player-badges .badge {
+  background: rgba(16,33,64,0.14);
+  color: #102140;
+}
+
+body.spectator-mode .base-price span {
+  color: #102140;
+}
+
+.spectator-side-bid {
+  display: none;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.72rem;
+  border: 1px solid rgba(255,203,48,0.32);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,203,48,0.12), rgba(255,203,48,0.05));
+  margin-bottom: 0.55rem;
+}
+
+body.spectator-mode .spectator-side-bid {
+  display: flex;
+}
+
+.spectator-side-bid-label {
+  font-size: 0.7rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #f7d67a;
+  font-weight: 700;
+}
+
+.spectator-side-team {
+  display: flex;
+  align-items: center;
+  gap: 0.52rem;
+}
+
+.spectator-side-team-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  color: #fff0c8;
+}
+
+.spectator-side-team-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 5px;
+}
+
+.spectator-side-team-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: #fff4cf;
+}
+
+.spectator-side-bid-amount {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 800;
+  font-size: 2.05rem;
+  color: #ffd62e;
+  letter-spacing: 0.3px;
 }
 
 /* ============================================================

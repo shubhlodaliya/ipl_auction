@@ -5,6 +5,8 @@
 let teamCounter = 0;
 let playerCounter = 0;
 let customPlayerFields = [];
+const MANUAL_ASSET_CACHE_KEY = 'ipl_manual_asset_cache_v1';
+const MANUAL_ASSET_CACHE_LIMIT = 500;
 
 window.addEventListener('DOMContentLoaded', initManualSetup);
 
@@ -474,6 +476,71 @@ function parseBidOptions() {
   return [...new Set(options)].sort((a, b) => a - b);
 }
 
+function hashText(input) {
+  // Small deterministic hash for stable local cache keys.
+  let hash = 2166136261;
+  const str = String(input || '');
+  for (let i = 0; i < str.length; i += 1) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function readManualAssetCache() {
+  try {
+    const raw = localStorage.getItem(MANUAL_ASSET_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveManualAssetCache(cache) {
+  try {
+    const entries = Object.entries(cache || {});
+    const sliced = entries.slice(-MANUAL_ASSET_CACHE_LIMIT);
+    localStorage.setItem(MANUAL_ASSET_CACHE_KEY, JSON.stringify(Object.fromEntries(sliced)));
+  } catch (_) {
+    // Ignore cache persistence failures.
+  }
+}
+
+function isCloudinaryUrl(url) {
+  return /^https?:\/\/res\.cloudinary\.com\//i.test(String(url || '').trim());
+}
+
+function getFileAssetKey(file, kind) {
+  const sig = [
+    String(file?.name || ''),
+    String(file?.size || 0),
+    String(file?.lastModified || 0),
+    String(file?.type || '')
+  ].join('|');
+  return `${kind}-file-${hashText(sig)}`;
+}
+
+function getSourceAssetKey(source, kind) {
+  return `${kind}-source-${hashText(String(source || '').trim())}`;
+}
+
+function getCachedAssetUrl(cache, key) {
+  const url = String(cache?.[key] || '').trim();
+  return isCloudinaryUrl(url) ? url : '';
+}
+
+function setCachedAssetUrl(cache, key, url) {
+  if (!cache || !key) return;
+  const safeUrl = String(url || '').trim();
+  if (!isCloudinaryUrl(safeUrl)) return;
+
+  if (Object.prototype.hasOwnProperty.call(cache, key)) {
+    delete cache[key];
+  }
+  cache[key] = safeUrl;
+}
+
 async function getSignedUploadParams(payload) {
   const resp = await fetch('/api/cloudinary-sign-upload', {
     method: 'POST',
@@ -580,45 +647,78 @@ async function uploadRemoteSourceWithFallback(source, signPayload) {
 }
 
 async function uploadManualAssets(roomCode, teams, players) {
+  const assetCache = readManualAssetCache();
+
   for (const team of teams) {
     if (!team.logoFile) continue;
+
+    const teamAssetKey = getFileAssetKey(team.logoFile, 'team');
+    const cachedTeamLogo = getCachedAssetUrl(assetCache, teamAssetKey);
+    if (cachedTeamLogo) {
+      team.logo = cachedTeamLogo;
+      continue;
+    }
+
     team.logo = await uploadFileToCloudinary(team.logoFile, {
       roomCode,
       entityType: 'team',
       entityId: team.id,
-      fileName: team.logoFile.name || 'logo'
+      fileName: team.logoFile.name || 'logo',
+      sharedAssetKey: teamAssetKey
     });
+    setCachedAssetUrl(assetCache, teamAssetKey, team.logo);
   }
 
   for (const player of players) {
     if (player.photoFile) {
+      const playerAssetKey = getFileAssetKey(player.photoFile, 'player');
+      const cachedPlayerPhoto = getCachedAssetUrl(assetCache, playerAssetKey);
+      if (cachedPlayerPhoto) {
+        player.photo_url = cachedPlayerPhoto;
+        continue;
+      }
+
       player.photo_url = await uploadFileToCloudinary(player.photoFile, {
         roomCode,
         entityType: 'player',
         entityId: player.id,
-        fileName: player.photoFile.name || 'photo'
+        fileName: player.photoFile.name || 'photo',
+        sharedAssetKey: playerAssetKey
       });
+      setCachedAssetUrl(assetCache, playerAssetKey, player.photo_url);
       continue;
     }
 
     const source = String(player.photo_url || '').trim();
     if (!source) continue;
+    if (isCloudinaryUrl(source)) continue;
 
     const isRemoteUrl = /^https?:\/\//i.test(source);
     const isDataUrl = /^data:image\//i.test(source);
     if (!isRemoteUrl && !isDataUrl) continue;
 
+    const sourceAssetKey = getSourceAssetKey(source, isRemoteUrl ? 'player-url' : 'player-data');
+    const cachedSourcePhoto = getCachedAssetUrl(assetCache, sourceAssetKey);
+    if (cachedSourcePhoto) {
+      player.photo_url = cachedSourcePhoto;
+      continue;
+    }
+
     const signPayload = {
       roomCode,
       entityType: 'player',
       entityId: player.id,
-      fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url'
+      fileName: isRemoteUrl ? 'photo-url' : 'photo-data-url',
+      sharedAssetKey: sourceAssetKey
     };
 
     player.photo_url = isRemoteUrl
       ? await uploadRemoteSourceWithFallback(source, signPayload)
       : await uploadFileToCloudinary(source, signPayload);
+    setCachedAssetUrl(assetCache, sourceAssetKey, player.photo_url);
   }
+
+  saveManualAssetCache(assetCache);
 }
 
 async function createManualRoom() {

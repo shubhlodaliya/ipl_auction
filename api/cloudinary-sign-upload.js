@@ -11,6 +11,7 @@ module.exports = async function handler(req, res) {
     const roomCode = String(body.roomCode || '').trim();
     const entityType = String(body.entityType || '').trim();
     const entityId = String(body.entityId || '').trim();
+    const sharedAssetKeyRaw = String(body.sharedAssetKey || '').trim();
 
     if (!roomCode || !entityType || !entityId) {
       res.status(400).json({ error: 'Missing roomCode/entityType/entityId' });
@@ -28,8 +29,13 @@ module.exports = async function handler(req, res) {
 
     const timestamp = Math.floor(Date.now() / 1000);
     const safeType = entityType === 'team' ? 'teams' : 'players';
-    const folder = `ipl-auction/${roomCode}/${safeType}`;
-    const publicId = `${entityId}-${timestamp}`;
+    const sharedAssetKey = sharedAssetKeyRaw
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '')
+      .slice(0, 80);
+    const useSharedAsset = !!sharedAssetKey;
+    const folder = useSharedAsset ? 'ipl-auction/shared' : `ipl-auction/${roomCode}/${safeType}`;
+    const publicId = useSharedAsset ? `asset-${sharedAssetKey}` : `${entityId}-${timestamp}`;
     const tags = `ipl-auction,auction-${roomCode}`;
 
     const toSign = `folder=${folder}&public_id=${publicId}&tags=${tags}&timestamp=${timestamp}${apiSecret}`;

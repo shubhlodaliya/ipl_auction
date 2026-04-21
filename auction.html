@@ -91,6 +91,11 @@
             <button type="button" class="chat-quick-btn" data-msg="😎 Nice steal" onclick="sendQuickChat(this.dataset.msg, this)">😎 Nice steal</button>
             <button type="button" class="chat-quick-btn" data-msg="⏱️ Hurry up" onclick="sendQuickChat(this.dataset.msg, this)">⏱️ Hurry up</button>
           </div>
+          <div class="live-list-actions" id="liveListActions" style="display:none;">
+            <button class="btn btn-secondary live-list-btn" onclick="openLivePlayerListModal('sold')">Sold Players</button>
+            <button class="btn btn-secondary live-list-btn" onclick="openLivePlayerListModal('unsold')">Unsold Players</button>
+            <button class="btn btn-secondary live-list-btn" onclick="openLivePlayerListModal('available')">Available Players</button>
+          </div>
         </div>
       </div>
 
@@ -300,6 +305,17 @@
       </div>
       <div class="pool-summary" id="poolSummaryRow"></div>
       <div class="team-modal-content" id="poolModalContent"></div>
+    </div>
+  </div>
+
+  <div class="team-modal-overlay" id="livePlayerListModalOverlay" onclick="closeLivePlayerListModal()">
+    <div class="team-modal pool-modal live-player-list-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="livePlayerListModalTitle">Players</h3>
+        <button class="btn btn-ghost" onclick="closeLivePlayerListModal()">Close</button>
+      </div>
+      <div class="pool-summary" id="livePlayerListSummary"></div>
+      <div class="team-modal-content" id="livePlayerListContent"></div>
     </div>
   </div>
 

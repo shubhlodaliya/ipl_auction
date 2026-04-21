@@ -3185,6 +3185,46 @@ body.spectator-mode #voiceStatusBadge {
   background: rgba(29,160,255,0.14);
   border: 1px solid rgba(29,160,255,0.3);
 }
+.live-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  justify-content: flex-start;
+}
+.live-list-btn {
+  min-width: 156px;
+}
+.live-player-list-modal {
+  width: min(860px, 94vw);
+}
+.live-player-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.65rem 0.7rem;
+  border-radius: var(--radius-xs);
+  background: rgba(255,255,255,0.03);
+}
+.live-player-main {
+  min-width: 0;
+}
+.live-player-sub {
+  color: var(--text-sec);
+  font-size: 0.82rem;
+  margin-top: 0.15rem;
+}
+.live-player-detail {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+  margin-top: 0.2rem;
+}
+.live-player-row .result-player-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+}
 .team-modal-header {
   display: flex;
   align-items: center;

@@ -2,12 +2,17 @@
 // AUCTION.JS — Core real-time bidding engine
 // ============================================================
 
-const session = requireSession();
-if (!session) throw new Error('No session');
-
-const { roomCode, teamId: myTeamId, playerName } = session;
-let isHost = !!session.isHost;
-const isSpectator = !!session.isSpectator || !session.teamId;
+const auctionUrlParams = new URLSearchParams(window.location.search);
+const session = getSession();
+const roomCode = (session && session.roomCode) || String(auctionUrlParams.get('room') || '').trim();
+if (!roomCode) {
+  window.location.href = 'index.html';
+  throw new Error('No room specified');
+}
+const myTeamId = session?.teamId || null;
+const playerName = session?.playerName || 'Viewer';
+let isHost = !!session?.isHost;
+const isSpectator = !!session?.isSpectator || !session?.teamId || auctionUrlParams.get('view') === 'spectator' || !session;
 const isHostManager = !!isHost && !myTeamId;
 
 let roomConfig = null;
@@ -86,6 +91,12 @@ function applyAuctionBranding() {
   const logo = document.querySelector('.header .logo');
   if (logo) logo.textContent = `🏏 ${title}`;
   document.title = `Auction — ${title}`;
+}
+
+function updateLiveListButtonsVisibility() {
+  const actions = document.getElementById('liveListActions');
+  if (!actions) return;
+  actions.style.display = isManualAuction ? 'flex' : 'none';
 }
 
 async function backfillManualAuctionTitle() {
@@ -256,7 +267,7 @@ function syncLocalHostState() {
   }
 
   updateHostControlsUi();
-  saveSession({ ...session, isHost });
+  saveSession(session ? { ...session, isHost } : { roomCode, teamId: myTeamId, playerName, isHost });
   return Promise.resolve(false);
 }
 
@@ -271,7 +282,7 @@ async function claimHostAuthority(reason = 'host takeover') {
   if (!canClaimAsOriginalHost && !canClaimAsFallbackHost && currentHostUid === authUid) {
     isHost = true;
     updateHostControlsUi();
-    saveSession({ ...session, isHost: true });
+    saveSession(session ? { ...session, isHost: true } : { roomCode, teamId: myTeamId, playerName, isHost: true });
     registerHostPresence();
     return true;
   }
@@ -291,7 +302,7 @@ async function claimHostAuthority(reason = 'host takeover') {
       currentHostUid = authUid;
       isHost = true;
       updateHostControlsUi();
-      saveSession({ ...session, isHost: true });
+      saveSession(session ? { ...session, isHost: true } : { roomCode, teamId: myTeamId, playerName, isHost: true });
       registerHostPresence();
       if (reason) showToast(authUid === roomHostUid ? 'Host authority restored.' : 'Host authority transferred.', 'success');
       return true;
@@ -452,6 +463,7 @@ async function initAuction() {
     ? (room.manualTeams || {})
     : Object.fromEntries(IPL_TEAMS.map(t => [t.id, t]));
   timerSeconds = roomConfig.timerSeconds || 30;
+  updateLiveListButtonsVisibility();
 
   // Load players
   allPlayers = isManualAuction ? (room.manualPlayers || []) : await loadPlayers();
@@ -664,6 +676,8 @@ function applySpectatorUi() {
 
   const quickToolbar = document.getElementById('quickChatToolbar');
   if (quickToolbar) quickToolbar.style.display = isHostManager ? 'flex' : 'none';
+
+  updateLiveListButtonsVisibility();
 
   const soundToggleBtn = document.getElementById('soundToggleBtn');
   if (soundToggleBtn) soundToggleBtn.style.display = isHostManager ? 'inline-flex' : 'none';
@@ -1107,6 +1121,7 @@ function renderBidDisplay(data, player = null) {
   if (data.status === 'bidding') {
     if (isBidUiSpectator()) {
       updateSpectatorPanel(data);
+      updateLiveListButtonsVisibility();
       return;
     }
 
@@ -1279,6 +1294,8 @@ function renderBidDisplay(data, player = null) {
 
     if (bidPanelEl) bidPanelEl.classList.remove('motion-stagger');
   }
+
+  updateLiveListButtonsVisibility();
 }
 
 async function sellNow() {
@@ -2318,6 +2335,164 @@ function getPoolStats(poolId) {
   });
 
   return stats;
+}
+
+function getPlayerQueueIndex(playerId) {
+  const normalized = String(playerId || '').trim();
+  if (!normalized) return -1;
+  const queueIndex = playerQueue.findIndex((id) => String(id) === normalized);
+  if (queueIndex >= 0) return queueIndex;
+  return allPlayers.findIndex((player) => String(player.id) === normalized);
+}
+
+function getLivePlayerStatus(playerId) {
+  const normalized = String(playerId || '').trim();
+  if (!normalized) return 'available';
+  const sold = !!soldPlayersData[normalized] || !!soldPlayersData[String(normalized)];
+  if (sold) return 'sold';
+
+  if (currentAuctionData?.playerId && String(currentAuctionData.playerId) === normalized) {
+    if (currentAuctionData.status === 'sold') return 'sold';
+    if (currentAuctionData.status === 'unsold') return 'unsold';
+    return 'available';
+  }
+
+  const queueIndex = getPlayerQueueIndex(normalized);
+  if (queueIndex >= 0 && queueIndex < currentIndex) return 'unsold';
+  return 'available';
+}
+
+function openLivePlayerListModal(type) {
+  if (!isManualAuction) return;
+
+  const safeType = type === 'sold' || type === 'unsold' ? type : 'available';
+  const overlayEl = document.getElementById('livePlayerListModalOverlay');
+  const titleEl = document.getElementById('livePlayerListModalTitle');
+  const summaryEl = document.getElementById('livePlayerListSummary');
+  const contentEl = document.getElementById('livePlayerListContent');
+  if (!overlayEl || !titleEl || !summaryEl || !contentEl) return;
+
+  const filteredPlayers = [...allPlayers]
+    .filter((player) => getLivePlayerStatus(player.id) === safeType)
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
+  const rows = filteredPlayers.map((player) => {
+    const status = getLivePlayerStatus(player.id);
+    const soldInfo = soldPlayersData[player.id] || soldPlayersData[String(player.id)] || null;
+    const buyer = soldInfo?.teamId ? (teamsData[soldInfo.teamId] || getRoomTeamMeta(soldInfo.teamId) || null) : null;
+    const buyerLabel = buyer ? (buyer.short || buyer.name || soldInfo.teamId) : '';
+    const avatarHtml = player.photo_url
+      ? `<img src="${player.photo_url}" alt="${player.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
+      : getPlayerInitials(player.name);
+    const detailText = status === 'sold'
+      ? `${buyerLabel} · ${formatPrice(Number(soldInfo?.soldPrice || 0))}`
+      : status === 'unsold'
+        ? 'Moved to unsold list'
+        : 'Still available in live pool';
+
+    return `
+      <div class="live-player-row ${status}">
+        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${avatarHtml}</div>
+        <div class="live-player-main">
+          <div class="result-player-name">${player.name}</div>
+          <div class="live-player-sub">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>
+          <div class="live-player-detail">${detailText}</div>
+        </div>
+        <span class="pool-status ${status}">${status.toUpperCase()}</span>
+      </div>
+    `;
+  }).join('');
+
+  titleEl.textContent = `${safeType.charAt(0).toUpperCase()}${safeType.slice(1)} Players`;
+  summaryEl.innerHTML = `<span class="pool-summary-pill ${safeType}">${filteredPlayers.length} players</span>`;
+  contentEl.innerHTML = rows || '<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players found for this view.</p></div>';
+  overlayEl.classList.add('visible');
+}
+
+function closeLivePlayerListModal() {
+  const overlayEl = document.getElementById('livePlayerListModalOverlay');
+  if (overlayEl) overlayEl.classList.remove('visible');
+}
+
+function getPlayerQueueIndex(playerId) {
+  const normalized = String(playerId || '').trim();
+  if (!normalized) return -1;
+  const idx = playerQueue.findIndex((id) => String(id) === normalized);
+  if (idx >= 0) return idx;
+  return allPlayers.findIndex((player) => String(player.id) === normalized);
+}
+
+function getLivePlayerStatus(playerId) {
+  const normalized = String(playerId || '').trim();
+  if (!normalized) return 'available';
+  const sold = !!soldPlayersData[normalized] || !!soldPlayersData[String(normalized)];
+  if (sold) return 'sold';
+
+  if (currentAuctionData?.playerId && String(currentAuctionData.playerId) === normalized) {
+    if (currentAuctionData.status === 'sold') return 'sold';
+    if (currentAuctionData.status === 'unsold') return 'unsold';
+    return 'available';
+  }
+
+  const queueIndex = getPlayerQueueIndex(normalized);
+  if (queueIndex >= 0 && queueIndex < currentIndex) return 'unsold';
+  return 'available';
+}
+
+function updateLiveListButtonsVisibility() {
+  const actions = document.getElementById('liveListActions');
+  if (!actions) return;
+  actions.style.display = isManualAuction ? 'flex' : 'none';
+}
+
+function openLivePlayerListModal(type) {
+  if (!isManualAuction) return;
+
+  const overlayEl = document.getElementById('livePlayerListModalOverlay');
+  const titleEl = document.getElementById('livePlayerListModalTitle');
+  const summaryEl = document.getElementById('livePlayerListSummary');
+  const contentEl = document.getElementById('livePlayerListContent');
+  if (!overlayEl || !titleEl || !summaryEl || !contentEl) return;
+
+  const safeType = type === 'sold' || type === 'unsold' ? type : 'available';
+  const sortedPlayers = [...allPlayers].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  const rows = sortedPlayers.filter((player) => getLivePlayerStatus(player.id) === safeType).map((player) => {
+    const status = getLivePlayerStatus(player.id);
+    const soldInfo = soldPlayersData[player.id] || soldPlayersData[String(player.id)] || null;
+    const buyer = soldInfo?.teamId ? (teamsData[soldInfo.teamId] || getRoomTeamMeta(soldInfo.teamId) || null) : null;
+    const buyerLabel = buyer ? (buyer.short || buyer.name || soldInfo.teamId) : '';
+    const avatarHtml = player.photo_url
+      ? `<img src="${player.photo_url}" alt="${player.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
+      : getPlayerInitials(player.name);
+    const detailLine = status === 'sold'
+      ? `${buyerLabel} · ${formatPrice(Number(soldInfo?.soldPrice || 0))}`
+      : status === 'unsold'
+        ? 'Moved to unsold list'
+        : 'Still available in live pool';
+
+    return `
+      <div class="live-player-row ${status}">
+        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${avatarHtml}</div>
+        <div class="live-player-main">
+          <div class="result-player-name">${player.name}</div>
+          <div class="live-player-sub">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>
+          <div class="live-player-detail">${detailLine}</div>
+        </div>
+        <span class="pool-status ${status}">${status.toUpperCase()}</span>
+      </div>
+    `;
+  }).join('');
+
+  const count = rows ? (rows.match(/class="live-player-row/g) || []).length : 0;
+  titleEl.textContent = `${safeType.toUpperCase()} Players`;
+  summaryEl.innerHTML = `<span class="pool-summary-pill ${safeType}">${count} players</span>`;
+  contentEl.innerHTML = rows || '<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players found for this view.</p></div>';
+  overlayEl.classList.add('visible');
+}
+
+function closeLivePlayerListModal() {
+  const overlayEl = document.getElementById('livePlayerListModalOverlay');
+  if (overlayEl) overlayEl.classList.remove('visible');
 }
 
 function renderCurrentPoolBanner() {

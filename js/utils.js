@@ -162,8 +162,9 @@ function requireSession(redirectTo = 'index.html') {
 }
 
 function buildInviteUrl(roomCode, passcode = null, includePasscode = false) {
-  const url = new URL(window.location.origin + window.location.pathname.replace(/[^/]+$/, 'index.html'));
+  const url = new URL(window.location.origin + window.location.pathname.replace(/[^/]+$/, 'auction.html'));
   url.searchParams.set('room', roomCode);
+  url.searchParams.set('view', 'spectator');
   if (includePasscode && passcode) {
     url.searchParams.set('passcode', passcode);
   }

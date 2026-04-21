@@ -341,10 +341,6 @@ async function joinRoom() {
 // WATCH LIVE AUCTION (SPECTATOR)
 // ============================================================
 async function watchLiveAuction() {
-  if (typeof requireAuthForAction === 'function' && !requireAuthForAction('Please login before opening live auction view.')) {
-    return;
-  }
-
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   const name = document.getElementById('joinName').value.trim();
 

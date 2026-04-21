@@ -2959,40 +2959,125 @@ body.spectator-mode #voiceStatusBadge {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 2500;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.18s ease;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255,255,255,0.12), transparent 22%),
+    radial-gradient(circle at 50% 50%, rgba(255,203,48,0.11), transparent 34%),
+    rgba(3, 6, 15, 0.58);
+  backdrop-filter: blur(5px);
 }
 .result-overlay.visible { opacity: 1; }
 .result-banner {
-  padding: 2rem 4rem;
-  border-radius: var(--radius);
+  position: relative;
+  min-width: min(720px, calc(100vw - 2.5rem));
+  padding: 1.9rem 3rem 1.7rem;
+  border-radius: 24px;
   text-align: center;
   border: 2px solid transparent;
   backdrop-filter: blur(20px);
-  animation: bannerPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform: translateY(18px) scale(0.92);
+  opacity: 0;
+  overflow: hidden;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.45);
 }
 .result-banner.sold {
-  background: rgba(0,196,140,0.15);
-  border-color: var(--green);
-  box-shadow: 0 0 60px rgba(0,196,140,0.3);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,0.12), transparent 26%),
+    linear-gradient(135deg, rgba(0,196,140,0.2), rgba(10,26,34,0.94));
+  border-color: rgba(0,196,140,0.75);
+  box-shadow: 0 0 0 1px rgba(0,196,140,0.18) inset, 0 28px 80px rgba(0,0,0,0.45), 0 0 40px rgba(0,196,140,0.2);
 }
 .result-banner.unsold {
-  background: rgba(255,77,77,0.12);
-  border-color: var(--red);
-  box-shadow: 0 0 60px rgba(255,77,77,0.25);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,0.12), transparent 26%),
+    linear-gradient(135deg, rgba(255,77,77,0.18), rgba(34,10,18,0.94));
+  border-color: rgba(255,77,77,0.78);
+  box-shadow: 0 0 0 1px rgba(255,77,77,0.14) inset, 0 28px 80px rgba(0,0,0,0.45), 0 0 40px rgba(255,77,77,0.2);
+}
+.result-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.22) 48%, transparent 58%);
+  transform: translateX(-130%) skewX(-18deg);
+  opacity: 0;
+  pointer-events: none;
+}
+.result-banner.animate-in {
+  animation: resultBannerIntro 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.result-banner.animate-in::before {
+  animation: resultSweep 900ms ease-out 120ms forwards;
 }
 .result-word {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 4rem;
-  font-weight: 700;
-  letter-spacing: 4px;
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 900;
+  letter-spacing: 6px;
   display: block;
+  text-transform: uppercase;
+  line-height: 0.98;
+  text-shadow: 0 6px 22px rgba(0,0,0,0.35);
 }
-.result-banner.sold .result-word { color: var(--green); }
-.result-banner.unsold .result-word { color: var(--red); }
-.result-detail { font-size: 1rem; color: var(--text-sec); margin-top: 0.3rem; }
+.result-banner.sold .result-word { color: #7dffe0; }
+.result-banner.unsold .result-word { color: #ffb1b1; }
+.result-detail {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.88);
+  margin-top: 0.7rem;
+  max-width: 58ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+.result-banner.sold .result-detail {
+  color: rgba(228, 255, 247, 0.86);
+}
+.result-banner.unsold .result-detail {
+  color: rgba(255, 230, 230, 0.86);
+}
+
+@keyframes resultBannerIntro {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.92);
+    filter: blur(8px);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes resultSweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-130%) skewX(-18deg);
+  }
+  18% { opacity: 0.8; }
+  100% {
+    opacity: 0;
+    transform: translateX(140%) skewX(-18deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .result-banner {
+    min-width: calc(100vw - 1.4rem);
+    padding: 1.35rem 1.1rem 1.2rem;
+    border-radius: 18px;
+  }
+  .result-detail {
+    font-size: 0.92rem;
+  }
+}
 
 .pool-start-banner {
   position: fixed;

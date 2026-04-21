@@ -3895,10 +3895,24 @@ function showResultBanner(type, word, detail) {
   wordEl.textContent = word;
   detailEl.textContent = detail;
   overlay.classList.add('visible');
+
+  banner.classList.remove('animate-in');
+  void banner.offsetWidth;
+  banner.classList.add('animate-in');
+
+  window.clearTimeout(window.resultBannerHideTimer);
+  window.resultBannerHideTimer = window.setTimeout(() => {
+    overlay.classList.remove('visible');
+    banner.classList.remove('animate-in');
+  }, 2600);
 }
 
 function hideResultBanner() {
-  document.getElementById('resultOverlay').classList.remove('visible');
+  const overlay = document.getElementById('resultOverlay');
+  const banner = document.getElementById('resultBanner');
+  if (overlay) overlay.classList.remove('visible');
+  if (banner) banner.classList.remove('animate-in');
+  window.clearTimeout(window.resultBannerHideTimer);
 }
 
 // ---- CLEANUP ----

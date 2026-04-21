@@ -765,13 +765,17 @@ function updateSpectatorSideBid(data = null) {
 function updateBroadcastView(data) {
   if (!data) return;
   const player = playerMap[data.playerId];
+  const fallbackAvatar = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2216%22 fill=%22%232f4058%22/><text x=%2250%22 y=%2255%22 fill=%22%23a98cff%22 font-size=%2240%22 font-family=%22Arial%22 text-anchor=%22middle%22 alignment-baseline=%22central%22>🏏</text></svg>`;
   
   // Set badges and basic info
   if (player) {
     const pName = document.getElementById('broadcastPlayerName');
     if (pName) pName.textContent = player.name;
     const pImg = document.getElementById('broadcastPlayerImg');
-    if (pImg) pImg.src = player.image || 'assets/default-avatar.png';
+    if (pImg) {
+      pImg.src = player.photo_url || player.image || player.image_url || fallbackAvatar;
+      pImg.onerror = () => { pImg.src = fallbackAvatar; };
+    }
     
     const pMeta = document.getElementById('broadcastPlayerMeta');
     if (pMeta) {

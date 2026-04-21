@@ -1154,14 +1154,19 @@ function renderPlayerSpotlight(player) {
   const ageText = player.age ? ` · Age ${player.age}` : '';
   const categoryText = String(player.category || '').trim();
   const roleText = String(player.role || '').trim();
-  const showCategory = !!categoryText && categoryText.toLowerCase() !== roleText.toLowerCase();
+  const showCategory = !!categoryText && categoryText.toLowerCase() !== roleText.toLowerCase() && categoryText.toLowerCase() !== 'manual';
   const coreFieldKeys = new Set([
     'id', 'name', 'role', 'country', 'base_price_lakh', 'category', 'photo_url',
     'auction_status', 'extraFields', 'age', 'set_number', 'poolId', 'pool_id',
     'team', 'teamId', 'team_id', 'soldPrice', 'sold_price', 'soldBy', 'sold_by'
   ]);
   const dynamicFieldChips = Object.entries(player || {})
-    .filter(([key, value]) => !coreFieldKeys.has(key) && String(value || '').trim())
+    .filter(([key, value]) => {
+      if (coreFieldKeys.has(key)) return false;
+      const safe = String(value || '').trim();
+      if (!safe) return false;
+      return safe.toLowerCase() !== 'manual';
+    })
     .map(([key, value]) => {
       const label = String(key || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
       const safeValue = String(value || '').trim();
@@ -1169,7 +1174,10 @@ function renderPlayerSpotlight(player) {
     }).join('');
   const extraFields = player.extraFields && typeof player.extraFields === 'object' ? player.extraFields : {};
   const extraFieldChips = Object.entries(extraFields)
-    .filter(([, value]) => String(value || '').trim())
+    .filter(([, value]) => {
+      const safe = String(value || '').trim();
+      return !!safe && safe.toLowerCase() !== 'manual';
+    })
     .map(([key, value]) => {
       const label = String(key || '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
       const safeVal = String(value || '').trim();
@@ -1187,7 +1195,7 @@ function renderPlayerSpotlight(player) {
       <h2 class="player-name">${player.name}</h2>
       <div class="player-badges">
         <span class="badge badge-role">${icon} ${player.role}</span>
-        <span class="badge badge-country">${flag} ${player.country}${ageText}</span>
+        ${String(player.country || '').trim().toLowerCase() !== 'manual' ? `<span class="badge badge-country">${flag} ${player.country}${ageText}</span>` : ''}
         ${showCategory ? `<span class="badge badge-category-${player.category}">${player.category}</span>` : ''}
       </div>
       ${dynamicFieldChips ? `<div class="player-extra-fields">${dynamicFieldChips}</div>` : ''}

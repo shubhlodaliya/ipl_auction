@@ -4688,10 +4688,11 @@ body.spectator-mode .player-avatar {
   height: 340px !important;
   border-radius: 50% !important;
   border-width: 5px !important;
-  border-color: rgba(255, 214, 46, 0.6) !important;
-  box-shadow: 
-    0 0 40px rgba(255, 214, 46, 0.35),
-    0 0 80px rgba(255, 214, 46, 0.15),
+  border-color: rgba(255, 214, 46, 0.95) !important;
+  box-shadow:
+    0 0 0 8px rgba(255, 214, 46, 0.18),
+    0 0 34px rgba(255, 214, 46, 0.24),
+    0 0 68px rgba(255, 214, 46, 0.08),
     inset 0 0 40px rgba(255, 255, 255, 0.08) !important;
   position: relative;
   overflow: hidden;
@@ -4703,6 +4704,17 @@ body.spectator-mode .player-avatar::before {
   inset: 0;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), transparent 50%);
+  pointer-events: none;
+}
+
+body.spectator-mode .player-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  border: 3px dashed rgba(255, 214, 46, 0.9);
+  opacity: 0.72;
+  animation: spectatorOrbit 6.5s linear infinite;
   pointer-events: none;
 }
 
@@ -4782,7 +4794,33 @@ body.spectator-mode .base-price span {
 }
 
 body.spectator-mode .player-extra-fields {
-  font-size: 1.05rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+  padding: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin-bottom: 0.75rem;
+  font-size: 1.02rem;
+}
+
+body.spectator-mode .badge-extra-field {
+  background: rgba(29, 160, 255, 0.12) !important;
+  border: 1px solid rgba(29, 160, 255, 0.42) !important;
+  color: #d5ecff !important;
+  border-radius: 999px;
+  padding: 0.34rem 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+body.spectator-mode .player-extra-fields .badge-extra-field {
+  background: rgba(29, 160, 255, 0.12) !important;
+}
+
+@keyframes spectatorOrbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .spectator-side-bid {

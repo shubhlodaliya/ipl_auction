@@ -77,7 +77,8 @@ const voiceRtcConfig = {
 
 function getAuctionBrandTitle() {
   const title = String(roomConfig?.auctionTitle || '').trim();
-  return title || 'IPL Auction';
+  if (title) return title;
+  return roomConfig?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
 }
 
 function applyAuctionBranding() {
@@ -85,6 +86,19 @@ function applyAuctionBranding() {
   const logo = document.querySelector('.header .logo');
   if (logo) logo.textContent = `🏏 ${title}`;
   document.title = `Auction — ${title}`;
+}
+
+async function backfillManualAuctionTitle() {
+  if (!isHost || roomConfig?.auctionType !== 'manual') return;
+  const existing = String(roomConfig?.auctionTitle || '').trim();
+  if (existing) return;
+  const fallbackTitle = 'My Auction';
+  roomConfig.auctionTitle = fallbackTitle;
+  try {
+    await db.ref(`rooms/${roomCode}/config/auctionTitle`).set(fallbackTitle);
+  } catch (_) {
+    // Keep local fallback even if write fails.
+  }
 }
 
 // ---- Firebase listeners ----
@@ -407,6 +421,7 @@ async function initAuction() {
   if (!roomSnap.exists()) { alert('Room not found'); window.location.href = 'index.html'; return; }
   const room = roomSnap.val();
   roomConfig = room.config || {};
+  await backfillManualAuctionTitle();
   applyAuctionBranding();
   roomHostUid = roomConfig.hostUid || null;
   currentHostUid = roomConfig.currentHostUid || roomConfig.hostUid || null;

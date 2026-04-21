@@ -22,7 +22,17 @@ let iconPickTeamId = null;
 
 function getAuctionBrandTitle() {
   const title = String(roomConfig?.auctionTitle || '').trim();
-  return title || 'IPL Auction';
+  if (title) return title;
+  return roomConfig?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
+}
+
+function backfillManualAuctionTitle() {
+  if (!isHost || roomConfig?.auctionType !== 'manual') return;
+  const existing = String(roomConfig?.auctionTitle || '').trim();
+  if (existing) return;
+  const fallbackTitle = 'My Auction';
+  roomConfig.auctionTitle = fallbackTitle;
+  db.ref(`rooms/${roomCode}/config/auctionTitle`).set(fallbackTitle).catch(() => {});
 }
 
 function applyAuctionBranding() {
@@ -171,6 +181,7 @@ function initLobby() {
     if (!snap.exists()) { alert('Room not found!'); window.location.href = 'index.html'; return; }
     const room = snap.val();
     roomConfig = room.config || {};
+    backfillManualAuctionTitle();
     applyAuctionBranding();
 
     const pdfBtn = document.getElementById('downloadPlayersPdfBtn');

@@ -216,7 +216,8 @@
         showToast('Invite link unavailable.', 'error');
         return;
       }
-      const text = encodeURIComponent(`Join my IPL Auction room: ${link}`);
+      const auctionTitle = window.lobbyAuctionBrandTitle || 'Auction';
+      const text = encodeURIComponent(`Join my ${auctionTitle} room: ${link}`);
       window.open(`https://wa.me/?text=${text}`, '_blank');
     }
     function leaveRoom() {

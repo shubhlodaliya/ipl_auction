@@ -75,6 +75,18 @@ const voiceRtcConfig = {
   ]
 };
 
+function getAuctionBrandTitle() {
+  const title = String(roomConfig?.auctionTitle || '').trim();
+  return title || 'IPL Auction';
+}
+
+function applyAuctionBranding() {
+  const title = getAuctionBrandTitle();
+  const logo = document.querySelector('.header .logo');
+  if (logo) logo.textContent = `🏏 ${title}`;
+  document.title = `Auction — ${title}`;
+}
+
 // ---- Firebase listeners ----
 let listeners = {};
 
@@ -395,6 +407,7 @@ async function initAuction() {
   if (!roomSnap.exists()) { alert('Room not found'); window.location.href = 'index.html'; return; }
   const room = roomSnap.val();
   roomConfig = room.config || {};
+  applyAuctionBranding();
   roomHostUid = roomConfig.hostUid || null;
   currentHostUid = roomConfig.currentHostUid || roomConfig.hostUid || null;
   const authUid = getLocalAuthUid();

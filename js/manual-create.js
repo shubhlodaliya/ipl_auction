@@ -627,6 +627,8 @@ async function createManualRoom() {
 
   const hostName = document.getElementById('hostName').value.trim();
   const passcode = document.getElementById('invitePasscode').value.trim();
+  const auctionTitleInput = document.getElementById('auctionTitle');
+  const auctionTitle = String(auctionTitleInput?.value || '').trim().slice(0, 40) || 'My Auction';
   const budget = Number(document.getElementById('budgetLakh').value || 0);
   const maxSquadSize = Number(document.getElementById('maxSquadSize').value || 0);
   const minSquadSize = Number(document.getElementById('minSquadSize').value || 0);
@@ -736,6 +738,7 @@ async function createManualRoom() {
     await db.ref(`rooms/${code}`).set({
       config: {
         auctionType: 'manual',
+        auctionTitle,
         hostTeamId: hostTeam ? hostTeam.id : null,
         hostManagerOnly,
         hostBidsForAllTeams,

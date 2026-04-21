@@ -20,6 +20,19 @@ let iconPicksListener = null;
 let hasMyTeam = false;
 let iconPickTeamId = null;
 
+function getAuctionBrandTitle() {
+  const title = String(roomConfig?.auctionTitle || '').trim();
+  return title || 'IPL Auction';
+}
+
+function applyAuctionBranding() {
+  const title = getAuctionBrandTitle();
+  const logo = document.querySelector('.header .logo');
+  if (logo) logo.textContent = `🏏 ${title}`;
+  document.title = `Lobby — ${title}`;
+  window.lobbyAuctionBrandTitle = title;
+}
+
 function isPaddleMode() {
   return !!(roomConfig && roomConfig.auctionType === 'manual' && roomConfig.hostBidsForAllTeams);
 }
@@ -158,6 +171,7 @@ function initLobby() {
     if (!snap.exists()) { alert('Room not found!'); window.location.href = 'index.html'; return; }
     const room = snap.val();
     roomConfig = room.config || {};
+    applyAuctionBranding();
 
     const pdfBtn = document.getElementById('downloadPlayersPdfBtn');
     if (pdfBtn) {

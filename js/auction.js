@@ -1197,7 +1197,6 @@ function renderPlayerSpotlight(player) {
       <h2 class="player-name">${player.name}</h2>
       <div class="player-badges">
         <span class="badge badge-role">${icon} ${player.role}</span>
-        ${String(player.country || '').trim() && String(player.country || '').trim().toLowerCase() !== 'manual' ? `<span class="badge badge-country">${flag} ${player.country}${ageText}</span>` : ''}
         ${showCategory ? `<span class="badge badge-category-${player.category}">${player.category}</span>` : ''}
       </div>
       ${dynamicFieldChips ? `<div class="player-extra-fields">${dynamicFieldChips}</div>` : ''}

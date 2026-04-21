@@ -5554,13 +5554,14 @@ body.broadcast-mode #teamModalOverlay {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4rem;
+  padding: 0 4rem 0 6rem;
 }
 
 /* LEFT SIDE - PLAYER */
 .broadcast-player-section {
   display: flex;
   align-items: center;
+  margin-left: 1rem;
 }
 
 .broadcast-photo-wrapper {

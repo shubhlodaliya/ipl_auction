@@ -505,6 +505,107 @@ input[type=range]::-webkit-slider-thumb {
   padding: 0.7rem 1rem 0.2rem;
 }
 
+.past-auctions-wrap {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.past-auctions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+
+.past-auctions-head h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+}
+
+.past-auctions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.past-auction-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  padding: 0.62rem 0.7rem;
+}
+
+.past-auction-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.past-auction-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.past-auction-code {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  letter-spacing: 0.4px;
+}
+
+.past-auction-status {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.16rem 0.48rem;
+  border: 1px solid rgba(255,255,255,0.16);
+  color: var(--text-sec);
+}
+
+.past-auction-status.lobby {
+  color: #9fd6ff;
+  border-color: rgba(29,160,255,0.42);
+  background: rgba(29,160,255,0.12);
+}
+
+.past-auction-status.auction {
+  color: #9dffde;
+  border-color: rgba(0,196,140,0.45);
+  background: rgba(0,196,140,0.12);
+}
+
+.past-auction-status.finished {
+  color: #ffe8a8;
+  border-color: rgba(255,203,48,0.45);
+  background: rgba(255,203,48,0.13);
+}
+
+.past-auction-meta {
+  margin-top: 0.28rem;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+.past-auction-actions {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.past-auction-actions .btn {
+  min-height: 32px;
+  padding: 0.32rem 0.6rem;
+  font-size: 0.78rem;
+}
+
 .watchlist-toolbar {
   display: flex;
   align-items: center;

@@ -14,12 +14,283 @@ function getAuthUid() {
   return String(localStorage.getItem('ipl_auth_uid') || '').trim();
 }
 
+function formatHistoryDate(ts) {
+  const time = Number(ts || 0);
+  if (!Number.isFinite(time) || time <= 0) return 'Unknown time';
+  try {
+    return new Date(time).toLocaleString();
+  } catch (_) {
+    return 'Unknown time';
+  }
+}
+
+function escapeHtml(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getHistoryPath(authUid) {
+  return `users/${authUid}/auctionHistory`;
+}
+
 window.addEventListener('DOMContentLoaded', initCreatePage);
 
 function initCreatePage() {
   initAuctionModeToggle();
   initSquadRangeControls();
+  renderPastAuctions();
+  window.addEventListener('focus', renderPastAuctions);
+  window.addEventListener('storage', (event) => {
+    if (!event || !String(event.key || '').startsWith('ipl_auth_')) return;
+    renderPastAuctions();
+  });
 }
+
+async function renderPastAuctions() {
+  const listEl = document.getElementById('pastAuctionsList');
+  if (!listEl) return;
+
+  const authUid = getAuthUid();
+  if (!authUid) {
+    listEl.innerHTML = '<div class="state-empty" style="padding:0.85rem 0;"><p style="font-size:0.82rem;">Login to view your past auctions.</p></div>';
+    return;
+  }
+
+  listEl.innerHTML = '<div class="state-loading" style="padding:0.85rem 0;"><div class="spinner"></div></div>';
+
+  try {
+    const snap = await db.ref(getHistoryPath(authUid)).get();
+    if (!snap.exists()) {
+      listEl.innerHTML = '<div class="state-empty" style="padding:0.85rem 0;"><p style="font-size:0.82rem;">No past auctions yet.</p></div>';
+      return;
+    }
+
+    const historyMap = snap.val() || {};
+    const rows = Object.values(historyMap)
+      .filter((item) => item && item.roomCode)
+      .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
+
+    if (!rows.length) {
+      listEl.innerHTML = '<div class="state-empty" style="padding:0.85rem 0;"><p style="font-size:0.82rem;">No past auctions yet.</p></div>';
+      return;
+    }
+
+    listEl.innerHTML = rows.slice(0, 20).map((row) => {
+      const title = escapeHtml(row.title || 'Untitled Auction');
+      const roomCode = escapeHtml(String(row.roomCode || '').toUpperCase());
+      const status = String(row.status || 'lobby').toLowerCase();
+      const statusClass = status === 'auction' ? 'auction' : status === 'finished' ? 'finished' : 'lobby';
+      const updatedAtLabel = formatHistoryDate(row.updatedAt || row.createdAt);
+      return `
+        <div class="past-auction-card">
+          <div class="past-auction-top">
+            <div>
+              <div class="past-auction-title">${title}</div>
+              <div class="past-auction-code">Room: ${roomCode}</div>
+            </div>
+            <span class="past-auction-status ${statusClass}">${escapeHtml(status)}</span>
+          </div>
+          <div class="past-auction-meta">Updated: ${escapeHtml(updatedAtLabel)}</div>
+          <div class="past-auction-actions">
+            <button class="btn btn-secondary" type="button" onclick="reopenPastAuction('${roomCode}')">Reopen</button>
+            <button class="btn btn-ghost" type="button" onclick="restartPastAuction('${roomCode}')">Restart</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Failed to load past auctions:', err);
+    listEl.innerHTML = '<div class="state-empty" style="padding:0.85rem 0;"><p style="font-size:0.82rem;">Could not load past auctions.</p></div>';
+  }
+}
+
+async function reserveAvailableRoomCode(maxAttempts = 30) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const code = generateRoomCode();
+    const snap = await db.ref(`rooms/${code}`).get();
+    if (!snap.exists()) return code;
+  }
+  throw new Error('Could not generate unique room code');
+}
+
+async function upsertAuctionHistory(authUid, roomCode, patch = {}) {
+  if (!authUid || !roomCode) return;
+  const now = Date.now();
+  await db.ref(`${getHistoryPath(authUid)}/${roomCode}`).update({
+    roomCode,
+    updatedAt: now,
+    ...patch
+  });
+}
+
+async function reopenPastAuction(roomCode) {
+  const authUid = getAuthUid();
+  if (!authUid) {
+    showToast('Please login first.', 'error');
+    return;
+  }
+
+  try {
+    const snap = await db.ref(`rooms/${roomCode}`).get();
+    if (!snap.exists()) {
+      showToast('Auction room no longer exists.', 'error');
+      return;
+    }
+
+    const room = snap.val() || {};
+    const config = room.config || {};
+    const hostUid = String(config.hostUid || '').trim();
+    if (hostUid && hostUid !== authUid) {
+      showToast('Only the original host can reopen this auction.', 'error');
+      return;
+    }
+
+    const hostTeamId = config.hostTeamId || Object.keys(room.teams || {}).find((id) => room.teams[id]?.isHost) || Object.keys(room.teams || {})[0] || null;
+    const hostName = room.teams?.[hostTeamId]?.ownerName || String(localStorage.getItem('ipl_auth_name') || '').trim() || 'Host';
+
+    let targetStatus = String(config.status || 'lobby');
+    if (targetStatus === 'finished') {
+      const queue = Array.isArray(room.playerQueue) ? room.playerQueue : [];
+      const idx = Number(room.currentIndex || 0);
+      const canResume = queue.length > 0 && idx < queue.length && !!room.currentAuction;
+      targetStatus = canResume ? 'auction' : 'lobby';
+      await db.ref(`rooms/${roomCode}/config`).update({
+        status: targetStatus,
+        reopenedAt: Date.now(),
+        reopenedBy: authUid
+      });
+    }
+
+    await upsertAuctionHistory(authUid, roomCode, {
+      title: String(config.auctionTitle || '').trim() || (config.auctionType === 'manual' ? 'My Auction' : 'IPL Auction'),
+      status: targetStatus,
+      auctionType: config.auctionType || 'random',
+      hostTeamId: hostTeamId || null
+    });
+
+    saveSession({ roomCode, teamId: hostTeamId, playerName: hostName, isHost: true });
+    window.location.href = targetStatus === 'auction'
+      ? `auction.html?room=${encodeURIComponent(roomCode)}`
+      : 'lobby.html';
+  } catch (err) {
+    console.error('Reopen failed:', err);
+    showToast('Failed to reopen auction.', 'error');
+  }
+}
+
+async function restartPastAuction(sourceCode) {
+  const authUid = getAuthUid();
+  if (!authUid) {
+    showToast('Please login first.', 'error');
+    return;
+  }
+
+  try {
+    const sourceSnap = await db.ref(`rooms/${sourceCode}`).get();
+    if (!sourceSnap.exists()) {
+      showToast('Original auction room not found.', 'error');
+      return;
+    }
+
+    const sourceRoom = sourceSnap.val() || {};
+    const sourceConfig = sourceRoom.config || {};
+    const hostUid = String(sourceConfig.hostUid || '').trim();
+    if (hostUid && hostUid !== authUid) {
+      showToast('Only the original host can restart this auction.', 'error');
+      return;
+    }
+
+    const code = await reserveAvailableRoomCode();
+    const hostTeamId = sourceConfig.hostTeamId || Object.keys(sourceRoom.teams || {}).find((id) => sourceRoom.teams[id]?.isHost) || Object.keys(sourceRoom.teams || {})[0] || null;
+    if (!hostTeamId) {
+      showToast('Host team is missing in the source auction.', 'error');
+      return;
+    }
+
+    const sourceHostTeam = sourceRoom.teams?.[hostTeamId] || {};
+    const sourceManualTeams = sourceRoom.manualTeams || {};
+    const isManual = sourceConfig.auctionType === 'manual';
+    const hostTeamMeta = isManual
+      ? (sourceManualTeams[hostTeamId] || sourceHostTeam || getTeam(hostTeamId))
+      : (getTeam(hostTeamId) || sourceHostTeam);
+    const hostName = sourceHostTeam.ownerName || String(localStorage.getItem('ipl_auth_name') || '').trim() || 'Host';
+    const budget = Number(sourceConfig.budget || sourceHostTeam.purse || 2000);
+
+    const roomPayload = {
+      config: {
+        hostTeamId,
+        hostUid: authUid,
+        currentHostUid: authUid,
+        budget,
+        maxSquadSize: Number(sourceConfig.maxSquadSize || 25),
+        minSquadSize: Number(sourceConfig.minSquadSize || 11),
+        timerSeconds: Number(sourceConfig.timerSeconds || 30),
+        auctionMode: sourceConfig.auctionMode || 'random',
+        invitePasscode: sourceConfig.invitePasscode || '',
+        status: 'lobby',
+        createdAt: Date.now(),
+        auctionType: sourceConfig.auctionType || 'random',
+        auctionTitle: String(sourceConfig.auctionTitle || '').trim() || (sourceConfig.auctionType === 'manual' ? 'My Auction' : 'IPL Auction'),
+        bidOptions: Array.isArray(sourceConfig.bidOptions) && sourceConfig.bidOptions.length ? sourceConfig.bidOptions : [25, 50, 100],
+        unlimitedTimer: !!sourceConfig.unlimitedTimer,
+        hostBidsForAllTeams: !!sourceConfig.hostBidsForAllTeams
+      },
+      teams: {
+        [hostTeamId]: {
+          name: hostTeamMeta?.name || sourceHostTeam.name || hostTeamId,
+          short: hostTeamMeta?.short || sourceHostTeam.short || hostTeamId,
+          primary: hostTeamMeta?.primary || sourceHostTeam.primary || '#1DA0FF',
+          logo: hostTeamMeta?.logo || sourceHostTeam.logo || '',
+          ownerName: hostName,
+          ownerUid: authUid,
+          purse: budget,
+          squad: [],
+          isHost: true,
+          joinedAt: Date.now()
+        }
+      }
+    };
+
+    if (isManual) {
+      roomPayload.manualTeams = Object.keys(sourceManualTeams).length
+        ? sourceManualTeams
+        : IPL_TEAMS.reduce((acc, team) => {
+            acc[team.id] = { ...team };
+            return acc;
+          }, {});
+      roomPayload.manualPlayers = Array.isArray(sourceRoom.manualPlayers)
+        ? sourceRoom.manualPlayers
+        : [];
+    }
+
+    await db.ref(`rooms/${code}`).set(roomPayload);
+
+    await upsertAuctionHistory(authUid, code, {
+      roomCode: code,
+      title: roomPayload.config.auctionTitle,
+      status: 'lobby',
+      auctionType: roomPayload.config.auctionType,
+      hostTeamId,
+      createdAt: Date.now(),
+      sourceRoomCode: sourceCode
+    });
+
+    saveSession({ roomCode: code, teamId: hostTeamId, playerName: hostName, isHost: true });
+    showToast('Auction restarted with a new room.', 'success');
+    window.location.href = 'lobby.html';
+  } catch (err) {
+    console.error('Restart failed:', err);
+    showToast('Failed to restart auction.', 'error');
+  }
+}
+
+window.renderPastAuctions = renderPastAuctions;
+window.reopenPastAuction = reopenPastAuction;
+window.restartPastAuction = restartPastAuction;
 
 function initSquadRangeControls() {
   const maxEl = document.getElementById('squadRange');
@@ -207,6 +478,16 @@ async function createRoom() {
           joinedAt: Date.now()
         }
       }
+    });
+
+    await upsertAuctionHistory(authUid, code, {
+      roomCode: code,
+      title: 'IPL Auction',
+      status: 'lobby',
+      auctionType: 'random',
+      hostTeamId: teamId,
+      hostName: name,
+      createdAt: Date.now()
     });
 
     saveSession({ roomCode: code, teamId, playerName: name, isHost: true });

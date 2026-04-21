@@ -101,6 +101,21 @@ function updateLiveListButtonsVisibility() {
   actions.style.display = isManualAuction ? 'flex' : 'none';
 }
 
+async function syncAuctionHistoryStatus(status, extra = {}) {
+  const hostUid = String(roomHostUid || roomConfig?.hostUid || getLocalAuthUid() || '').trim();
+  if (!hostUid || !roomCode) return;
+  const payload = {
+    roomCode,
+    title: getAuctionBrandTitle(),
+    status,
+    auctionType: roomConfig?.auctionType || 'random',
+    hostTeamId: roomConfig?.hostTeamId || null,
+    updatedAt: Date.now(),
+    ...extra
+  };
+  await db.ref(`users/${hostUid}/auctionHistory/${roomCode}`).update(payload).catch(() => {});
+}
+
 async function backfillManualAuctionTitle() {
   if (!isHost || roomConfig?.auctionType !== 'manual') return;
   const existing = String(roomConfig?.auctionTitle || '').trim();
@@ -2283,6 +2298,7 @@ async function skipToNextPool() {
 
   if (nextIndex >= playerQueue.length) {
     await db.ref(`rooms/${roomCode}/config/status`).set('finished');
+    await syncAuctionHistoryStatus('finished', { finishedAt: Date.now(), finishReason: 'pool-skip-end' });
     return;
   }
 
@@ -2375,11 +2391,13 @@ async function markUnsold() {
 
 async function advanceToNextPlayer() {
   if (await areAllTeamsComplete()) {
+    const finishedAt = Date.now();
     await db.ref(`rooms/${roomCode}/config`).update({
       status: 'finished',
-      finishedAt: Date.now(),
+      finishedAt,
       finishReason: 'all-squads-complete'
     });
+    await syncAuctionHistoryStatus('finished', { finishedAt, finishReason: 'all-squads-complete' });
     return;
   }
 
@@ -2388,6 +2406,7 @@ async function advanceToNextPlayer() {
   if (nextIndex >= playerQueue.length) {
     // Auction over
     await db.ref(`rooms/${roomCode}/config/status`).set('finished');
+    await syncAuctionHistoryStatus('finished', { finishedAt: Date.now(), finishReason: 'queue-complete' });
     return;
   }
 
@@ -2938,8 +2957,10 @@ async function togglePauseAuction() {
 async function terminateAuction() {
   if (!isHost) return;
   const actorId = myTeamId || 'host-manager';
+  const terminatedAt = Date.now();
   if (!confirm('Terminate auction now and show results?')) return;
-  await db.ref(`rooms/${roomCode}/config`).update({ status: 'finished', terminatedAt: Date.now(), terminatedBy: actorId });
+  await db.ref(`rooms/${roomCode}/config`).update({ status: 'finished', terminatedAt, terminatedBy: actorId });
+  await syncAuctionHistoryStatus('finished', { terminatedAt, terminatedBy: actorId, finishReason: 'terminated' });
   // NOTE: Do NOT cleanup Cloudinary here.
   // Re-auction uses the same room and still needs manual player images.
   // Cleanup is triggered when the host clicks "New Auction" from results.

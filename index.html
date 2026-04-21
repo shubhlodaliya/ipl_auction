@@ -161,6 +161,19 @@
           🚀 Create Auction Room
         </button>
         <p id="createError" style="color:var(--red);font-size:0.85rem;display:none;"></p>
+
+        <div class="past-auctions-wrap" id="pastAuctionsWrap">
+          <div class="past-auctions-head">
+            <h3>My Past Auctions</h3>
+            <button class="btn btn-ghost" type="button" onclick="renderPastAuctions()">Refresh</button>
+          </div>
+          <div class="past-auctions-list" id="pastAuctionsList">
+            <div class="state-loading" style="padding:1rem 0;">
+              <div class="spinner"></div>
+              <p style="color:var(--text-dim);font-size:0.85rem;">Loading your auction history...</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- JOIN PANEL -->

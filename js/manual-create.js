@@ -724,6 +724,9 @@ async function uploadManualAssets(roomCode, teams, players) {
 async function createManualRoom() {
   const errEl = document.getElementById('manualSetupError');
   errEl.style.display = 'none';
+  const authUid = typeof getAuthUid === 'function'
+    ? getAuthUid()
+    : String(localStorage.getItem('ipl_auth_uid') || '').trim();
 
   const hostName = document.getElementById('hostName').value.trim();
   const passcode = document.getElementById('invitePasscode').value.trim();
@@ -815,6 +818,7 @@ async function createManualRoom() {
           primary: t.primary,
           logo: t.logo || '',
           ownerName: hostName,
+          ownerUid: authUid || null,
           purse: budget,
           squad: [],
           isHost: false,
@@ -828,6 +832,7 @@ async function createManualRoom() {
         primary: hostTeam.primary,
         logo: hostTeam.logo || '',
         ownerName: hostName,
+        ownerUid: authUid || null,
         purse: budget,
         squad: [],
         isHost: true,
@@ -839,6 +844,8 @@ async function createManualRoom() {
       config: {
         auctionType: 'manual',
         auctionTitle,
+        hostUid: authUid || null,
+        currentHostUid: authUid || null,
         hostTeamId: hostTeam ? hostTeam.id : null,
         hostManagerOnly,
         hostBidsForAllTeams,
@@ -862,6 +869,19 @@ async function createManualRoom() {
       teams: initialTeams,
       playerQueue
     });
+
+    if (authUid) {
+      await db.ref(`users/${authUid}/auctionHistory/${code}`).update({
+        roomCode: code,
+        title: auctionTitle,
+        status: 'lobby',
+        auctionType: 'manual',
+        hostTeamId: hostTeam ? hostTeam.id : null,
+        hostName,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
 
     saveSession({
       roomCode: code,

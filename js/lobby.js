@@ -764,6 +764,18 @@ async function startAuction() {
     // Set room status → triggers redirect in all clients
     await db.ref(`rooms/${roomCode}/config/status`).set('auction');
 
+    const hostUid = String(roomConfig?.hostUid || localStorage.getItem('ipl_auth_uid') || '').trim();
+    if (hostUid) {
+      await db.ref(`users/${hostUid}/auctionHistory/${roomCode}`).update({
+        roomCode,
+        title: String(roomConfig?.auctionTitle || '').trim() || (roomConfig?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction'),
+        status: 'auction',
+        auctionType: roomConfig?.auctionType || 'random',
+        hostTeamId: roomConfig?.hostTeamId || null,
+        updatedAt: Date.now()
+      });
+    }
+
   } catch (err) {
     console.error(err);
     showToast('Failed to start auction. Try again.', 'error');

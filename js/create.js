@@ -37,6 +37,49 @@ function getHistoryPath(authUid) {
   return `users/${authUid}/auctionHistory`;
 }
 
+function normalizeHistoryStatus(status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'auction') return 'auction';
+  if (s === 'finished') return 'finished';
+  return 'lobby';
+}
+
+function mapRoomToHistoryRow(roomCode, room) {
+  const config = room?.config || {};
+  const createdAt = Number(config.createdAt || 0) || Date.now();
+  const updatedAt = Number(config.updatedAt || config.finishedAt || config.terminatedAt || createdAt) || createdAt;
+  const auctionType = config.auctionType || (room?.manualPlayers ? 'manual' : 'random');
+  const fallbackTitle = auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
+  return {
+    roomCode,
+    title: String(config.auctionTitle || '').trim() || fallbackTitle,
+    status: normalizeHistoryStatus(config.status),
+    auctionType,
+    hostTeamId: config.hostTeamId || null,
+    createdAt,
+    updatedAt,
+    migratedFromRoom: true
+  };
+}
+
+async function getHostOwnedRooms(authUid) {
+  if (!authUid) return [];
+  const roomsSnap = await db.ref('rooms').get();
+  if (!roomsSnap.exists()) return [];
+  const rooms = roomsSnap.val() || {};
+  return Object.entries(rooms)
+    .filter(([roomCode, room]) => {
+      if (!roomCode || !room?.config) return false;
+      const hostUid = String(room.config.hostUid || room.config.currentHostUid || '').trim();
+      if (hostUid && hostUid === authUid) return true;
+
+      const hostTeamId = room.config.hostTeamId || Object.keys(room.teams || {}).find((id) => room.teams?.[id]?.isHost) || null;
+      const hostTeamOwnerUid = String(room.teams?.[hostTeamId]?.ownerUid || '').trim();
+      return !!hostTeamOwnerUid && hostTeamOwnerUid === authUid;
+    })
+    .map(([roomCode, room]) => mapRoomToHistoryRow(roomCode, room));
+}
+
 window.addEventListener('DOMContentLoaded', initCreatePage);
 
 function initCreatePage() {
@@ -63,15 +106,59 @@ async function renderPastAuctions() {
   listEl.innerHTML = '<div class="state-loading" style="padding:0.85rem 0;"><div class="spinner"></div></div>';
 
   try {
-    const snap = await db.ref(getHistoryPath(authUid)).get();
-    if (!snap.exists()) {
-      listEl.innerHTML = '<div class="state-empty" style="padding:0.85rem 0;"><p style="font-size:0.82rem;">No past auctions yet.</p></div>';
-      return;
+    const [historySnap, hostedRows] = await Promise.all([
+      db.ref(getHistoryPath(authUid)).get(),
+      getHostOwnedRooms(authUid)
+    ]);
+
+    const historyMap = historySnap.exists() ? (historySnap.val() || {}) : {};
+    const merged = new Map();
+
+    Object.values(historyMap)
+      .filter((item) => item && item.roomCode)
+      .forEach((item) => {
+        const roomCode = String(item.roomCode || '').toUpperCase();
+        if (!roomCode) return;
+        merged.set(roomCode, {
+          ...item,
+          roomCode,
+          status: normalizeHistoryStatus(item.status)
+        });
+      });
+
+    const backfillWrites = [];
+    hostedRows.forEach((row) => {
+      const roomCode = String(row.roomCode || '').toUpperCase();
+      if (!roomCode) return;
+      if (!merged.has(roomCode)) {
+        merged.set(roomCode, row);
+        backfillWrites.push(
+          db.ref(`${getHistoryPath(authUid)}/${roomCode}`).update({
+            ...row,
+            updatedAt: Date.now(),
+            syncedAt: Date.now()
+          }).catch(() => {})
+        );
+        return;
+      }
+
+      const existing = merged.get(roomCode) || {};
+      const existingUpdatedAt = Number(existing.updatedAt || existing.createdAt || 0);
+      const rowUpdatedAt = Number(row.updatedAt || row.createdAt || 0);
+      if (rowUpdatedAt > existingUpdatedAt) {
+        merged.set(roomCode, {
+          ...existing,
+          ...row,
+          roomCode
+        });
+      }
+    });
+
+    if (backfillWrites.length) {
+      Promise.all(backfillWrites).catch(() => {});
     }
 
-    const historyMap = snap.val() || {};
-    const rows = Object.values(historyMap)
-      .filter((item) => item && item.roomCode)
+    const rows = Array.from(merged.values())
       .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
 
     if (!rows.length) {

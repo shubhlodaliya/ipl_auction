@@ -254,9 +254,9 @@
       <div class="broadcast-logo">
         <span>🏏 CricAuction™</span>
       </div>
-      <div class="broadcast-banner" id="broadcastBannerTitle">AUCTION ROOM</div>
+      <div class="broadcast-banner" id="broadcastBannerTitle">MY AUCTION</div>
       <nav class="broadcast-nav">
-        <span>WELCOME</span> | <span>AUCTION</span> | <span>TEAMS</span> | <span>PLAYERS</span> | <span>CATEGORY</span>
+        <span onclick="openAllTeamsModal()" style="cursor:pointer; text-decoration:underline;">TEAMS</span>
         <div class="broadcast-profile-icon">👤</div>
       </nav>
     </header>
@@ -275,6 +275,7 @@
         </div>
         <div class="broadcast-name-ribbon">
           <div class="broadcast-name-text" id="broadcastPlayerName">Waiting for player...</div>
+          <div class="broadcast-player-meta" id="broadcastPlayerMeta"></div>
         </div>
       </div>
 
@@ -295,14 +296,18 @@
     </div>
 
     <div class="broadcast-footer-stats">
-      <div class="broadcast-stat-box max-bid-box">
-        <span class="stat-label">MAX BID</span>
-        <span class="stat-value" id="broadcastMaxBid">--</span>
-      </div>
       <div class="broadcast-stat-pills">
-        <div class="stat-pill sold">Sold <span id="broadcastStatSold">0</span></div>
-        <div class="stat-pill unsold">UnSold <span id="broadcastStatUnsold">0</span></div>
-        <div class="stat-pill available">Available <span id="broadcastStatAvailable">0</span></div>
+        <div class="stat-pill sold" style="cursor:pointer" onclick="openLivePlayerListModal('sold')">Sold <span id="broadcastStatSold">0</span></div>
+        <div class="stat-pill unsold" style="cursor:pointer" onclick="openLivePlayerListModal('unsold')">UnSold <span id="broadcastStatUnsold">0</span></div>
+        <div class="stat-pill available" style="cursor:pointer" onclick="openLivePlayerListModal('available')">Available <span id="broadcastStatAvailable">0</span></div>
+      </div>
+    </div>
+    
+    <div class="firecracker-container" id="firecrackerAnim" style="display:none;">
+      <div class="fireworks"></div>
+      <div class="firecracker-content">
+        <div class="firecracker-label">SOLD!</div>
+        <div class="firecracker-text" id="firecrackerText"></div>
       </div>
     </div>
   </div>
@@ -345,6 +350,17 @@
     <div class="pool-start-inner">
       <div class="pool-start-title">New Pool Started</div>
       <div class="pool-start-name" id="poolStartName">Marquee Pool</div>
+    </div>
+  </div>
+
+  <!-- ALL TEAMS MODAL -->
+  <div class="team-modal-overlay" id="allTeamsModalOverlay" onclick="closeAllTeamsModal()">
+    <div class="team-modal pool-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>All Teams</h3>
+        <button class="btn btn-ghost" onclick="closeAllTeamsModal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="allTeamsModalContent" style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:center;"></div>
     </div>
   </div>
 

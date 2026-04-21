@@ -774,6 +774,15 @@ function updateBroadcastView(data) {
     if (pImg) pImg.src = player.image || 'assets/default-avatar.png';
     const pSet = document.getElementById('broadcastSetBadge');
     if (pSet) pSet.textContent = player.set_number || '1';
+    
+    const pMeta = document.getElementById('broadcastPlayerMeta');
+    if (pMeta) {
+      pMeta.innerHTML = `
+        <span>${getRoleIcon(player.role)} ${player.role || 'Unknown'}</span>
+        <span>${getCountryFlag(player.country)} ${player.country || 'Unknown'}</span>
+        <span>Base: ${formatPrice(player.base_price_lakh)}</span>
+      `;
+    }
   }
 
   // Set pool badge
@@ -788,7 +797,7 @@ function updateBroadcastView(data) {
   const tName = document.getElementById('broadcastTeamName');
   const bidEl = document.getElementById('broadcastBidAmount');
   
-  if (bidEl) bidEl.textContent = data.currentBid ? data.currentBid.toLocaleString() : '0';
+  if (bidEl) bidEl.textContent = data.currentBid ? formatPrice(data.currentBid) : '0';
 
   if (data.highestBidder) {
     const team = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {};
@@ -813,15 +822,21 @@ function updateBroadcastView(data) {
   if (stampSold) stampSold.style.display = data.status === 'sold' ? 'block' : 'none';
   if (stampUnsold) stampUnsold.style.display = data.status === 'unsold' ? 'block' : 'none';
 
-  // Stats
-  let maxPurse = 0;
-  for (const tId of Object.keys(teamsData)) {
-    if (teamsData[tId].purse > maxPurse) {
-      maxPurse = teamsData[tId].purse;
+  // Animation
+  if (data.status === 'sold' && data.highestBidder && window.lastAnimPlayerId !== data.playerId) {
+    window.lastAnimPlayerId = data.playerId;
+    const anim = document.getElementById('firecrackerAnim');
+    const animText = document.getElementById('firecrackerText');
+    if (anim && animText) {
+      const team = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {};
+      const teamName = team.name || team.short || data.highestBidder;
+      animText.innerHTML = `${player.name}<br>sold to ${teamName}<br>for ${formatPrice(data.currentBid)}`;
+      anim.style.display = 'flex';
+      setTimeout(() => { anim.style.display = 'none'; }, 5000);
     }
   }
-  const maxBidEl = document.getElementById('broadcastMaxBid');
-  if (maxBidEl) maxBidEl.textContent = maxPurse.toLocaleString();
+
+  // Stats
 
   let sold = 0;
   let unsold = 0;
@@ -3999,5 +4014,46 @@ window.addEventListener('beforeunload', () => {
   }
   db.ref('.info/serverTimeOffset').off('value', listeners.serverTimeOffset);
 });
+
+// Broadcast Mode: All Teams Modal
+window.openAllTeamsModal = function() {
+  const modal = document.getElementById('allTeamsModalOverlay');
+  const content = document.getElementById('allTeamsModalContent');
+  if (!modal || !content) return;
+
+  const teamIds = Object.keys(teamsData || {});
+  if (teamIds.length === 0) {
+    content.innerHTML = '<div style="color:var(--text-sec);padding:2rem;">No teams joined yet.</div>';
+    modal.style.display = 'flex';
+    return;
+  }
+
+  content.innerHTML = teamIds.map(tId => {
+    const team = teamsData[tId];
+    const meta = getRoomTeamMeta(tId) || {};
+    const short = meta.short || team.name || tId;
+    const logo = meta.logo 
+      ? `<img src="${meta.logo}" alt="logo" style="width:70px;height:70px;object-fit:contain;margin-bottom:0.5rem">` 
+      : `<div style="font-size:2.5rem;font-weight:900;color:#ccc;margin-bottom:0.5rem">${short.slice(0,3).toUpperCase()}</div>`;
+    
+    return `
+      <div class="broadcast-team-card" style="width:200px; cursor:pointer; padding:1.5rem; transition:transform 0.2s" 
+           onmouseover="this.style.transform='scale(1.05)'" 
+           onmouseout="this.style.transform='scale(1)'"
+           onclick="closeAllTeamsModal(); openTeamSquadModal('${tId}')">
+        ${logo}
+        <div style="font-weight:900;color:#1e3a8a;text-align:center;font-size:1.1rem">${team.name || short}</div>
+        <div style="margin-top:0.5rem;font-size:1rem;color:#15803d;font-weight:700">Purse: ${formatPrice(team.purse)}</div>
+      </div>
+    `;
+  }).join('');
+  
+  modal.style.display = 'flex';
+};
+
+window.closeAllTeamsModal = function() {
+  const modal = document.getElementById('allTeamsModalOverlay');
+  if (modal) modal.style.display = 'none';
+};
 
 

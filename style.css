@@ -5650,9 +5650,15 @@ body.broadcast-mode #teamModalOverlay {
     radial-gradient(circle at 10% 22%, rgba(255,255,255,0.32), transparent 13%),
     radial-gradient(circle at 86% 20%, rgba(255,255,255,0.24), transparent 12%),
     radial-gradient(circle at 70% 56%, rgba(255, 212, 84, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(8, 14, 42, 0.36), rgba(3, 8, 23, 0.76)),
+    url('assets/broadcast/stadium-bg.jpg'),
     radial-gradient(ellipse at 50% 105%, #2f9828 0%, #0e6328 24%, #0b1e26 58%, transparent 78%),
     linear-gradient(180deg, #1e0b5f 0%, #12093a 37%, #080621 67%, #070512 100%);
-  filter: saturate(1.1) contrast(1.05);
+  background-size: cover, cover, cover, cover, cover, cover, cover;
+  background-position: center, center, center, center, center, center, center;
+  background-repeat: no-repeat;
+  filter: blur(4px) saturate(1.1) contrast(1.06);
+  transform: scale(1.03);
   z-index: 1;
 }
 
@@ -5662,9 +5668,10 @@ body.broadcast-mode #teamModalOverlay {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
   background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 229, 135, 0.22), transparent 48%),
     repeating-radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06) 0 1px, transparent 1px 18px),
-    linear-gradient(180deg, rgba(2, 8, 20, 0.3), rgba(2, 8, 20, 0.58));
-  opacity: 0.5;
+    linear-gradient(180deg, rgba(2, 8, 20, 0.35), rgba(2, 8, 20, 0.66));
+  opacity: 0.68;
 }
 
 .broadcast-overlay {
@@ -5700,15 +5707,39 @@ body.broadcast-mode #teamModalOverlay {
 }
 
 .broadcast-banner {
-  background: linear-gradient(90deg, #214aa8, #4d86ff, #214aa8);
-  padding: 0.45rem 3rem;
+  position: relative;
+  background: linear-gradient(96deg, #214aa8 0%, #3e72e4 38%, #1a4bb0 100%);
+  padding: 0.5rem 3.3rem;
   font-weight: 900;
   font-style: italic;
-  font-size: 1.18rem;
+  font-size: 1.2rem;
+  line-height: 1;
+  letter-spacing: 0.8px;
   transform: skewX(-15deg);
   border: 2px solid #facc15;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.15);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 2px rgba(9, 20, 61, 0.8);
   text-transform: uppercase;
+  color: #f4f8ff;
+}
+
+.broadcast-banner::before,
+.broadcast-banner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 70%;
+  transform: translateY(-50%) skewX(15deg);
+  background: linear-gradient(180deg, #ffe694, #facc15);
+  box-shadow: 0 0 0 1px rgba(9, 20, 61, 0.65);
+}
+
+.broadcast-banner::before {
+  left: -14px;
+}
+
+.broadcast-banner::after {
+  right: -14px;
 }
 
 .broadcast-nav {

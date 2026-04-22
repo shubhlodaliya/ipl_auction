@@ -6140,6 +6140,7 @@ body.broadcast-mode #teamModalOverlay {
 .stat-pill.sold { background: #15803d; color: #fff; }
 .stat-pill.unsold { background: #b91c1c; color: #fff; }
 .stat-pill.available { background: #b45309; color: #fff; }
+.stat-pill.all-teams-btn { display: none; }
 
 .stat-pill:hover {
   transform: translateY(-1px);
@@ -6657,11 +6658,13 @@ body.broadcast-mode {
     display: flex;
     justify-content: space-between;
     gap: 6px;
+    flex-wrap: wrap;
   }
   .stat-pill {
     flex-direction: column;
     gap: 2px;
     flex: 1;
+    min-width: 72px;
     border-radius: 8px;
     padding: 8px;
     text-align: center;

@@ -277,6 +277,14 @@
         <div class="broadcast-name-ribbon">
           <div class="broadcast-name-text" id="broadcastPlayerName">Waiting for player...</div>
           <div class="broadcast-player-meta" id="broadcastPlayerMeta"></div>
+          
+          <div class="broadcast-mobile-meta-blocks" style="display:none;">
+            <div class="mobile-age-role-row">
+              <div class="mobile-age-block" id="mobilePlayerAge">-- Years</div>
+              <div class="mobile-role-block" id="mobilePlayerRole">--</div>
+            </div>
+            <div class="mobile-style-row" id="mobilePlayerStyles">--</div>
+          </div>
         </div>
       </div>
 
@@ -297,14 +305,26 @@
 
     <div class="broadcast-footer-stats">
       <div class="broadcast-stat-pills">
-        <div class="stat-pill sold" style="cursor:pointer" onclick="openLivePlayerListModal('sold')">Sold <span id="broadcastStatSold">0</span></div>
-        <div class="stat-pill unsold" style="cursor:pointer" onclick="openLivePlayerListModal('unsold')">Unsold <span id="broadcastStatUnsold">0</span></div>
-        <div class="stat-pill available" style="cursor:pointer" onclick="openLivePlayerListModal('available')">Available <span id="broadcastStatAvailable">0</span></div>
+        <div class="stat-pill sold" style="cursor:pointer" onclick="openLivePlayerListModal('sold')">
+          <div class="pill-label">Sold</div>
+          <div class="pill-value" id="broadcastStatSold">0</div>
+        </div>
+        <div class="stat-pill unsold" style="cursor:pointer" onclick="openLivePlayerListModal('unsold')">
+          <div class="pill-label">Unsold</div>
+          <div class="pill-value" id="broadcastStatUnsold">0</div>
+        </div>
+        <div class="stat-pill available" style="cursor:pointer" onclick="openLivePlayerListModal('available')">
+          <div class="pill-label">Available</div>
+          <div class="pill-value" id="broadcastStatAvailable">0</div>
+        </div>
+        <div class="stat-pill all-teams-btn" style="cursor:pointer; display:none;" onclick="openAllTeamsModal()">
+          <div class="pill-label">ALL TEAMS</div>
+        </div>
       </div>
     </div>
 
-    <div class="mobile-all-teams-wrapper">
-      <button class="mobile-all-teams-btn" onclick="openAllTeamsModal()">ALL TEAMS</button>
+    <!-- Mobile Teams Grid -->
+    <div class="broadcast-mobile-teams-container" id="broadcastMobileTeamsContainer" style="display:none;">
     </div>
     
     <div class="firecracker-container" id="firecrackerAnim" style="display:none;">

@@ -950,17 +950,7 @@ function updateBroadcastView(data) {
   }
 
   if (player) {
-    const mAge = document.getElementById('mobilePlayerAge');
-    const mRole = document.getElementById('mobilePlayerRole');
-    const mStyles = document.getElementById('mobilePlayerStyles');
-    if (mAge) mAge.textContent = player.age ? `${player.age} Years` : '—';
-    if (mRole) mRole.textContent = player.role || '—';
-    if (mStyles) {
-      const styles = [];
-      if (player.extraFields?.batting_style && player.extraFields.batting_style.toLowerCase() !== 'manual') styles.push(player.extraFields.batting_style);
-      if (player.extraFields?.bowling_style && player.extraFields.bowling_style.toLowerCase() !== 'manual') styles.push(player.extraFields.bowling_style);
-      mStyles.textContent = styles.length ? styles.join(' | ') : (player.role || 'Player');
-    }
+    // (Mobile meta blocks removed as per user request to use desktop ribbons)
   }
 
   // Set Team Logo, Name and Bid
@@ -1085,7 +1075,7 @@ function updateBroadcastView(data) {
       const formattedPurse = formatPrice(purseLeft).replace('₹', '');
       
       mHtml += `
-        <div class="mobile-team-card">
+        <div class="mobile-team-card" onclick="showTeamSquad('${tid}')" style="cursor:pointer">
           <div class="m-team-header">
             <span class="m-team-name">${escapeHtml(name)}</span>
             <span class="m-team-set">${count}</span>

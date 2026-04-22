@@ -6294,7 +6294,11 @@ body.broadcast-mode {
   transform: rotate(5deg);
 }@media (max-width: 768px) {
   .broadcast-banner {
-    transform: skewX(-15deg) scale(0.7);
+    transform: skewX(-15deg);
+    width: 90%;
+    font-size: 1.4rem;
+    margin: 0 auto;
+    text-align: center;
   }
 
   .broadcast-main {
@@ -6317,8 +6321,8 @@ body.broadcast-mode {
   }
   
   .broadcast-photo-wrapper {
-    width: 130px;
-    height: 130px;
+    width: 140px;
+    height: 140px;
     flex-shrink: 0;
     border-radius: 8px;
     border: 3px solid #facc15;
@@ -6348,58 +6352,28 @@ body.broadcast-mode {
     box-shadow: none;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     background: transparent;
     padding: 0;
   }
   
   .broadcast-name-text {
-    background: #facc15;
-    color: #000;
-    font-size: 1.1rem;
-    padding: 8px 12px;
-    border-radius: 4px;
+    font-size: 1.2rem;
+    padding: 0.6rem 1.5rem 0.5rem 0.8rem;
+    clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+    background: linear-gradient(90deg, #ffd327 0%, #f0bb0f 70%, #dca105 100%);
+    color: #1e3a8a;
+    border-radius: 0;
     font-weight: 900;
-    transform: skewX(-10deg);
-    text-align: center;
-  }
-  .broadcast-player-meta {
-    display: none !important;
+    transform: none;
+    text-align: left;
+    width: fit-content;
   }
   
-  .broadcast-mobile-meta-blocks {
-    display: flex !important;
-    flex-direction: column;
-    gap: 5px;
-    transform: skewX(-10deg);
-  }
-  .mobile-age-role-row {
-    display: flex;
-    gap: 5px;
-  }
-  .mobile-age-block, .mobile-role-block {
-    background: #0f172a;
-    color: #facc15;
-    padding: 6px 8px;
+  .broadcast-meta-line {
     font-size: 0.85rem;
-    font-weight: 700;
-    border-radius: 4px;
-    border: 1px solid #1e293b;
-    white-space: nowrap;
-  }
-  .mobile-role-block {
-    color: #fff;
-    flex-grow: 1;
-    text-align: center;
-  }
-  .mobile-style-row {
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-align: center;
-    background: rgba(0,0,0,0.5);
-    padding: 6px;
-    border-radius: 4px;
+    padding: 0.35rem 1.2rem 0.35rem 0.6rem;
+    clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
   }
 
   .broadcast-team-section {

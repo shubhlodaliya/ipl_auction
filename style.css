@@ -1325,10 +1325,10 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .player-number-badge.compact {
-  width: 22px;
-  height: 22px;
-  top: -4px;
-  left: -4px;
+  width: 20px;
+  height: 20px;
+  top: 2px;
+  left: 2px;
   font-size: 0.72rem;
   border-width: 2px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.35);
@@ -4485,8 +4485,9 @@ body.spectator-mode #voiceStatusBadge {
   font-size: 0.85rem;
 }
 .result-player-avatar {
-  width: 40px; height: 40px;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5806,6 +5807,32 @@ body.broadcast-mode #teamModalOverlay {
   padding: 0 4rem 0 6rem;
 }
 
+.broadcast-view.state-prebid .broadcast-main {
+  justify-content: center;
+  padding: 0 2.2rem;
+}
+
+.broadcast-view.state-prebid .broadcast-team-section {
+  display: none;
+}
+
+.broadcast-view.state-prebid .broadcast-player-section {
+  margin-left: 0;
+}
+
+.broadcast-view.state-livebid .broadcast-team-section,
+.broadcast-view.state-sold .broadcast-team-section {
+  display: flex;
+}
+
+.broadcast-view.state-unsold .broadcast-team-section {
+  display: none;
+}
+
+.broadcast-view.state-unsold .broadcast-name-ribbon {
+  display: none;
+}
+
 /* LEFT SIDE - PLAYER */
 .broadcast-player-section {
   display: flex;
@@ -5824,11 +5851,7 @@ body.broadcast-mode #teamModalOverlay {
 }
 
 .broadcast-photo-ring {
-  position: absolute;
-  inset: -10px;
-  border-radius: 30px;
-  border: 4px dashed #facc15;
-  animation: rotateRing 20s linear infinite;
+  display: none;
 }
 
 @keyframes rotateRing {
@@ -6199,6 +6222,44 @@ body.broadcast-mode {
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 70%);
+}
+
+.fireworks-side {
+  position: absolute;
+  top: 0;
+  width: 22vw;
+  height: 100%;
+  overflow: hidden;
+}
+
+.fireworks-left {
+  left: 0;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255, 212, 84, 0.42), transparent 34%),
+    radial-gradient(circle at 36% 46%, rgba(255, 69, 69, 0.35), transparent 30%),
+    radial-gradient(circle at 32% 72%, rgba(57, 176, 255, 0.3), transparent 36%);
+  animation: sideSparkleLeft 0.95s ease-in-out infinite;
+}
+
+.fireworks-right {
+  right: 0;
+  background:
+    radial-gradient(circle at 72% 18%, rgba(255, 212, 84, 0.42), transparent 34%),
+    radial-gradient(circle at 66% 44%, rgba(255, 69, 69, 0.35), transparent 30%),
+    radial-gradient(circle at 70% 74%, rgba(57, 176, 255, 0.3), transparent 36%);
+  animation: sideSparkleRight 0.95s ease-in-out infinite;
+}
+
+@keyframes sideSparkleLeft {
+  0% { filter: brightness(0.9) saturate(0.9); transform: translateX(0); opacity: 0.7; }
+  50% { filter: brightness(1.15) saturate(1.15); transform: translateX(6px); opacity: 0.95; }
+  100% { filter: brightness(0.9) saturate(0.9); transform: translateX(0); opacity: 0.7; }
+}
+
+@keyframes sideSparkleRight {
+  0% { filter: brightness(0.9) saturate(0.9); transform: translateX(0); opacity: 0.7; }
+  50% { filter: brightness(1.15) saturate(1.15); transform: translateX(-6px); opacity: 0.95; }
+  100% { filter: brightness(0.9) saturate(0.9); transform: translateX(0); opacity: 0.7; }
 }
 
 .firecracker-content {

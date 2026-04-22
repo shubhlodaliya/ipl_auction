@@ -843,6 +843,17 @@ function updateSpectatorSideBid(data = null) {
 
 function updateBroadcastView(data) {
   if (!data) return;
+  const broadcastViewEl = document.getElementById('broadcastView');
+  if (broadcastViewEl) {
+    const state = data.status === 'sold'
+      ? 'state-sold'
+      : data.status === 'unsold'
+        ? 'state-unsold'
+        : (data.highestBidder ? 'state-livebid' : 'state-prebid');
+    broadcastViewEl.classList.remove('state-prebid', 'state-livebid', 'state-sold', 'state-unsold');
+    broadcastViewEl.classList.add(state);
+  }
+
   const player = playerMap[data.playerId];
   const fallbackAvatar = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2216%22 fill=%22%232f4058%22/><text x=%2250%22 y=%2255%22 fill=%22%23a98cff%22 font-size=%2240%22 font-family=%22Arial%22 text-anchor=%22middle%22 alignment-baseline=%22central%22>🏏</text></svg>`;
 
@@ -969,10 +980,10 @@ function updateBroadcastView(data) {
   if (stampUnsold) stampUnsold.style.display = data.status === 'unsold' ? 'block' : 'none';
 
   // Animation
+  const anim = document.getElementById('firecrackerAnim');
+  const animText = document.getElementById('firecrackerText');
   if (data.status === 'sold' && data.highestBidder && window.lastAnimPlayerId !== data.playerId) {
     window.lastAnimPlayerId = data.playerId;
-    const anim = document.getElementById('firecrackerAnim');
-    const animText = document.getElementById('firecrackerText');
     if (anim && animText) {
       const team = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {};
       const teamName = team.name || team.short || data.highestBidder;
@@ -980,6 +991,8 @@ function updateBroadcastView(data) {
       anim.style.display = 'flex';
       setTimeout(() => { anim.style.display = 'none'; }, 5000);
     }
+  } else if (data.status !== 'sold' && anim) {
+    anim.style.display = 'none';
   }
 
   // Stats

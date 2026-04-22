@@ -5960,8 +5960,9 @@ body.broadcast-mode #teamModalOverlay {
 .broadcast-team-section {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 430px;
 }
 
 .broadcast-pool-badge {
@@ -5975,63 +5976,75 @@ body.broadcast-mode #teamModalOverlay {
 }
 
 .broadcast-team-card {
-  background: linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%);
-  border-radius: 20px;
-  padding: 0.95rem 0.95rem 0.85rem;
+  background: transparent;
+  border-radius: 0;
+  padding: 0.1rem 0.4rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 14px 34px rgba(0,0,0,0.5);
-  width: 300px;
-  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow: none;
+  width: 100%;
+  border: 0;
 }
 
 .broadcast-team-logo-wrap {
-  width: auto;
-  height: auto;
+  width: 164px;
+  height: 138px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
-  background: transparent;
-  padding: 0;
+  margin-bottom: 0.65rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+  padding: 0.45rem;
+  box-shadow: 0 16px 28px rgba(0,0,0,0.44);
+  border: 1px solid rgba(255,255,255,0.74);
 }
 
 .broadcast-team-logo-wrap img {
-  max-width: 135px;
-  max-height: 105px;
+  max-width: 132px;
+  max-height: 118px;
   object-fit: contain;
   background: transparent;
   display: block;
 }
 
 .placeholder-logo {
-  font-size: 3rem;
-  color: #ccc;
+  font-size: 2.45rem;
+  color: rgba(26, 43, 91, 0.45);
   font-weight: 900;
 }
 
 .broadcast-team-name {
-  color: #1e3a8a;
-  font-size: 1.65rem;
-  font-weight: 900;
+  color: #ffffff;
+  font-size: 2.15rem;
+  font-weight: 800;
   text-align: center;
   text-transform: uppercase;
+  letter-spacing: 1.1px;
+  line-height: 1.13;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.55);
+  max-width: 100%;
 }
 
 .broadcast-bid-box {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
+  justify-content: center;
+  gap: 0.88rem;
+  margin-top: 0.25rem;
+  width: 100%;
+  padding: 0.62rem 0;
+  border-top: 2px solid rgba(255,255,255,0.22);
+  border-bottom: 2px solid rgba(255,255,255,0.22);
 }
 
 .broadcast-coin {
-  font-size: 3rem;
+  font-size: 2.35rem;
   background: #facc15;
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6042,10 +6055,10 @@ body.broadcast-mode #teamModalOverlay {
 }
 
 .broadcast-bid-amount {
-  font-size: 5rem;
+  font-size: 4.65rem;
   font-weight: 900;
   color: #facc15;
-  text-shadow: 3px 3px 0 #000, 0 12px 24px rgba(0,0,0,0.52);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.68), 0 8px 18px rgba(0,0,0,0.5);
   font-family: 'Rajdhani', sans-serif;
   letter-spacing: 1px;
 }
@@ -6129,7 +6142,10 @@ body.broadcast-mode {
   .broadcast-bid-amount { font-size: 3rem; }
   .broadcast-name-text { font-size: 1.6rem; }
   .broadcast-name-ribbon { min-width: 380px; max-width: 520px; }
-  .broadcast-team-card { width: 280px; }
+  .broadcast-team-section { min-width: 300px; }
+  .broadcast-team-logo-wrap { width: 138px; height: 116px; }
+  .broadcast-team-name { font-size: 1.55rem; }
+  .broadcast-bid-amount { font-size: 3.2rem; }
 }
 
 /* PLAYER META */

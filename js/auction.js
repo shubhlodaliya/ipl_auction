@@ -148,14 +148,42 @@ function getActingTeamIdForBidUi() {
   return isHostProxyBidderActive() ? hostProxyBidTeamId : myTeamId;
 }
 
+function getHostProxyTeamIds() {
+  const catalogIds = Object.keys(roomTeamCatalog || {});
+  if (catalogIds.length) return catalogIds;
+  return Object.keys(teamsData || {});
+}
+
+function getHostProxyTeamState(teamId) {
+  if (!teamId) return null;
+  const liveTeam = teamsData?.[teamId] || {};
+  const catalogTeam = roomTeamCatalog?.[teamId] || getTeam(teamId) || {};
+  return {
+    ...catalogTeam,
+    ...liveTeam,
+    id: teamId,
+    name: liveTeam.name || catalogTeam.name || teamId,
+    short: liveTeam.short || catalogTeam.short || teamId,
+    primary: liveTeam.primary || catalogTeam.primary || '#1DA0FF',
+    logo: liveTeam.logo || catalogTeam.logo || '',
+    purse: Number.isFinite(Number(liveTeam.purse))
+      ? Number(liveTeam.purse)
+      : Number.isFinite(Number(catalogTeam.purse))
+        ? Number(catalogTeam.purse)
+        : Number(roomConfig?.budget || 0),
+    squad: Array.isArray(liveTeam.squad) ? liveTeam.squad : []
+  };
+}
+
 function ensureHostProxyBidTeamSelected() {
   if (!isHostProxyBidderActive()) return;
-  if (hostProxyBidTeamId && teamsData?.[hostProxyBidTeamId]) return;
-  if (myTeamId && teamsData?.[myTeamId]) {
+  const availableTeamIds = getHostProxyTeamIds();
+  if (hostProxyBidTeamId && availableTeamIds.includes(hostProxyBidTeamId)) return;
+  if (myTeamId && availableTeamIds.includes(myTeamId)) {
     hostProxyBidTeamId = myTeamId;
     return;
   }
-  const first = Object.keys(teamsData || {})[0];
+  const first = availableTeamIds[0];
   hostProxyBidTeamId = first || null;
 }
 
@@ -189,7 +217,7 @@ async function handleHostProxyBidTeamClick(teamId) {
   if (allowedJumps.length !== 1) return;
 
   const jump = allowedJumps[0];
-  const actingTeam = teamsData?.[nextTeamId];
+  const actingTeam = getHostProxyTeamState(nextTeamId);
   if (!actingTeam) return;
 
   const nextBid = currentAuctionData.currentBid + jump;
@@ -216,17 +244,17 @@ function renderHostProxyBidPanel() {
   ensureHostProxyBidTeamSelected();
   wrap.style.display = 'block';
 
-  const teamIds = Object.keys(teamsData || {});
+  const teamIds = getHostProxyTeamIds();
   if (!teamIds.length) {
     list.innerHTML = '<div class="bid-history-empty">Waiting for teams...</div>';
     return;
   }
 
   list.innerHTML = teamIds.map((teamId) => {
+    const team = getHostProxyTeamState(teamId) || {};
     const meta = getRoomTeamMeta(teamId) || {};
-    const live = teamsData?.[teamId] || {};
-    const name = live.name || meta.name || teamId;
-    const short = meta.short || live.short || teamId;
+    const name = team.name || meta.name || teamId;
+    const short = team.short || meta.short || teamId;
     const activeClass = teamId === hostProxyBidTeamId ? 'active' : '';
     const logo = meta.logo
       ? `<img class="host-proxy-team-logo" src="${meta.logo}" alt="${short} logo" loading="lazy" decoding="async" />`
@@ -2013,7 +2041,7 @@ async function placeBid(selectedJump = null, useBaseBid = false) {
 
   ensureHostProxyBidTeamSelected();
   const actingTeamId = getActingTeamIdForBidUi();
-  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  const actingTeam = actingTeamId ? getHostProxyTeamState(actingTeamId) : null;
   if (!actingTeamId || !actingTeam) {
     showToast('Select a team to bid.', 'error');
     return;
@@ -2110,7 +2138,7 @@ async function passPlayer() {
 
   ensureHostProxyBidTeamSelected();
   const actingTeamId = getActingTeamIdForBidUi();
-  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  const actingTeam = actingTeamId ? getHostProxyTeamState(actingTeamId) : null;
   if (!actingTeamId || !actingTeam) {
     showToast('Select a team first.', 'error');
     return;
@@ -2148,7 +2176,7 @@ async function skipCurrentPool() {
 
   ensureHostProxyBidTeamSelected();
   const actingTeamId = getActingTeamIdForBidUi();
-  const actingTeam = actingTeamId ? teamsData[actingTeamId] : null;
+  const actingTeam = actingTeamId ? getHostProxyTeamState(actingTeamId) : null;
   if (!actingTeamId || !actingTeam) {
     showToast('Select a team first.', 'error');
     return;

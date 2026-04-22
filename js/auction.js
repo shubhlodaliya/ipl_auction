@@ -640,6 +640,9 @@ async function initAuction() {
     updateMyPurse();
     renderHostProxyBidPanel();
     if (isBidUiSpectator()) renderSpectatorPredictionPoll(currentAuctionData);
+    if (isSpectator && currentAuctionData && !isHostProxyBidderActive()) {
+      updateBroadcastView(currentAuctionData);
+    }
   });
 
   listeners.soldPlayers = db.ref(`rooms/${roomCode}/soldPlayers`).on('value', snap => {

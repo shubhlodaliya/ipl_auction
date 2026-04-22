@@ -733,7 +733,7 @@ async function createManualRoom() {
     ? getAuthUid()
     : String(localStorage.getItem('ipl_auth_uid') || '').trim();
 
-  const hostName = document.getElementById('hostName').value.trim();
+  const hostLabel = 'Host';
   const passcode = document.getElementById('invitePasscode').value.trim();
   const auctionTitleInput = document.getElementById('auctionTitle');
   const auctionTitle = String(auctionTitleInput?.value || '').trim().slice(0, 40) || 'My Auction';
@@ -753,7 +753,6 @@ async function createManualRoom() {
   const players = collectPlayers();
   const hostTeamId = document.getElementById('hostTeamSelect').value;
 
-  if (!hostName) return showError('Host name is required.');
   if (!passcode) return showError('Room passcode is required.');
   if (teams.length < 2) return showError('Add at least 2 teams.');
   if (players.length < 1) return showError('Add at least 1 player.');
@@ -823,7 +822,7 @@ async function createManualRoom() {
           short: t.short,
           primary: t.primary,
           logo: t.logo || '',
-          ownerName: hostName,
+          ownerName: hostLabel,
           ownerUid: authUid || null,
           purse: budget,
           squad: [],
@@ -837,7 +836,7 @@ async function createManualRoom() {
         short: hostTeam.short,
         primary: hostTeam.primary,
         logo: hostTeam.logo || '',
-        ownerName: hostName,
+        ownerName: hostLabel,
         ownerUid: authUid || null,
         purse: budget,
         squad: [],
@@ -884,7 +883,7 @@ async function createManualRoom() {
         status: 'lobby',
         auctionType: 'manual',
         hostTeamId: hostTeam ? hostTeam.id : null,
-        hostName,
+        hostName: hostLabel,
         createdAt: Date.now(),
         updatedAt: Date.now()
       });
@@ -893,7 +892,7 @@ async function createManualRoom() {
     saveSession({
       roomCode: code,
       teamId: hostTeam ? hostTeam.id : null,
-      playerName: hostName,
+      playerName: hostLabel,
       isHost: true,
       isSpectator: hostManagerOnly
     });

@@ -5741,18 +5741,26 @@ body.broadcast-mode #teamModalOverlay {
 
 .broadcast-banner {
   position: relative;
-  background: linear-gradient(96deg, #214aa8 0%, #3e72e4 38%, #1a4bb0 100%);
-  padding: 0.5rem 3.3rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1e3a8a 100%);
+  background-size: 200% 200%;
+  padding: 0.8rem 5rem;
   font-weight: 900;
   font-style: italic;
-  font-size: 1.2rem;
+  font-size: 2.5rem;
   line-height: 1;
-  letter-spacing: 0.8px;
+  letter-spacing: 3px;
   transform: skewX(-15deg);
-  border: 2px solid #facc15;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.42), inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 0 2px rgba(9, 20, 61, 0.8);
+  border: 3px solid #facc15;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.4), 0 0 15px #facc15;
   text-transform: uppercase;
-  color: #f4f8ff;
+  color: #ffffff;
+  text-shadow: 3px 3px 6px rgba(0,0,0,0.6), 0 0 20px rgba(255,255,255,0.5);
+  animation: bannerShine 3s ease-in-out infinite alternate;
+}
+
+@keyframes bannerShine {
+  0% { background-position: 0% 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.4), 0 0 10px #facc15; }
+  100% { background-position: 100% 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.4), 0 0 30px #facc15; }
 }
 
 .broadcast-banner::before,
@@ -5760,7 +5768,7 @@ body.broadcast-mode #teamModalOverlay {
   content: '';
   position: absolute;
   top: 50%;
-  width: 12px;
+  width: 16px;
   height: 70%;
   transform: translateY(-50%) skewX(15deg);
   background: linear-gradient(180deg, #ffe694, #facc15);
@@ -5768,11 +5776,11 @@ body.broadcast-mode #teamModalOverlay {
 }
 
 .broadcast-banner::before {
-  left: -14px;
+  left: -19px;
 }
 
 .broadcast-banner::after {
-  right: -14px;
+  right: -19px;
 }
 
 .broadcast-nav {

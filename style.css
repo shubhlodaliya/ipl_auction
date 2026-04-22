@@ -6181,8 +6181,7 @@ body.broadcast-mode {
   gap: 0.45rem;
 }
 
-/* Hide old badges if browser cache serves stale markup */
-.broadcast-set-badge,
+/* Hide deprecated pool badge if browser cache serves stale markup */
 .broadcast-pool-badge {
   display: none !important;
 }

@@ -922,6 +922,17 @@ function updateBroadcastView(data) {
         .map((line, idx) => `<div class="broadcast-meta-line ${idx === playerLines.length - 1 ? 'is-base' : ''}"><span>${escapeHtml(line)}</span></div>`)
         .join('');
     }
+
+    const pSetBadge = document.getElementById('broadcastSetBadge');
+    if (pSetBadge) {
+      const playerNum = getPlayerDisplayNumber(player);
+      if (playerNum) {
+        pSetBadge.textContent = String(playerNum);
+        pSetBadge.style.display = 'flex';
+      } else {
+        pSetBadge.style.display = 'none';
+      }
+    }
   } else {
     const pSetBadge = document.getElementById('broadcastSetBadge');
     if (pSetBadge) pSetBadge.style.display = 'none';
@@ -3012,17 +3023,6 @@ function showTeamSquad(teamId) {
             <div class="result-player-row">
               <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${numberBadgeHtml}${avatarHtml}</div>
               <div style="flex:1;">
-
-                    const pSetBadge = document.getElementById('broadcastSetBadge');
-                    if (pSetBadge) {
-                      const playerNum = getPlayerDisplayNumber(player);
-                      if (playerNum) {
-                        pSetBadge.textContent = String(playerNum);
-                        pSetBadge.style.display = 'flex';
-                      } else {
-                        pSetBadge.style.display = 'none';
-                      }
-                    }
                 <div class="result-player-name">${p.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
                 <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}${isIcon ? ' · Icon Player' : ''}</div>
               </div>

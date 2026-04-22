@@ -65,7 +65,9 @@ function handlePlayerImageError(imgEl, fallbackText = 'NA') {
   const parent = imgEl.parentElement;
   if (!parent) return;
   try { imgEl.remove(); } catch (_) {}
-  parent.textContent = String(fallbackText || 'NA').slice(0, 2).toUpperCase();
+  const span = document.createElement('span');
+  span.textContent = String(fallbackText || 'NA').slice(0, 2).toUpperCase();
+  parent.insertBefore(span, parent.firstChild);
 }
 
 function getRoleColor(role) {

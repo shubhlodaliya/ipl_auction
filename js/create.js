@@ -311,6 +311,40 @@ async function restartPastAuction(sourceCode) {
     const hostName = sourceHostTeam.ownerName || String(localStorage.getItem('ipl_auth_name') || '').trim() || 'Host';
     const budget = Number(sourceConfig.budget || sourceHostTeam.purse || 2000);
 
+    const sourceTeams = sourceRoom.teams || {};
+    const sourceTeamIds = Object.keys(sourceTeams);
+    const clonedTeams = {};
+    if (sourceTeamIds.length) {
+      sourceTeamIds.forEach((teamId) => {
+        const team = sourceTeams[teamId] || {};
+        clonedTeams[teamId] = {
+          name: team.name || teamId,
+          short: team.short || teamId,
+          primary: team.primary || '#1DA0FF',
+          logo: team.logo || '',
+          ownerName: team.ownerName || hostName,
+          ownerUid: team.ownerUid || authUid,
+          purse: Number.isFinite(Number(team.purse)) ? Number(team.purse) : budget,
+          squad: [],
+          isHost: teamId === hostTeamId,
+          joinedAt: Date.now()
+        };
+      });
+    } else {
+      clonedTeams[hostTeamId] = {
+        name: hostTeamMeta?.name || sourceHostTeam.name || hostTeamId,
+        short: hostTeamMeta?.short || sourceHostTeam.short || hostTeamId,
+        primary: hostTeamMeta?.primary || sourceHostTeam.primary || '#1DA0FF',
+        logo: hostTeamMeta?.logo || sourceHostTeam.logo || '',
+        ownerName: hostName,
+        ownerUid: authUid,
+        purse: budget,
+        squad: [],
+        isHost: true,
+        joinedAt: Date.now()
+      };
+    }
+
     const roomPayload = {
       config: {
         hostTeamId,
@@ -331,20 +365,7 @@ async function restartPastAuction(sourceCode) {
         unlimitedTimer: !!sourceConfig.unlimitedTimer,
         hostBidsForAllTeams: !!sourceConfig.hostBidsForAllTeams
       },
-      teams: {
-        [hostTeamId]: {
-          name: hostTeamMeta?.name || sourceHostTeam.name || hostTeamId,
-          short: hostTeamMeta?.short || sourceHostTeam.short || hostTeamId,
-          primary: hostTeamMeta?.primary || sourceHostTeam.primary || '#1DA0FF',
-          logo: hostTeamMeta?.logo || sourceHostTeam.logo || '',
-          ownerName: hostName,
-          ownerUid: authUid,
-          purse: budget,
-          squad: [],
-          isHost: true,
-          joinedAt: Date.now()
-        }
-      }
+      teams: clonedTeams
     };
 
     if (isManual) {

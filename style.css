@@ -6293,3 +6293,305 @@ body.broadcast-mode {
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
   transform: rotate(5deg);
 }
+
+@media (max-width: 768px) {
+  .broadcast-header {
+    height: 50px;
+    padding: 0 1rem;
+    background: transparent;
+  }
+  .broadcast-banner {
+    font-size: 1.2rem;
+    padding: 0.3rem 1.5rem;
+    transform: none;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    position: static;
+  }
+  .broadcast-banner::before,
+  .broadcast-banner::after {
+    display: none;
+  }
+  .broadcast-logo span {
+    font-size: 1.5rem;
+  }
+  .broadcast-nav {
+    display: none;
+  }
+
+  .broadcast-main {
+    flex-direction: column;
+    padding: 0 1rem;
+    align-items: stretch;
+    justify-content: flex-start;
+    height: auto;
+    gap: 1rem;
+    margin-top: 10px;
+  }
+
+  .broadcast-player-section {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: unset;
+  }
+  
+  .broadcast-photo-wrapper {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 3px solid #facc15;
+  }
+  .broadcast-photo-inner {
+    border-radius: 4px;
+  }
+  .broadcast-photo-ring {
+    display: none;
+  }
+  .broadcast-set-badge {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+    top: -8px;
+    right: -8px;
+    left: auto;
+  }
+
+  .broadcast-name-ribbon {
+    position: static;
+    margin: 0;
+    min-width: unset;
+    max-width: unset;
+    width: 100%;
+    transform: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: transparent;
+    padding: 0;
+  }
+  
+  .broadcast-name-text {
+    background: #facc15;
+    color: #000;
+    font-size: 1.1rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 900;
+    transform: skewX(-10deg);
+  }
+  .broadcast-player-meta {
+    display: none !important;
+  }
+  
+  .broadcast-mobile-meta-blocks {
+    display: flex !important;
+    flex-direction: column;
+    gap: 5px;
+    transform: skewX(-10deg);
+  }
+  .mobile-age-role-row {
+    display: flex;
+    gap: 5px;
+  }
+  .mobile-age-block, .mobile-role-block {
+    background: #0f172a;
+    color: #facc15;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 4px;
+    border: 1px solid #1e293b;
+    white-space: nowrap;
+  }
+  .mobile-role-block {
+    color: #fff;
+    flex-grow: 1;
+    text-align: center;
+  }
+  .mobile-style-row {
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+    background: rgba(0,0,0,0.5);
+    padding: 4px;
+    border-radius: 4px;
+  }
+
+  .broadcast-team-section {
+    position: static;
+    width: 100%;
+    min-width: unset;
+    height: auto;
+    background: #b91c1c;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: none;
+    transform: none;
+  }
+  .broadcast-team-section::before { display: none; }
+  
+  .broadcast-team-card {
+    display: none;
+  }
+  
+  .broadcast-bid-box {
+    position: static;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    transform: none;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+  .broadcast-bid-box::after, .broadcast-bid-box::before { display: none; }
+  
+  .broadcast-coin {
+    width: 35px;
+    height: 35px;
+    font-size: 1.3rem;
+    background: #facc15;
+    border: none;
+  }
+  .broadcast-bid-amount {
+    font-size: 2.5rem;
+    color: #fff;
+    text-shadow: none;
+  }
+  .broadcast-team-section::after {
+    content: attr(data-mobile-team);
+    display: block;
+    color: #facc15;
+    font-size: 1.1rem;
+    font-weight: 900;
+    margin-top: 5px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .broadcast-footer-stats {
+    position: static;
+    padding: 0 1rem;
+    width: 100%;
+    margin-top: 10px;
+  }
+  .broadcast-stat-pills {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .stat-pill {
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    box-shadow: none;
+    border: none;
+  }
+  .stat-pill .pill-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .stat-pill .pill-value {
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+  .stat-pill.filter-btn {
+    flex: 0 0 40px;
+    background: #991b1b;
+    justify-content: center;
+    color: white;
+  }
+  .stat-pill.filter-btn .pill-icon {
+    font-size: 1.5rem;
+  }
+
+  .broadcast-mobile-teams-container {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px;
+    background: #b91c1c;
+    border-radius: 20px 20px 0 0;
+    margin-top: 15px;
+    flex-grow: 1;
+    align-content: start;
+    height: 100%;
+  }
+  .mobile-team-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 6px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .m-team-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 5px;
+  }
+  .m-team-name {
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 50px;
+  }
+  .m-team-set {
+    background: #b91c1c;
+    color: #fff;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+  .m-team-stat {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #0f172a;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .m-team-stat-icon {
+    color: #facc15;
+  }
+}
+

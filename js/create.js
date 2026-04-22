@@ -239,85 +239,20 @@ async function reopenPastAuction(roomCode) {
     const hostTeamId = config.hostTeamId || Object.keys(room.teams || {}).find((id) => room.teams[id]?.isHost) || Object.keys(room.teams || {})[0] || null;
     const hostName = room.teams?.[hostTeamId]?.ownerName || String(localStorage.getItem('ipl_auth_name') || '').trim() || 'Host';
 
-    let targetStatus = String(config.status || 'lobby');
-    if (targetStatus === 'finished') {
-      const queue = Array.isArray(room.playerQueue) ? room.playerQueue : [];
-      const idx = Number(room.currentIndex || 0);
-      const hasLiveState = queue.length > 0 && idx < queue.length && !!room.currentAuction;
+    let targetStatus = String(config.status || 'lobby').toLowerCase();
+    const queue = Array.isArray(room.playerQueue) ? room.playerQueue : [];
+    const idx = Number(room.currentIndex || 0);
+    const hasRemainingPlayers = queue.length > 0 && idx < queue.length;
 
-      if (hasLiveState) {
-        targetStatus = 'auction';
-        await db.ref(`rooms/${roomCode}/config`).update({
-          status: targetStatus,
-          reopenedAt: Date.now(),
-          reopenedBy: authUid
-        });
-      } else {
-        // If the live room is missing state, try to restore it from the most recent archive snapshot.
-        const archiveId = String(config.lastArchiveId || '').trim();
-        if (archiveId) {
-          const archSnap = await db.ref(`roomArchives/${roomCode}/${archiveId}`).get();
-          if (archSnap.exists()) {
-            const archivedRoom = archSnap.val() || {};
-            const archivedConfig = archivedRoom.config || {};
-            const archivedQueue = Array.isArray(archivedRoom.playerQueue) ? archivedRoom.playerQueue : [];
-            const archivedIdx = Number(archivedRoom.currentIndex || 0);
-            const archivedAuction = archivedRoom.currentAuction || null;
-            const canResumeFromArchive = archivedQueue.length > 0 && archivedIdx < archivedQueue.length && !!archivedAuction;
-
-            if (canResumeFromArchive) {
-              const restoreUpdates = {};
-              restoreUpdates[`rooms/${roomCode}/playerQueue`] = archivedQueue;
-              restoreUpdates[`rooms/${roomCode}/currentIndex`] = archivedIdx;
-              restoreUpdates[`rooms/${roomCode}/currentAuction`] = archivedAuction;
-              if (archivedRoom.poolByIndex) restoreUpdates[`rooms/${roomCode}/poolByIndex`] = archivedRoom.poolByIndex;
-              if (archivedRoom.soldPlayers) restoreUpdates[`rooms/${roomCode}/soldPlayers`] = archivedRoom.soldPlayers;
-              if (archivedRoom.teams) restoreUpdates[`rooms/${roomCode}/teams`] = archivedRoom.teams;
-              if (archivedRoom.playing11) restoreUpdates[`rooms/${roomCode}/playing11`] = archivedRoom.playing11;
-              if (archivedRoom.auctionControl) restoreUpdates[`rooms/${roomCode}/auctionControl`] = archivedRoom.auctionControl;
-              if (archivedRoom.manualPlayers) restoreUpdates[`rooms/${roomCode}/manualPlayers`] = archivedRoom.manualPlayers;
-              if (archivedRoom.manualTeams) restoreUpdates[`rooms/${roomCode}/manualTeams`] = archivedRoom.manualTeams;
-
-              targetStatus = 'auction';
-              restoreUpdates[`rooms/${roomCode}/config/status`] = 'auction';
-              restoreUpdates[`rooms/${roomCode}/config/reopenedAt`] = Date.now();
-              restoreUpdates[`rooms/${roomCode}/config/reopenedBy`] = authUid;
-              // Preserve title/type if missing
-              if (!String(config.auctionTitle || '').trim() && String(archivedConfig.auctionTitle || '').trim()) {
-                restoreUpdates[`rooms/${roomCode}/config/auctionTitle`] = String(archivedConfig.auctionTitle || '').trim();
-              }
-              if (!String(config.auctionType || '').trim() && String(archivedConfig.auctionType || '').trim()) {
-                restoreUpdates[`rooms/${roomCode}/config/auctionType`] = String(archivedConfig.auctionType || '').trim();
-              }
-              await db.ref().update(restoreUpdates);
-            } else {
-              targetStatus = 'lobby';
-              showToast('This past auction cannot be resumed (missing state).', 'error');
-              await db.ref(`rooms/${roomCode}/config`).update({
-                status: targetStatus,
-                reopenedAt: Date.now(),
-                reopenedBy: authUid
-              });
-            }
-          } else {
-            targetStatus = 'lobby';
-            showToast('This past auction cannot be resumed (archive missing).', 'error');
-            await db.ref(`rooms/${roomCode}/config`).update({
-              status: targetStatus,
-              reopenedAt: Date.now(),
-              reopenedBy: authUid
-            });
-          }
-        } else {
-          targetStatus = 'lobby';
-          showToast('This past auction cannot be resumed (not archived).', 'error');
-          await db.ref(`rooms/${roomCode}/config`).update({
-            status: targetStatus,
-            reopenedAt: Date.now(),
-            reopenedBy: authUid
-          });
-        }
-      }
+    // Reopen should resume from existing room state without resetting sold/unsold progress.
+    // If a room is marked finished but still has remaining players, move it back to live auction.
+    if (targetStatus === 'finished' && hasRemainingPlayers) {
+      targetStatus = 'auction';
+      await db.ref(`rooms/${roomCode}/config`).update({
+        status: 'auction',
+        reopenedAt: Date.now(),
+        reopenedBy: authUid
+      });
     }
 
     await upsertAuctionHistory(authUid, roomCode, {
@@ -328,9 +263,13 @@ async function reopenPastAuction(roomCode) {
     });
 
     saveSession({ roomCode, teamId: hostTeamId, playerName: hostName, isHost: true });
-    window.location.href = targetStatus === 'auction'
-      ? `auction.html?room=${encodeURIComponent(roomCode)}`
-      : 'lobby.html';
+    if (targetStatus === 'auction') {
+      window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}`;
+    } else if (targetStatus === 'finished') {
+      window.location.href = `results.html?room=${encodeURIComponent(roomCode)}`;
+    } else {
+      window.location.href = 'lobby.html';
+    }
   } catch (err) {
     console.error('Reopen failed:', err);
     showToast('Failed to reopen auction.', 'error');
@@ -392,7 +331,7 @@ async function restartPastAuction(sourceCode) {
           logo: team.logo || '',
           ownerName: team.ownerName || hostName,
           ownerUid: team.ownerUid || authUid,
-          purse: Number.isFinite(Number(team.purse)) ? Number(team.purse) : budget,
+          purse: budget,
           squad: [],
           isHost: teamId === hostTeamId,
           joinedAt: Date.now()

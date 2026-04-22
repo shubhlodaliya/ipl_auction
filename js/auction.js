@@ -989,6 +989,34 @@ function updateBroadcastView(data) {
       const teamName = team.name || team.short || data.highestBidder;
       animText.innerHTML = `${player.name}<br>sold to ${teamName}<br>for ${formatPrice(data.currentBid)}`;
       anim.style.display = 'flex';
+      
+      // Trigger canvas-confetti from both sides
+      if (typeof confetti === 'function') {
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        (function frame() {
+          confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.8 },
+            colors: ['#facc15', '#ef4444', '#3b82f6', '#10b981']
+          });
+          confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.8 },
+            colors: ['#facc15', '#ef4444', '#3b82f6', '#10b981']
+          });
+
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        }());
+      }
+
       setTimeout(() => { anim.style.display = 'none'; }, 5000);
     }
   } else if (data.status !== 'sold' && anim) {

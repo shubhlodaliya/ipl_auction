@@ -86,6 +86,40 @@ function getAuctionBrandTitle() {
   return roomConfig?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
 }
 
+function getPlayerDisplayNumber(player) {
+  if (!player) return null;
+
+  const explicitCandidates = [
+    player.player_number,
+    player.playerNumber,
+    player.number,
+    player.set_number
+  ];
+
+  for (const candidate of explicitCandidates) {
+    const value = Number(candidate);
+    if (Number.isFinite(value) && value > 0) return Math.floor(value);
+  }
+
+  const idText = String(player.id || '').trim();
+  const idMatch = idText.match(/(?:^|_)(\d+)$/);
+  if (idMatch?.[1]) {
+    const parsed = Number(idMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+
+  const index = allPlayers.findIndex((p) => String(p?.id || '') === idText);
+  if (index >= 0) return index + 1;
+  return null;
+}
+
+function buildPlayerNumberBadgeHtml(player, compact = false) {
+  const num = getPlayerDisplayNumber(player);
+  if (!num) return '';
+  const cls = compact ? 'player-number-badge compact' : 'player-number-badge';
+  return `<span class="${cls}">${num}</span>`;
+}
+
 function applyAuctionBranding() {
   const title = getAuctionBrandTitle();
   const logo = document.querySelector('.header .logo');
@@ -841,7 +875,7 @@ function updateBroadcastView(data) {
       'id', 'name', 'role', 'country', 'base_price_lakh', 'category', 'photo_url',
       'auction_status', 'extraFields', 'age', 'set_number', 'poolId', 'pool_id',
       'team', 'teamId', 'team_id', 'soldPrice', 'sold_price', 'soldBy', 'sold_by',
-      'image', 'image_url'
+      'image', 'image_url', 'player_number', 'playerNumber', 'number'
     ]);
 
     Object.entries(playerData || {}).forEach(([key, value]) => {
@@ -888,6 +922,9 @@ function updateBroadcastView(data) {
         .map((line, idx) => `<div class="broadcast-meta-line ${idx === playerLines.length - 1 ? 'is-base' : ''}"><span>${escapeHtml(line)}</span></div>`)
         .join('');
     }
+  } else {
+    const pSetBadge = document.getElementById('broadcastSetBadge');
+    if (pSetBadge) pSetBadge.style.display = 'none';
   }
 
   // Set Team Logo, Name and Bid
@@ -1261,6 +1298,7 @@ function renderPlayerSpotlight(player) {
   const coreFieldKeys = new Set([
     'id', 'name', 'role', 'country', 'base_price_lakh', 'category', 'photo_url',
     'auction_status', 'extraFields', 'age', 'set_number', 'poolId', 'pool_id',
+    'player_number', 'playerNumber', 'number',
     'team', 'teamId', 'team_id', 'soldPrice', 'sold_price', 'soldBy', 'sold_by'
   ]);
   const dynamicFieldChips = Object.entries(player || {})
@@ -1289,9 +1327,11 @@ function renderPlayerSpotlight(player) {
   const avatarInner = player.photo_url
     ? `<img src="${player.photo_url}" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" onerror="handlePlayerImageError(this, '${initials}')" />`
     : initials;
+  const numberBadgeHtml = buildPlayerNumberBadgeHtml(player);
 
   document.getElementById('playerSpotlight').innerHTML = `
     <div class="player-avatar pulse-ring ${avatarBorderVariantClass}" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
+      ${numberBadgeHtml}
       ${avatarInner}
     </div>
     <div class="player-info-card">
@@ -2642,6 +2682,7 @@ function openLivePlayerListModal(type) {
     const avatarHtml = player.photo_url
       ? `<img src="${player.photo_url}" alt="${player.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
       : getPlayerInitials(player.name);
+    const numberBadgeHtml = buildPlayerNumberBadgeHtml(player, true);
     const detailText = status === 'sold'
       ? `${buyerLabel} · ${formatPrice(Number(soldInfo?.soldPrice || 0))}`
       : status === 'unsold'
@@ -2650,7 +2691,7 @@ function openLivePlayerListModal(type) {
 
     return `
       <div class="live-player-row ${status}">
-        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${avatarHtml}</div>
+        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${numberBadgeHtml}${avatarHtml}</div>
         <div class="live-player-main">
           <div class="result-player-name">${player.name}</div>
           <div class="live-player-sub">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>
@@ -2735,9 +2776,10 @@ function showCurrentPoolDetails() {
     const avatarHtml = player.photo_url
       ? `<img src="${player.photo_url}" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
       : getPlayerInitials(player.name);
+    const numberBadgeHtml = buildPlayerNumberBadgeHtml(player, true);
     return `
       <div class="pool-player-row">
-        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${avatarHtml}</div>
+        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${numberBadgeHtml}${avatarHtml}</div>
         <div style="flex:1;min-width:0;">
           <div class="result-player-name">${player.name}</div>
           <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>
@@ -2965,10 +3007,22 @@ function showTeamSquad(teamId) {
           const avatarHtml = p.photo_url
             ? `<img src="${p.photo_url}" alt="${p.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${getPlayerInitials(p.name)}')" />`
             : getPlayerInitials(p.name);
+          const numberBadgeHtml = buildPlayerNumberBadgeHtml(p, true);
           return `
             <div class="result-player-row">
-              <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${avatarHtml}</div>
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(p.role)}99,${getRoleColor(p.role)}44)">${numberBadgeHtml}${avatarHtml}</div>
               <div style="flex:1;">
+
+                    const pSetBadge = document.getElementById('broadcastSetBadge');
+                    if (pSetBadge) {
+                      const playerNum = getPlayerDisplayNumber(player);
+                      if (playerNum) {
+                        pSetBadge.textContent = String(playerNum);
+                        pSetBadge.style.display = 'flex';
+                      } else {
+                        pSetBadge.style.display = 'none';
+                      }
+                    }
                 <div class="result-player-name">${p.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
                 <div style="font-size:0.72rem;color:var(--text-dim)">${getRoleIcon(p.role)} ${p.role} · ${getCountryFlag(p.country)} ${p.country}${isIcon ? ' · Icon Player' : ''}</div>
               </div>

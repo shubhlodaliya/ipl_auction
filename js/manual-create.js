@@ -131,6 +131,9 @@ function addPlayerRow(prefill = null) {
     row.querySelector('.p-age').value = prefill.age || '';
     row.querySelector('.p-category').value = prefill.category || 'Batsman';
     row.querySelector('.p-base').value = prefill.base_price_lakh || '';
+    if (Number.isFinite(Number(prefill.player_number)) && Number(prefill.player_number) > 0) {
+      row.dataset.playerNumber = String(Number(prefill.player_number));
+    }
     if (prefill.photo_url) row.dataset.photoUrl = prefill.photo_url;
 
     if (prefill.extraFields) {
@@ -280,6 +283,7 @@ async function importExcelPlayers() {
         age: age || '',
         category,
         base_price_lakh: basePrice,
+        player_number: importedPlayers.length + 1,
         photo_url: photoUrl,
         extraFields
       });
@@ -453,6 +457,7 @@ function collectPlayers() {
 
     return {
       id: `mp_${idx + 1}`,
+      player_number: Number(row.dataset.playerNumber || (idx + 1)),
       name,
       age: age || null,
       category,
@@ -791,6 +796,7 @@ async function createManualRoom() {
 
     const finalPlayers = players.map(p => ({
       id: p.id,
+      player_number: Number(p.player_number || 0) > 0 ? Number(p.player_number) : null,
       name: p.name,
       age: p.age || null,
       category: p.category,

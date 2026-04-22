@@ -849,6 +849,7 @@ async function createManualRoom() {
         hostTeamId: hostTeam ? hostTeam.id : null,
         hostManagerOnly,
         hostBidsForAllTeams,
+        bidOptionsAll: bidOptions,
         budget,
         maxSquadSize,
         minSquadSize,

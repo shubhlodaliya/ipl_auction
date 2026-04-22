@@ -301,6 +301,10 @@ async function restartPastAuction(sourceCode) {
     const sourceHostTeam = sourceRoom.teams?.[hostTeamId] || {};
     const sourceManualTeams = sourceRoom.manualTeams || {};
     const isManual = sourceConfig.auctionType === 'manual';
+    const sourceBidOptions = Array.isArray(sourceConfig.bidOptionsAll) && sourceConfig.bidOptionsAll.length
+      ? sourceConfig.bidOptionsAll
+      : (Array.isArray(sourceConfig.bidOptions) && sourceConfig.bidOptions.length ? sourceConfig.bidOptions : [25, 50, 100]);
+    const restartBidOptions = sourceBidOptions.length > 1 ? sourceBidOptions : [25, 50, 100];
     const hostTeamMeta = isManual
       ? (sourceManualTeams[hostTeamId] || sourceHostTeam || getTeam(hostTeamId))
       : (getTeam(hostTeamId) || sourceHostTeam);
@@ -322,7 +326,8 @@ async function restartPastAuction(sourceCode) {
         createdAt: Date.now(),
         auctionType: sourceConfig.auctionType || 'random',
         auctionTitle: String(sourceConfig.auctionTitle || '').trim() || (sourceConfig.auctionType === 'manual' ? 'My Auction' : 'IPL Auction'),
-        bidOptions: Array.isArray(sourceConfig.bidOptions) && sourceConfig.bidOptions.length ? sourceConfig.bidOptions : [25, 50, 100],
+        bidOptions: restartBidOptions,
+        bidOptionsAll: sourceBidOptions,
         unlimitedTimer: !!sourceConfig.unlimitedTimer,
         hostBidsForAllTeams: !!sourceConfig.hostBidsForAllTeams
       },

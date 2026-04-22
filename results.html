@@ -198,29 +198,6 @@
       const urlRoom = new URLSearchParams(window.location.search).get('room');
       const roomCode = urlRoom || session?.roomCode || '';
 
-      // Manual auctions may upload player images to Cloudinary under a room prefix.
-      // Don't delete on terminate/finish (re-auction still needs them).
-      // Instead, delete only when the host leaves via "New Auction".
-      if (roomCode) {
-        try {
-          const cfgSnap = await db.ref(`rooms/${roomCode}/config`).get();
-          const cfg = cfgSnap.exists() ? (cfgSnap.val() || {}) : {};
-          const authUid = getAuthUid();
-          const amHost = !!(session?.isHost || (authUid && (cfg.hostUid === authUid || cfg.currentHostUid === authUid)));
-          const isManualAuction = cfg.auctionType === 'manual';
-
-          if (amHost && isManualAuction) {
-            await fetch('/api/cloudinary-cleanup', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ roomCode })
-            });
-          }
-        } catch (err) {
-          console.warn('Cloudinary cleanup skipped/failed:', err);
-        }
-      }
-
       clearSession();
       window.location.href = 'index.html';
     }

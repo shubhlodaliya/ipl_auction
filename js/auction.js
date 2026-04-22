@@ -150,6 +150,65 @@ async function syncAuctionHistoryStatus(status, extra = {}) {
   await db.ref(`users/${hostUid}/auctionHistory/${roomCode}`).update(payload).catch(() => {});
 }
 
+function buildArchiveIdFromRoomConfig(cfg) {
+  const finishedAt = Number(cfg?.finishedAt || 0);
+  const terminatedAt = Number(cfg?.terminatedAt || 0);
+  const createdAt = Number(cfg?.createdAt || 0);
+  const base = finishedAt || terminatedAt || Date.now();
+  const suffix = createdAt ? `_${createdAt}` : '';
+  return `${base}${suffix}`;
+}
+
+function stripRoomForArchive(room = {}) {
+  const clone = JSON.parse(JSON.stringify(room || {}));
+  if (!clone || typeof clone !== 'object') return {};
+  delete clone.spectators;
+  delete clone.hostPresence;
+  delete clone.voice;
+  if (clone.chat && typeof clone.chat === 'object') {
+    delete clone.chat.messages;
+    delete clone.chat.muted;
+  }
+  delete clone.watchlists;
+  return clone;
+}
+
+async function archiveFinishedAuctionSnapshot(extraMeta = {}) {
+  const hostUid = String(roomHostUid || roomConfig?.hostUid || getLocalAuthUid() || '').trim();
+  if (!roomCode || !hostUid) return;
+
+  try {
+    const roomSnap = await db.ref(`rooms/${roomCode}`).get();
+    if (!roomSnap.exists()) return;
+    const room = roomSnap.val() || {};
+    const cfg = room.config || {};
+
+    const archiveId = buildArchiveIdFromRoomConfig(cfg);
+    const existingArchiveId = String(cfg.lastArchiveId || '').trim();
+    if (existingArchiveId && existingArchiveId === archiveId) return;
+
+    const archivePayload = stripRoomForArchive(room);
+    archivePayload._meta = {
+      roomCode,
+      archivedAt: Date.now(),
+      archivedBy: hostUid,
+      archiveId,
+      ...extraMeta
+    };
+
+    const updates = {};
+    updates[`roomArchives/${roomCode}/${archiveId}`] = archivePayload;
+    updates[`rooms/${roomCode}/config/lastArchiveId`] = archiveId;
+    updates[`rooms/${roomCode}/config/archivedAt`] = Date.now();
+    updates[`users/${hostUid}/auctionHistory/${roomCode}/lastArchiveId`] = archiveId;
+    updates[`users/${hostUid}/auctionHistory/${roomCode}/archivedAt`] = Date.now();
+
+    await db.ref().update(updates);
+  } catch (err) {
+    console.warn('Archive snapshot failed:', err);
+  }
+}
+
 async function backfillManualAuctionTitle() {
   if (!isHost || roomConfig?.auctionType !== 'manual') return;
   const existing = String(roomConfig?.auctionTitle || '').trim();
@@ -481,17 +540,8 @@ function removeSpectatorPresence() {
 }
 
 async function requestCloudinaryCleanup() {
-  if (cleanupRequested || !isHost || !isManualAuction) return;
-  cleanupRequested = true;
-  try {
-    await fetch('/api/cloudinary-cleanup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomCode })
-    });
-  } catch (err) {
-    console.warn('Cloudinary cleanup failed:', err);
-  }
+  // Deprecated: we no longer auto-delete manual-auction photos.
+  return;
 }
 
 // ---- INIT ----
@@ -2530,6 +2580,7 @@ async function skipToNextPool() {
   }
 
   if (nextIndex >= playerQueue.length) {
+    await archiveFinishedAuctionSnapshot({ finishReason: 'pool-skip-end' });
     await db.ref(`rooms/${roomCode}/config/status`).set('finished');
     await syncAuctionHistoryStatus('finished', { finishedAt: Date.now(), finishReason: 'pool-skip-end' });
     return;
@@ -2625,6 +2676,7 @@ async function markUnsold() {
 async function advanceToNextPlayer() {
   if (await areAllTeamsComplete()) {
     const finishedAt = Date.now();
+    await archiveFinishedAuctionSnapshot({ finishedAt, finishReason: 'all-squads-complete' });
     await db.ref(`rooms/${roomCode}/config`).update({
       status: 'finished',
       finishedAt,
@@ -2638,6 +2690,7 @@ async function advanceToNextPlayer() {
 
   if (nextIndex >= playerQueue.length) {
     // Auction over
+    await archiveFinishedAuctionSnapshot({ finishReason: 'queue-complete' });
     await db.ref(`rooms/${roomCode}/config/status`).set('finished');
     await syncAuctionHistoryStatus('finished', { finishedAt: Date.now(), finishReason: 'queue-complete' });
     return;
@@ -3195,6 +3248,7 @@ async function terminateAuction() {
   const actorId = myTeamId || 'host-manager';
   const terminatedAt = Date.now();
   if (!confirm('Terminate auction now and show results?')) return;
+  await archiveFinishedAuctionSnapshot({ terminatedAt, terminatedBy: actorId, finishReason: 'terminated' });
   await db.ref(`rooms/${roomCode}/config`).update({ status: 'finished', terminatedAt, terminatedBy: actorId });
   await syncAuctionHistoryStatus('finished', { terminatedAt, terminatedBy: actorId, finishReason: 'terminated' });
   // NOTE: Do NOT cleanup Cloudinary here.

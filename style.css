@@ -5651,7 +5651,7 @@ body.broadcast-mode #teamModalOverlay {
     radial-gradient(circle at 86% 20%, rgba(255,255,255,0.24), transparent 12%),
     radial-gradient(circle at 70% 56%, rgba(255, 212, 84, 0.1), transparent 24%),
     linear-gradient(180deg, rgba(8, 14, 42, 0.36), rgba(3, 8, 23, 0.76)),
-    url('assets/broadcast/stadium-bg.jpg'),
+    url('assets/cricket ground background.jpg'),
     radial-gradient(ellipse at 50% 105%, #2f9828 0%, #0e6328 24%, #0b1e26 58%, transparent 78%),
     linear-gradient(180deg, #1e0b5f 0%, #12093a 37%, #080621 67%, #070512 100%);
   background-size: cover, cover, cover, cover, cover, cover, cover;

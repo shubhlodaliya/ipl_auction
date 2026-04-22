@@ -949,20 +949,6 @@ function updateBroadcastView(data) {
     if (pSetBadge) pSetBadge.style.display = 'none';
   }
 
-  if (player) {
-    const mAge = document.getElementById('mobilePlayerAge');
-    const mRole = document.getElementById('mobilePlayerRole');
-    const mStyles = document.getElementById('mobilePlayerStyles');
-    if (mAge) mAge.textContent = player.age ? `${player.age} Years` : '—';
-    if (mRole) mRole.textContent = player.role || '—';
-    if (mStyles) {
-      const styles = [];
-      if (player.extraFields?.batting_style && player.extraFields.batting_style.toLowerCase() !== 'manual') styles.push(player.extraFields.batting_style);
-      if (player.extraFields?.bowling_style && player.extraFields.bowling_style.toLowerCase() !== 'manual') styles.push(player.extraFields.bowling_style);
-      mStyles.textContent = styles.length ? styles.join(' | ') : (player.role || 'Player');
-    }
-  }
-
   // Set Team Logo, Name and Bid
   const tLogoWrap = document.getElementById('broadcastTeamLogoWrap');
   const tName = document.getElementById('broadcastTeamName');
@@ -974,8 +960,6 @@ function updateBroadcastView(data) {
     const team = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {};
     const short = team.short || team.name || data.highestBidder;
     if (tName) tName.textContent = team.name || short;
-    const tSection = document.querySelector('.broadcast-team-section');
-    if (tSection) tSection.setAttribute('data-mobile-team', team.name || short);
     
     if (tLogoWrap) {
       if (team.logo) {
@@ -987,8 +971,6 @@ function updateBroadcastView(data) {
   } else {
     if (tName) tName.textContent = 'NO BIDS YET';
     if (tLogoWrap) tLogoWrap.innerHTML = `<div class="placeholder-logo">--</div>`;
-    const tSection = document.querySelector('.broadcast-team-section');
-    if (tSection) tSection.removeAttribute('data-mobile-team');
   }
 
   // Stamps
@@ -1059,48 +1041,6 @@ function updateBroadcastView(data) {
   if (sSold) sSold.textContent = sold;
   if (sUnsold) sUnsold.textContent = unsold;
   if (sAvail) sAvail.textContent = Math.max(0, available);
-
-  // Mobile Teams Grid
-  const mTeamsContainer = document.getElementById('broadcastMobileTeamsContainer');
-  if (mTeamsContainer) {
-    let mHtml = '';
-    const roomPurse = window.roomSettings?.budget || 0;
-    const maxSquad = window.roomSettings?.max_players_per_team || 20;
-    
-    const teamSpent = {};
-    const teamCount = {};
-    allPlayers.forEach(p => {
-      if (getLivePlayerStatus(p.id) === 'sold' && p.sold_to) {
-        teamSpent[p.sold_to] = (teamSpent[p.sold_to] || 0) + (p.sold_price || 0);
-        teamCount[p.sold_to] = (teamCount[p.sold_to] || 0) + 1;
-      }
-    });
-
-    Object.keys(teamsData).forEach(tid => {
-      const t = teamsData[tid];
-      const name = t.name || tid;
-      const count = teamCount[tid] || 0;
-      const spent = teamSpent[tid] || 0;
-      const purseLeft = Math.max(0, (t.purse_balance ?? roomPurse) - spent);
-      const formattedPurse = formatPrice(purseLeft).replace('₹', '');
-      
-      mHtml += `
-        <div class="mobile-team-card">
-          <div class="m-team-header">
-            <span class="m-team-name">${escapeHtml(name)}</span>
-            <span class="m-team-set">${count}</span>
-          </div>
-          <div class="m-team-stat">
-            <span class="m-team-stat-icon">🪙</span> ${count}/${maxSquad}
-          </div>
-          <div class="m-team-stat">
-            <span class="m-team-stat-icon">🪙</span> ${formattedPurse}
-          </div>
-        </div>
-      `;
-    });
-    mTeamsContainer.innerHTML = mHtml;
-  }
 }
 
 function updateSpectatorPanel(data = null) {

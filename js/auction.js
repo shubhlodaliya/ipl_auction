@@ -1075,18 +1075,20 @@ function updateBroadcastView(data) {
       const formattedPurse = formatPrice(purseLeft).replace('₹', '');
       
       mHtml += `
-        <div class="mobile-team-card" onclick="showTeamSquad('${tid}')" style="cursor:pointer">
-          <div class="m-team-header">
-            <span class="m-team-name">${escapeHtml(name)}</span>
-            <span class="m-team-set">${count}</span>
+        <button class="mobile-team-btn" type="button" onclick="showTeamSquad('${tid}')" aria-label="Open ${escapeHtml(name)} squad">
+          <div class="mobile-team-card">
+            <div class="m-team-header">
+              <span class="m-team-name">${escapeHtml(name)}</span>
+              <span class="m-team-set">${count}</span>
+            </div>
+            <div class="m-team-stat">
+              <span class="m-team-stat-icon">👥</span> ${count}/${maxSquad}
+            </div>
+            <div class="m-team-stat">
+              <span class="m-team-stat-icon">🪙</span> ${formattedPurse}
+            </div>
           </div>
-          <div class="m-team-stat">
-            <span class="m-team-stat-icon">🪙</span> ${count}/${maxSquad}
-          </div>
-          <div class="m-team-stat">
-            <span class="m-team-stat-icon">🪙</span> ${formattedPurse}
-          </div>
-        </div>
+        </button>
       `;
     });
     mTeamsContainer.innerHTML = mHtml;

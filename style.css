@@ -5775,6 +5775,10 @@ body.broadcast-mode #teamModalOverlay {
   box-shadow: 0 0 0 1px rgba(9, 20, 61, 0.65);
 }
 
+.broadcast-mobile-teams-container {
+  display: none;
+}
+
 .broadcast-banner::before {
   left: -19px;
 }
@@ -6498,6 +6502,10 @@ body.broadcast-mode {
     text-align: center;
   }
 
+  .broadcast-logo {
+    display: none;
+  }
+
   .broadcast-nav {
     display: none;
   }
@@ -6688,6 +6696,20 @@ body.broadcast-mode {
     align-content: start;
     height: 100%;
   }
+
+  .mobile-team-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    text-align: inherit;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
   .mobile-team-card {
     background: #fff;
     border-radius: 8px;
@@ -6697,6 +6719,10 @@ body.broadcast-mode {
     align-items: center;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .mobile-team-btn:active .mobile-team-card {
+    transform: scale(0.98);
   }
   .m-team-header {
     display: flex;

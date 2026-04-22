@@ -811,6 +811,65 @@ function updateBroadcastView(data) {
   if (!data) return;
   const player = playerMap[data.playerId];
   const fallbackAvatar = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2216%22 fill=%22%232f4058%22/><text x=%2250%22 y=%2255%22 fill=%22%23a98cff%22 font-size=%2240%22 font-family=%22Arial%22 text-anchor=%22middle%22 alignment-baseline=%22central%22>🏏</text></svg>`;
+
+  const buildBroadcastPlayerLines = (playerData) => {
+    if (!playerData) return [];
+
+    const roleText = String(playerData.role || '').trim();
+    const categoryText = String(playerData.category || '').trim();
+    const countryText = String(playerData.country || '').trim();
+    const ageText = String(playerData.age || '').trim();
+    const lines = [];
+
+    if (roleText) {
+      lines.push(`${getRoleIcon(roleText)} ${roleText}`);
+    }
+
+    if (categoryText && categoryText.toLowerCase() !== 'manual' && categoryText.toLowerCase() !== roleText.toLowerCase()) {
+      lines.push(`Category: ${categoryText}`);
+    }
+
+    if (countryText && countryText.toLowerCase() !== 'manual') {
+      lines.push(`${getCountryFlag(countryText)} ${countryText}`);
+    }
+
+    if (ageText) {
+      lines.push(`Age: ${ageText}`);
+    }
+
+    const coreFieldKeys = new Set([
+      'id', 'name', 'role', 'country', 'base_price_lakh', 'category', 'photo_url',
+      'auction_status', 'extraFields', 'age', 'set_number', 'poolId', 'pool_id',
+      'team', 'teamId', 'team_id', 'soldPrice', 'sold_price', 'soldBy', 'sold_by',
+      'image', 'image_url'
+    ]);
+
+    Object.entries(playerData || {}).forEach(([key, value]) => {
+      if (coreFieldKeys.has(key)) return;
+      const safeValue = String(value || '').trim();
+      if (!safeValue || safeValue.toLowerCase() === 'manual') return;
+      const label = String(key || '')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      lines.push(`${label}: ${safeValue}`);
+    });
+
+    const extraFields = playerData.extraFields && typeof playerData.extraFields === 'object'
+      ? playerData.extraFields
+      : {};
+
+    Object.entries(extraFields).forEach(([key, value]) => {
+      const safeValue = String(value || '').trim();
+      if (!safeValue || safeValue.toLowerCase() === 'manual') return;
+      const label = String(key || '')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      lines.push(`${label}: ${safeValue}`);
+    });
+
+    lines.push(`Base Price: ${formatPrice(playerData.base_price_lakh)}`);
+    return lines;
+  };
   
   // Set badges and basic info
   if (player) {
@@ -824,11 +883,10 @@ function updateBroadcastView(data) {
     
     const pMeta = document.getElementById('broadcastPlayerMeta');
     if (pMeta) {
-      pMeta.innerHTML = `
-        <span>${getRoleIcon(player.role)} ${player.role || 'Unknown'}</span>
-        <span>${getCountryFlag(player.country)} ${player.country || 'Unknown'}</span>
-        <span>Base: ${formatPrice(player.base_price_lakh)}</span>
-      `;
+      const playerLines = buildBroadcastPlayerLines(player);
+      pMeta.innerHTML = playerLines
+        .map((line, idx) => `<div class="broadcast-meta-line ${idx === playerLines.length - 1 ? 'is-base' : ''}"><span>${escapeHtml(line)}</span></div>`)
+        .join('');
     }
   }
 

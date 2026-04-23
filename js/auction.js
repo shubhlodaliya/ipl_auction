@@ -2443,6 +2443,74 @@ async function passPlayer() {
   }
 }
 
+// ---- RANDOM CHANGE PLAYER (host only) ----
+async function randomChangeCurrentPlayer() {
+  if (!isHost) {
+    showToast('Only host can change current player.', 'error');
+    return;
+  }
+  if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) {
+    showToast('Player change is available only during live bidding.', 'error');
+    return;
+  }
+
+  const currentPlayerId = String(currentAuctionData.playerId || '').trim();
+  if (!currentPlayerId) {
+    showToast('No active player to replace.', 'error');
+    return;
+  }
+
+  const candidates = playerQueue
+    .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
+    .filter(({ id, idx }) => {
+      if (!id) return false;
+      if (id === currentPlayerId) return false;
+      if (idx < Number(currentIndex || 0)) return false;
+      return !soldPlayersData[id];
+    });
+
+  if (!candidates.length) {
+    showToast('No available players left for random change.', 'error');
+    return;
+  }
+
+  const pick = candidates[Math.floor(Math.random() * candidates.length)];
+  const nextPlayer = playerMap[pick.id];
+  if (!nextPlayer) {
+    showToast('Random player data not found. Try again.', 'error');
+    return;
+  }
+
+  const nextPool = getPoolMetaAtIndex(pick.idx);
+
+  try {
+    await db.ref(`rooms/${roomCode}/currentAuction`).transaction((auction) => {
+      if (!auction || auction.status !== 'bidding') return;
+      const auctionPlayerId = String(auction.playerId || '').trim();
+      if (!auctionPlayerId) return;
+
+      return {
+        playerId: pick.id,
+        currentBid: Number(nextPlayer.base_price_lakh || 0),
+        highestBidder: null,
+        bidHistory: [],
+        poolId: nextPool?.poolId || null,
+        poolLabel: nextPool?.poolLabel || null,
+        skipVotes: {},
+        poolSkipVotes: {},
+        withdrawnTeams: {},
+        timerEnd: unlimitedTimer ? null : (getSyncedNowMs() + timerSeconds * 1000),
+        status: 'bidding'
+      };
+    });
+
+    showToast(`Random player: ${nextPlayer.name}`, 'success');
+  } catch (err) {
+    console.error('Random player change failed:', err);
+    showToast('Failed to change player.', 'error');
+  }
+}
+
 async function skipCurrentPool() {
   if (isBidUiSpectator()) {
     showToast('Viewer mode: pool skip is disabled.', 'error');

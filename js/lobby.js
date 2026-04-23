@@ -85,10 +85,16 @@ function renderIconPickTeamSelect() {
   }
 
   const actingTeamId = getActingIconPickTeamId();
+
+  const labelForTeam = (t) => {
+    if (roomConfig?.auctionType === 'manual') return String(t?.name || t?.short || t?.id || '').trim();
+    return String(t?.short || t?.name || t?.id || '').trim();
+  };
+
   sel.innerHTML = teams
     .slice()
-    .sort((a, b) => String(a.short || a.name || a.id).localeCompare(String(b.short || b.name || b.id)))
-    .map((t) => `<option value="${t.id}" ${t.id === actingTeamId ? 'selected' : ''}>${t.short || t.name || t.id}</option>`)
+    .sort((a, b) => labelForTeam(a).localeCompare(labelForTeam(b)))
+    .map((t) => `<option value="${t.id}" ${t.id === actingTeamId ? 'selected' : ''}>${escapeHtml(labelForTeam(t))}</option>`)
     .join('');
   sel.style.display = 'inline-flex';
 }
@@ -202,7 +208,10 @@ function initLobby() {
     if (me) {
       const chip = document.getElementById('myTeamChip');
       chip.style.display = 'flex';
-      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" loading="lazy" decoding="async" />` : ''} ${me.short}`;
+      const chipLabel = roomConfig?.auctionType === 'manual'
+        ? (me.name || me.short || myTeamId)
+        : (me.short || me.name || myTeamId);
+      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${escapeHtml(chipLabel)} logo" loading="lazy" decoding="async" />` : ''} ${escapeHtml(chipLabel)}`;
       hasMyTeam = true;
     } else if (isHost && roomConfig.auctionType === 'manual' && roomConfig.hostManagerOnly) {
       const chip = document.getElementById('myTeamChip');
@@ -369,7 +378,9 @@ function renderIconPickerModal() {
   const search = String(searchEl?.value || '').trim().toLowerCase();
   const actingTeamId = getActingIconPickTeamId();
   const actingTeam = actingTeamId ? (liveTeams[actingTeamId] || roomTeamCatalog[actingTeamId] || {}) : null;
-  const actingShort = actingTeam?.short || actingTeamId || '';
+  const actingShort = roomConfig?.auctionType === 'manual'
+    ? (actingTeam?.name || actingTeam?.short || actingTeamId || '')
+    : (actingTeam?.short || actingTeam?.name || actingTeamId || '');
   const myPickCount = Object.values(iconPicks).filter((x) => x?.teamId === actingTeamId).length;
   countLabel.textContent = `${myPickCount}/${maxIconPlayers} icon selected`;
   help.textContent = `${canPickIconsWithoutTeam() ? `Picking for ${actingShort}. ` : ''}Pick up to ${maxIconPlayers} players at fixed icon price ${formatPrice(fixedPrice)} before host starts auction.`;
@@ -395,7 +406,7 @@ function renderIconPickerModal() {
       const statusText = isMine
         ? `${canPickIconsWithoutTeam() ? `Picked for ${actingShort}` : 'Picked by you'} (${formatPrice(picked?.priceLakh || fixedPrice)})`
         : (pickedByTeamId
-          ? `Taken by ${pickedByTeam?.short || pickedByTeamId}`
+          ? `Taken by ${(roomConfig?.auctionType === 'manual') ? (pickedByTeam?.name || pickedByTeam?.short || pickedByTeamId) : (pickedByTeam?.short || pickedByTeam?.name || pickedByTeamId)}`
           : (limitReached ? `Limit reached (${myPickCount}/${maxIconPlayers})` : `Fixed ${formatPrice(fixedPrice)}`));
 
       const actionButton = isMine
@@ -460,7 +471,10 @@ async function toggleIconPlayer(playerId) {
 
   if (existing && existing.teamId !== actingTeamId) {
     const pickedTeam = teams[existing.teamId] || roomTeamCatalog[existing.teamId] || {};
-    showToast(`Already taken by ${pickedTeam.short || existing.teamId}.`, 'error');
+    const pickedLabel = roomConfig?.auctionType === 'manual'
+      ? (pickedTeam.name || pickedTeam.short || existing.teamId)
+      : (pickedTeam.short || pickedTeam.name || existing.teamId);
+    showToast(`Already taken by ${pickedLabel}.`, 'error');
     return;
   }
 

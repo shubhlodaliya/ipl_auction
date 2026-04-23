@@ -760,10 +760,9 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .manual-team-row > :nth-child(1) { flex: 1 1 220px; }
-.manual-team-row > :nth-child(2) { flex: 0 1 110px; }
-.manual-team-row > :nth-child(3) { flex: 1 1 260px; }
-.manual-team-row > :nth-child(4) { flex: 0 1 90px; }
-.manual-team-row > :nth-child(5) { flex: 0 1 120px; }
+.manual-team-row > :nth-child(2) { flex: 1 1 260px; }
+.manual-team-row > :nth-child(3) { flex: 0 1 90px; }
+.manual-team-row > :nth-child(4) { flex: 0 1 120px; }
 
 .manual-player-row > :nth-child(1) { flex: 1 1 220px; }
 .manual-player-row > :nth-child(2) { flex: 0 1 100px; }
@@ -5514,7 +5513,7 @@ body.spectator-mode .spectator-side-bid {
   .manual-grid-four {
     grid-template-columns: 1fr 1fr;
   }
-  .manual-team-row > :nth-child(5),
+  .manual-team-row > :nth-child(4),
   .manual-player-row > :nth-child(6) {
     flex: 1 1 100%;
   }

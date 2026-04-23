@@ -88,7 +88,6 @@ function addTeamRow() {
   row.id = rowId;
   row.innerHTML = `
     <input class="form-input team-name" type="text" maxlength="32" value="${defaultName}" placeholder="Team name" oninput="syncHostTeamOptions()" />
-    <input class="form-input team-short" type="text" maxlength="6" value="${normalizeTeamShort(defaultName)}" placeholder="Short" oninput="syncHostTeamOptions()" />
     <input class="form-input team-logo-file" type="file" accept="image/*" />
     <input class="form-input team-color" type="color" value="#1da462" />
     <button class="btn btn-danger" onclick="removeRow('${rowId}', syncHostTeamOptions)">Remove</button>
@@ -404,7 +403,7 @@ function syncHostTeamOptions() {
   const teams = collectTeams(false);
   const current = select.value;
 
-  select.innerHTML = teams.map(t => `<option value="${t.id}">${t.name} (${t.short})</option>`).join('');
+  select.innerHTML = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 
   if (current && teams.some(t => t.id === current)) {
     select.value = current;
@@ -418,12 +417,11 @@ function collectTeams(strict = true) {
   const rows = [...document.querySelectorAll('.manual-team-row')];
   return rows.map((row, idx) => {
     const name = row.querySelector('.team-name').value.trim();
-    const shortRaw = row.querySelector('.team-short').value.trim();
-    const short = shortRaw || normalizeTeamShort(name);
+    const short = normalizeTeamShort(name);
     const primary = row.querySelector('.team-color').value || '#1da462';
     const logoFile = row.querySelector('.team-logo-file')?.files?.[0] || null;
 
-    if (strict && (!name || !short)) return null;
+    if (strict && (!name)) return null;
 
     return {
       id: `mt_${idx + 1}`,

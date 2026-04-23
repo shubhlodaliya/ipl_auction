@@ -28,6 +28,7 @@ let unlimitedTimer = false;
 let processingRound = false;
 let teamsData = {};
 let soldPlayersData = {};
+let unsoldPlayersData = {};
 let paused = false;
 let pausedAt = null;
 let poolByIndex = {};
@@ -721,6 +722,10 @@ async function initAuction() {
     soldPlayersData = snap.val() || {};
     renderCurrentPoolBanner();
   });
+  listeners.unsoldPlayers = db.ref(`rooms/${roomCode}/unsoldPlayers`).on('value', snap => {
+    unsoldPlayersData = snap.val() || {};
+    renderCurrentPoolBanner();
+  });
 
   listeners.pause = db.ref(`rooms/${roomCode}/auctionControl`).on('value', snap => {
     const ctl = snap.val() || {};
@@ -734,6 +739,19 @@ async function initAuction() {
   listeners.index = db.ref(`rooms/${roomCode}/currentIndex`).on('value', snap => {
     if (snap.val() !== null) currentIndex = snap.val();
     updateProgressBar();
+    renderCurrentPoolBanner();
+  });
+
+  listeners.playerQueue = db.ref(`rooms/${roomCode}/playerQueue`).on('value', snap => {
+    playerQueue = snap.exists() ? normalizePlayerQueue(snap.val()) : [];
+    buildPoolIndexMap();
+    renderCurrentPoolBanner();
+    updateProgressBar();
+  });
+
+  listeners.poolByIndex = db.ref(`rooms/${roomCode}/poolByIndex`).on('value', snap => {
+    poolByIndex = snap.exists() ? (snap.val() || {}) : {};
+    buildPoolIndexMap();
     renderCurrentPoolBanner();
   });
 
@@ -2003,6 +2021,7 @@ async function reopenPlayerForRebid(playerId, playerName = 'Player') {
   }
 
   const soldRef = db.ref(`rooms/${roomCode}/soldPlayers/${queuedPlayerId}`);
+  const unsoldRef = db.ref(`rooms/${roomCode}/unsoldPlayers/${queuedPlayerId}`);
 
   try {
     const soldSnap = await soldRef.get();
@@ -2010,6 +2029,8 @@ async function reopenPlayerForRebid(playerId, playerName = 'Player') {
 
     if (soldEntry) {
       await rollbackSoldPlayerEntry(String(queuedPlayerId), soldEntry);
+    } else {
+      await unsoldRef.remove();
     }
 
     const targetPool = getPoolMetaAtIndex(targetIndex);
@@ -2064,6 +2085,7 @@ async function rollbackSoldPlayerEntry(playerId, soldEntry) {
   }
 
   await db.ref(`rooms/${roomCode}/soldPlayers/${playerId}`).remove();
+  await db.ref(`rooms/${roomCode}/unsoldPlayers/${playerId}`).remove();
 }
 
 window.undoAuctionAction = undoAuctionAction;
@@ -2669,6 +2691,7 @@ async function withdrawFromPlayer() {
 
 async function hostEvaluateFastPath(data) {
   if (!canDriveAuctionEngine() || paused || !data || data.status !== 'bidding' || processingRound) return;
+  if (!Object.keys(teamsData || {}).length) return;
 
   const totalTeams = Object.keys(teamsData).length;
   const skipCount = Object.keys(data.skipVotes || {}).length;
@@ -2805,7 +2828,7 @@ async function processAuctionRound() {
   if (highestBidder) {
     await markSold(playerId, highestBidder, currentBid);
   } else {
-    await markUnsold();
+    await markUnsold(playerId);
   }
 }
 
@@ -2818,6 +2841,7 @@ async function markSold(playerId, winnerTeamId, price) {
     soldPrice: price,
     soldAt: Date.now()
   });
+  await db.ref(`rooms/${roomCode}/unsoldPlayers/${playerId}`).remove();
 
   // Deduct purse
   await db.ref(`rooms/${roomCode}/teams/${winnerTeamId}/purse`).transaction(purse => {
@@ -2835,7 +2859,14 @@ async function markSold(playerId, winnerTeamId, price) {
   setTimeout(advanceToNextPlayer, 3000);
 }
 
-async function markUnsold() {
+async function markUnsold(playerIdOverride = null) {
+  const unsoldPlayerId = String(playerIdOverride || currentAuctionData?.playerId || '').trim();
+  if (unsoldPlayerId) {
+    await db.ref(`rooms/${roomCode}/soldPlayers/${unsoldPlayerId}`).remove();
+    await db.ref(`rooms/${roomCode}/unsoldPlayers/${unsoldPlayerId}`).set({
+      unsoldAt: Date.now()
+    });
+  }
   await db.ref(`rooms/${roomCode}/currentAuction/status`).set('unsold');
   setTimeout(advanceToNextPlayer, 3000);
 }
@@ -2975,15 +3006,14 @@ function getLivePlayerStatus(playerId) {
   if (!normalized) return 'available';
   const sold = !!soldPlayersData[normalized] || !!soldPlayersData[String(normalized)];
   if (sold) return 'sold';
+  const unsold = !!unsoldPlayersData[normalized] || !!unsoldPlayersData[String(normalized)];
+  if (unsold) return 'unsold';
 
   if (currentAuctionData?.playerId && String(currentAuctionData.playerId) === normalized) {
     if (currentAuctionData.status === 'sold') return 'sold';
     if (currentAuctionData.status === 'unsold') return 'unsold';
     return 'available';
   }
-
-  const queueIndex = getPlayerQueueIndex(normalized);
-  if (queueIndex >= 0 && queueIndex < currentIndex) return 'unsold';
   return 'available';
 }
 
@@ -4477,9 +4507,12 @@ window.addEventListener('beforeunload', () => {
   clearInterval(timerInterval);
   db.ref(`rooms/${roomCode}/teams`).off('value', listeners.teams);
   db.ref(`rooms/${roomCode}/soldPlayers`).off('value', listeners.soldPlayers);
+  db.ref(`rooms/${roomCode}/unsoldPlayers`).off('value', listeners.unsoldPlayers);
   db.ref(`rooms/${roomCode}/auctionControl`).off('value', listeners.pause);
   db.ref(`rooms/${roomCode}/currentAuction`).off('value', listeners.auction);
   db.ref(`rooms/${roomCode}/currentIndex`).off('value', listeners.index);
+  db.ref(`rooms/${roomCode}/playerQueue`).off('value', listeners.playerQueue);
+  db.ref(`rooms/${roomCode}/poolByIndex`).off('value', listeners.poolByIndex);
   db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
   if (listeners.currentHostUid) {
     db.ref(`rooms/${roomCode}/config/currentHostUid`).off('value', listeners.currentHostUid);

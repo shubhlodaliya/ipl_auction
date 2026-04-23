@@ -34,9 +34,22 @@ async function waitForAuthBootstrap(timeoutMs = 5000) {
   }
 }
 
+async function refreshAuthTokenIfPossible() {
+  try {
+    if (firebase?.auth && typeof firebase.auth === 'function') {
+      const user = firebase.auth().currentUser;
+      if (user && typeof user.getIdToken === 'function') {
+        await user.getIdToken(true);
+      }
+    }
+  } catch (_) {
+    // Ignore token refresh failures and continue with normal retry path.
+  }
+}
+
 async function loadRoomSnapshotWithRetry() {
   let lastErr = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await db.ref(`rooms/${roomCode}`).get();
     } catch (err) {
@@ -44,8 +57,9 @@ async function loadRoomSnapshotWithRetry() {
       const code = String(err?.code || '').toLowerCase();
       const msg = String(err?.message || '').toLowerCase();
       const maybeAuthTiming = code.includes('permission') || code.includes('auth') || msg.includes('permission') || msg.includes('auth');
-      if (attempt === 0 && maybeAuthTiming) {
+      if (maybeAuthTiming) {
         await waitForAuthBootstrap();
+        await refreshAuthTokenIfPossible();
         continue;
       }
       break;
@@ -336,11 +350,15 @@ function initLobby() {
     }
   }).catch((err) => {
     console.error('Failed to load lobby room data:', err);
+    const errCode = String(err?.code || 'unknown');
+    const errMessage = String(err?.message || 'Unknown room connection error.');
     const loading = document.getElementById('loadingScreen');
     if (loading) {
       loading.innerHTML = `
         <div class="state-empty" style="text-align:center;">
-          <p style="color:var(--red);margin-bottom:0.6rem;">Could not connect to this room.</p>
+          <p style="color:var(--red);margin-bottom:0.35rem;">Could not connect to this room.</p>
+          <p style="color:var(--text-dim);font-size:0.8rem;margin-bottom:0.7rem;">Room: ${escapeHtml(roomCode)} · ${escapeHtml(errCode)}</p>
+          <p style="color:var(--text-dim);font-size:0.76rem;margin:0 0 0.8rem;word-break:break-word;">${escapeHtml(errMessage)}</p>
           <button class="btn btn-secondary" onclick="window.location.reload()">Retry</button>
         </div>
       `;

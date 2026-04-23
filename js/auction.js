@@ -1058,9 +1058,17 @@ function updateBroadcastView(data) {
 
   // Stamps
   const stampSold = document.getElementById('broadcastStampSold');
-  const stampUnsold = document.getElementById('broadcastStampUnsold');
+  const stampUnsold = document.getElementById('broadcastUnsoldStamp');
   if (stampSold) stampSold.style.display = data.status === 'sold' ? 'block' : 'none';
-  if (stampUnsold) stampUnsold.style.display = data.status === 'unsold' ? 'block' : 'none';
+  if (stampUnsold) {
+    const show = data.status === 'unsold';
+    stampUnsold.style.display = show ? 'block' : 'none';
+    if (show) {
+      stampUnsold.classList.remove('animate');
+      void stampUnsold.offsetWidth;
+      stampUnsold.classList.add('animate');
+    }
+  }
 
   // Animation
   const anim = document.getElementById('firecrackerAnim');

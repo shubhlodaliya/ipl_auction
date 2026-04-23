@@ -5972,13 +5972,44 @@ body.broadcast-mode #teamModalOverlay {
   position: relative;
 }
 
-.broadcast-photo-inner img {
+.broadcast-photo-inner > #broadcastPlayerImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center center;
   background: rgba(7, 12, 27, 0.92);
   padding: 0;
+}
+
+.broadcast-unsold-stamp {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  z-index: 22;
+  opacity: 1;
+  transform: scale(0.86) rotate(-12deg);
+  filter: drop-shadow(0 18px 26px rgba(0,0,0,0.45));
+}
+
+.broadcast-unsold-stamp.animate {
+  animation: broadcastUnsoldStampPop 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+@keyframes broadcastUnsoldStampPop {
+  0% { opacity: 0; transform: scale(0.7) rotate(-18deg); }
+  55% { opacity: 1; transform: scale(1.08) rotate(-8deg); }
+  100% { opacity: 1; transform: scale(0.94) rotate(-12deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .broadcast-unsold-stamp.animate {
+    animation: none;
+    transform: none;
+  }
 }
 
 .broadcast-set-badge {

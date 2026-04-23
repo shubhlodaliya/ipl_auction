@@ -22,6 +22,38 @@ let iconPicksListener = null;
 let hasMyTeam = false;
 let iconPickTeamId = null;
 
+async function waitForAuthBootstrap(timeoutMs = 5000) {
+  if (typeof waitForAuthReady !== 'function') return;
+  try {
+    await Promise.race([
+      waitForAuthReady(),
+      new Promise((resolve) => setTimeout(resolve, timeoutMs))
+    ]);
+  } catch (_) {
+    // Best-effort wait only.
+  }
+}
+
+async function loadRoomSnapshotWithRetry() {
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await db.ref(`rooms/${roomCode}`).get();
+    } catch (err) {
+      lastErr = err;
+      const code = String(err?.code || '').toLowerCase();
+      const msg = String(err?.message || '').toLowerCase();
+      const maybeAuthTiming = code.includes('permission') || code.includes('auth') || msg.includes('permission') || msg.includes('auth');
+      if (attempt === 0 && maybeAuthTiming) {
+        await waitForAuthBootstrap();
+        continue;
+      }
+      break;
+    }
+  }
+  throw lastErr || new Error('Failed to load room');
+}
+
 function getAuctionBrandTitle() {
   const title = String(roomConfig?.auctionTitle || '').trim();
   if (title) return title;
@@ -186,7 +218,7 @@ function initLobby() {
   }
 
   // Load room data
-  db.ref(`rooms/${roomCode}`).get().then(snap => {
+  loadRoomSnapshotWithRetry().then(snap => {
     if (!snap.exists()) { alert('Room not found!'); window.location.href = 'index.html'; return; }
     const room = snap.val();
     roomConfig = room.config || {};

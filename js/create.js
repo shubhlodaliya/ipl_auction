@@ -176,7 +176,7 @@ async function renderPastAuctions() {
       const status = String(row.status || 'lobby').toLowerCase();
       const statusClass = status === 'auction' ? 'auction' : status === 'finished' ? 'finished' : 'lobby';
       const isTerminated = Number(row.terminatedAt || 0) > 0;
-      const canReopen = status !== 'finished' && !isTerminated;
+      const canReopen = status === 'auction';
       const canRestart = isTerminated;
       const updatedAtLabel = formatHistoryDate(row.updatedAt || row.createdAt);
       return `

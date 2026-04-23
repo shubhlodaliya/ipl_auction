@@ -1033,11 +1033,28 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--text);
 }
 .team-min-note {
-  display: block;
+  display: inline-flex;
+  align-items: center;
   margin-top: 0.1rem;
-  font-size: 0.58rem;
-  color: var(--text-dim);
-  letter-spacing: 0.2px;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 0.08rem 0.38rem;
+  border: 1px solid transparent;
+}
+
+.team-min-note.required {
+  color: #ffd58a;
+  border-color: rgba(255, 179, 71, 0.45);
+  background: rgba(255, 179, 71, 0.16);
+}
+
+.team-min-note.satisfied {
+  color: #8ef0bf;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.14);
 }
 .sidebar-squad-preview {
   margin-top: 0.4rem;

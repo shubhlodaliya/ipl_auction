@@ -3030,6 +3030,7 @@ function renderSidebar() {
     const minSquad = Number(roomConfig?.minSquadSize || 1);
     const squadText = maxSquad > 0 ? `${squadCount}/${maxSquad}` : `${squadCount}`;
     const minRequiredRemaining = Math.max(0, minSquad - squadCount);
+    const minNoteClass = minRequiredRemaining > 0 ? 'required' : 'satisfied';
     const minNoteText = minRequiredRemaining > 0
       ? `min ${minRequiredRemaining} required`
       : 'minimum satisfied';
@@ -3045,7 +3046,7 @@ function renderSidebar() {
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>
-          <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note">${minNoteText}</small></span>
+          <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note ${minNoteClass}">${minNoteText}</small></span>
         </div>
       </div>
     `;
@@ -4289,6 +4290,7 @@ window.openAllTeamsModal = function() {
       : '';
     const squadCount = normalizeTeamSquadEntries(team).length;
     const minPlayers = Number(team.minPlayers) > 0 ? Number(team.minPlayers) : 0;
+    const minNoteClass = minPlayers > 0 ? 'required' : 'satisfied';
     const purseText = formatPrice(team.purse);
     
     return `
@@ -4301,7 +4303,7 @@ window.openAllTeamsModal = function() {
           <span class="team-stat">💰 <span>${purseText}</span></span>
           <span class="team-stat">🏃 <span>${squadCount}/25 players</span></span>
         </div>
-        <span class="team-min-note">min ${minPlayers} required</span>
+        <span class="team-min-note ${minNoteClass}">min ${minPlayers} required</span>
       </button>
     `;
   }).join('');

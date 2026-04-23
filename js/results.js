@@ -1209,6 +1209,7 @@ async function loadResults() {
     const teamScoreMap = new Map((teamPowerData?.rankings || []).map((entry) => [entry.teamId, entry.score]));
 
     resultsExportState.roomCode = roomCode;
+    resultsExportState.isManualAuction = isManualAuction;
     resultsExportState.teams = teams;
     resultsExportState.sortedTeams = sortedTeams;
     resultsExportState.teamSquads = teamSquads;
@@ -1216,6 +1217,8 @@ async function loadResults() {
     resultsExportState.unsoldCount = unsoldCount;
     resultsExportState.totalSales = totalSales;
     resultsExportState.roomTeamCatalog = roomTeamCatalog;
+    const teamExportSelect = document.getElementById('teamExportSelect');
+    if (teamExportSelect) teamExportSelect.dataset.isManualAuction = isManualAuction ? '1' : '0';
     updateTeamExportSelect(sortedTeams, roomCode);
 
     document.getElementById('resultsGrid').innerHTML = sortedTeams.map(([tId, team], idx) => {
@@ -1811,11 +1814,14 @@ function renderReAuctionSection() {
 
   const teamReadyHtml = eligibleTeamIds.map(teamId => {
     const team = teams[teamId];
+    const label = room?.config?.auctionType === 'manual'
+      ? (team?.name || teamId)
+      : (team?.short || teamId);
     const selectedCount = Object.keys(selections[teamId] || {}).filter(pid => (selections[teamId] || {})[pid]).length;
     const ready = !!readyMap[teamId];
     return `
       <div class="reauction-team-chip ${ready ? 'ready' : ''}">
-        <span>${team?.short || teamId} · ${team?.ownerName || 'Team'}</span>
+        <span>${label} · ${team?.ownerName || 'Team'}</span>
         <span>${selectedCount} selected</span>
         <span>${ready ? 'Ready' : 'Pending'}</span>
       </div>
@@ -2110,7 +2116,10 @@ function updateTeamExportSelect(sortedTeams, roomCode) {
   sortedTeams.forEach(([teamId, team]) => {
     const option = document.createElement('option');
     option.value = teamId;
-    option.textContent = `${team.name} (${team.short || teamId.toUpperCase()})`;
+    const isManualAuction = select.dataset.isManualAuction === '1';
+    option.textContent = isManualAuction
+      ? `${team.name}`
+      : `${team.name} (${team.short || teamId.toUpperCase()})`;
     select.appendChild(option);
   });
 
@@ -2306,7 +2315,11 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
   doc.setTextColor(...PDF_THEME.slate900);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
-  doc.text(`${rankPrefix}${team.name} (${team.short || t.short || teamId})`, 56, startY);
+  const isManualAuction = !!resultsExportState?.isManualAuction;
+  const teamLabel = isManualAuction
+    ? (team.name || team.short || t.name || t.short || teamId)
+    : `${team.name} (${team.short || t.short || teamId})`;
+  doc.text(`${rankPrefix}${teamLabel}`, 56, startY);
 
   doc.setTextColor(...PDF_THEME.slate700);
   doc.setFont('helvetica', 'normal');
@@ -2518,7 +2531,8 @@ async function exportTeamPdfById(selectedTeamId) {
     roomCode,
     sortedTeams,
     teamSquads,
-    roomTeamCatalog
+    roomTeamCatalog,
+    isManualAuction
   } = resultsExportState;
 
   if (!roomCode || !sortedTeams.length) {
@@ -2561,7 +2575,7 @@ async function exportTeamPdfById(selectedTeamId) {
   appendPdfFooter(doc);
 
   const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
-  const safeTeam = String(team.short || teamId).replace(/[^a-zA-Z0-9-_]/g, '_');
+  const safeTeam = String(isManualAuction ? team.name : (team.short || teamId)).replace(/[^a-zA-Z0-9-_]/g, '_');
   const datePart = generatedAt.toISOString().slice(0, 10);
   doc.save(`ipl-auction-${safeRoom}-${safeTeam}-${datePart}.pdf`);
 }

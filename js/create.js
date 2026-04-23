@@ -540,6 +540,8 @@ async function fetchRoomTeams(code) {
     ? Object.values(room.manualTeams || {})
     : IPL_TEAMS;
 
+  const isManual = room.config?.auctionType === 'manual';
+
   grid.innerHTML = sourceTeams.map(t => {
     const taken = takenTeams.includes(t.id);
     const selectable = isAuctionLive ? taken : !taken;
@@ -552,8 +554,8 @@ async function fetchRoomTeams(code) {
            onclick="${selectable ? `selectJoinTeam('${t.id}')` : ''}"
            title="${t.name}"
            style="--team-color:${t.primary}">
-        <img class="team-logo" src="${t.logo}" alt="${t.short} logo" loading="lazy" decoding="async" />
-        <div class="team-short" style="color:${t.primary}">${t.short}</div>
+        <img class="team-logo" src="${t.logo}" alt="${t.name} logo" loading="lazy" decoding="async" />
+        <div class="team-short" style="color:${t.primary}">${isManual ? t.name : t.short}</div>
       </div>
     `;
   }).join('');

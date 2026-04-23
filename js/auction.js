@@ -255,6 +255,13 @@ function isBidUiSpectator() {
   return !!isSpectator && !isHostProxyBidderActive();
 }
 
+function getTeamDisplayName(team, fallbackId = '') {
+  const label = isManualAuction
+    ? (team?.name || team?.short || fallbackId)
+    : (team?.short || team?.name || fallbackId);
+  return String(label || '').trim();
+}
+
 function getActingTeamIdForBidUi() {
   return isHostProxyBidderActive() ? hostProxyBidTeamId : myTeamId;
 }
@@ -627,7 +634,8 @@ async function initAuction() {
     if (me) {
       const chip = document.getElementById('myTeamChip');
       chip.style.display = 'flex';
-      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${me.short} logo" loading="lazy" decoding="async" />` : ''} ${me.short}`;
+      const myLabel = getTeamDisplayName(me, myTeamId);
+      chip.innerHTML = `${me.logo ? `<img class="chip-team-logo" src="${me.logo}" alt="${escapeHtml(myLabel)} logo" loading="lazy" decoding="async" />` : ''} ${escapeHtml(myLabel)}`;
       if (me.primary) {
         chip.style.borderColor = me.primary + '60';
         chip.style.color = me.primary;
@@ -899,13 +907,13 @@ function updateSpectatorSideBid(data = null) {
   }
 
   const team = teamsData[current.highestBidder] || getRoomTeamMeta(current.highestBidder) || {};
-  const short = team.short || team.name || current.highestBidder;
+  const teamLabel = getTeamDisplayName(team, current.highestBidder);
   if (team.logo) {
-    logoEl.innerHTML = `<img src="${team.logo}" alt="${short} logo" loading="lazy" decoding="async" />`;
+    logoEl.innerHTML = `<img src="${team.logo}" alt="${escapeHtml(teamLabel)} logo" loading="lazy" decoding="async" />`;
   } else {
-    logoEl.textContent = String(short).slice(0, 3).toUpperCase();
+    logoEl.textContent = String(teamLabel || current.highestBidder).slice(0, 3).toUpperCase();
   }
-  nameEl.textContent = team.name || short;
+  nameEl.textContent = teamLabel || 'Team';
 }
 
 function updateBroadcastView(data) {
@@ -1029,16 +1037,16 @@ function updateBroadcastView(data) {
 
   if (data.highestBidder) {
     const team = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {};
-    const short = team.short || team.name || data.highestBidder;
-    if (tName) tName.textContent = team.name || short;
+    const teamLabel = getTeamDisplayName(team, data.highestBidder);
+    if (tName) tName.textContent = teamLabel || 'TEAM';
     const tSection = document.querySelector('.broadcast-team-section');
-    if (tSection) tSection.setAttribute('data-mobile-team', team.name || short);
+    if (tSection) tSection.setAttribute('data-mobile-team', teamLabel || 'TEAM');
     
     if (tLogoWrap) {
       if (team.logo) {
         tLogoWrap.innerHTML = `<img src="${team.logo}" alt="logo" loading="lazy">`;
       } else {
-        tLogoWrap.innerHTML = `<div class="placeholder-logo">${short.slice(0,3).toUpperCase()}</div>`;
+        tLogoWrap.innerHTML = `<div class="placeholder-logo">${String(teamLabel || data.highestBidder).slice(0,3).toUpperCase()}</div>`;
       }
     }
   } else {
@@ -1050,9 +1058,17 @@ function updateBroadcastView(data) {
 
   // Stamps
   const stampSold = document.getElementById('broadcastStampSold');
-  const stampUnsold = document.getElementById('broadcastStampUnsold');
+  const stampUnsold = document.getElementById('broadcastUnsoldStamp');
   if (stampSold) stampSold.style.display = data.status === 'sold' ? 'block' : 'none';
-  if (stampUnsold) stampUnsold.style.display = data.status === 'unsold' ? 'block' : 'none';
+  if (stampUnsold) {
+    const show = data.status === 'unsold';
+    stampUnsold.style.display = show ? 'block' : 'none';
+    if (show) {
+      stampUnsold.classList.remove('animate');
+      void stampUnsold.offsetWidth;
+      stampUnsold.classList.add('animate');
+    }
+  }
 
   // Animation
   const anim = document.getElementById('firecrackerAnim');
@@ -1190,19 +1206,20 @@ function updateSpectatorPanel(data = null) {
   bidEl.textContent = formatPrice(current.currentBid);
   if (current.highestBidder) {
     const t = teamsData[current.highestBidder] || getRoomTeamMeta(current.highestBidder) || {};
+    const teamLabel = getTeamDisplayName(t, current.highestBidder);
     leaderEl.textContent = '';
     if (t.logo) {
       const logoEl = document.createElement('img');
       logoEl.className = 'spectator-team-logo';
       logoEl.src = t.logo;
-      logoEl.alt = `${t.short || t.name || current.highestBidder} logo`;
+      logoEl.alt = `${teamLabel || current.highestBidder} logo`;
       logoEl.loading = 'lazy';
       logoEl.decoding = 'async';
       leaderEl.appendChild(logoEl);
     }
     const nameEl = document.createElement('span');
     nameEl.className = 'spectator-team-name';
-    nameEl.textContent = t.name || t.short || current.highestBidder;
+    nameEl.textContent = teamLabel || current.highestBidder;
     leaderEl.appendChild(nameEl);
   } else {
     leaderEl.textContent = 'No bids yet';
@@ -1306,7 +1323,8 @@ function renderSpectatorPredictionPoll(data = null) {
       subEl.textContent = `${currentPlayer.name}: Manager mode cannot vote. Watching live graph only.`;
     } else if (myVoteTeamId) {
       const myTeam = getRoomTeamMeta(myVoteTeamId) || teamsData[myVoteTeamId] || {};
-      subEl.textContent = `${currentPlayer.name}: You voted ${myTeam.short || myTeam.name || myVoteTeamId}. Vote is locked.`;
+      const myTeamLabel = getTeamDisplayName(myTeam, myVoteTeamId);
+      subEl.textContent = `${currentPlayer.name}: You voted ${myTeamLabel || myVoteTeamId}. Vote is locked.`;
     } else {
       subEl.textContent = `${currentPlayer.name}: Vote now before this player is sold.`;
     }
@@ -1318,12 +1336,13 @@ function renderSpectatorPredictionPoll(data = null) {
     const topRows = ranking.slice(0, 4);
     graphEl.innerHTML = topRows.map((row) => {
       const team = getRoomTeamMeta(row.teamId) || teamsData[row.teamId] || {};
+      const teamLabel = getTeamDisplayName(team, row.teamId);
       const pct = totalVotes > 0 ? Math.round((row.votes / totalVotes) * 100) : 0;
       const accent = team.primary || '#1DA0FF';
       return `
         <div class="spectator-poll-graph-row ${topTeamId === row.teamId ? 'leader' : ''}">
           <div class="spectator-poll-graph-meta">
-            <span>${team.short || row.teamId}</span>
+            <span>${escapeHtml(teamLabel || row.teamId)}</span>
             <span>${row.votes} (${pct}%)</span>
           </div>
           <div class="spectator-poll-bar-track">
@@ -1343,11 +1362,12 @@ function renderSpectatorPredictionPoll(data = null) {
   const sortedTeamIds = teamIds.slice().sort((a, b) => {
     const ta = teamsData[a] || getRoomTeamMeta(a) || {};
     const tb = teamsData[b] || getRoomTeamMeta(b) || {};
-    return String(ta.short || ta.name || a).localeCompare(String(tb.short || tb.name || b));
+    return getTeamDisplayName(ta, a).localeCompare(getTeamDisplayName(tb, b));
   });
 
   listEl.innerHTML = sortedTeamIds.map((teamId) => {
     const team = teamsData[teamId] || getRoomTeamMeta(teamId) || {};
+    const teamLabel = getTeamDisplayName(team, teamId);
     const voteRow = ranking.find((r) => r.teamId === teamId);
     const votes = voteRow?.votes || 0;
     const pct = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
@@ -1356,8 +1376,8 @@ function renderSpectatorPredictionPoll(data = null) {
     return `
       <button class="spectator-poll-team-btn ${isMyVote ? 'selected' : ''}" ${disabled ? 'disabled' : ''} onclick="castSpectatorPollVote('${teamId}')">
         <span class="spectator-poll-team-left">
-          ${team.logo ? `<img src="${team.logo}" alt="${team.short || teamId} logo" loading="lazy" decoding="async" />` : ''}
-          <span>${team.short || team.name || teamId}</span>
+          ${team.logo ? `<img src="${team.logo}" alt="${escapeHtml(teamLabel || teamId)} logo" loading="lazy" decoding="async" />` : ''}
+          <span>${escapeHtml(teamLabel || teamId)}</span>
         </span>
         <span class="spectator-poll-team-right">${votes} • ${pct}%</span>
       </button>
@@ -1367,13 +1387,15 @@ function renderSpectatorPredictionPoll(data = null) {
   if (voteClosed) {
     if (auction.status === 'sold') {
       const soldTeam = teamsData[auction.highestBidder] || getRoomTeamMeta(auction.highestBidder) || {};
+      const soldLabel = getTeamDisplayName(soldTeam, auction.highestBidder);
       if (tie) {
-        subEl.textContent = `${currentPlayer.name} sold to ${soldTeam.short || soldTeam.name || auction.highestBidder}. Poll ended with tie.`;
+        subEl.textContent = `${currentPlayer.name} sold to ${soldLabel || auction.highestBidder}. Poll ended with tie.`;
       } else if (topTeamId) {
         const topTeam = teamsData[topTeamId] || getRoomTeamMeta(topTeamId) || {};
-        subEl.textContent = `${currentPlayer.name} sold to ${soldTeam.short || soldTeam.name || auction.highestBidder}. Top predicted: ${topTeam.short || topTeam.name || topTeamId}.`;
+        const topLabel = getTeamDisplayName(topTeam, topTeamId);
+        subEl.textContent = `${currentPlayer.name} sold to ${soldLabel || auction.highestBidder}. Top predicted: ${topLabel || topTeamId}.`;
       } else {
-        subEl.textContent = `${currentPlayer.name} sold to ${soldTeam.short || soldTeam.name || auction.highestBidder}.`;
+        subEl.textContent = `${currentPlayer.name} sold to ${soldLabel || auction.highestBidder}.`;
       }
     } else if (auction.status === 'unsold') {
       subEl.textContent = `${currentPlayer.name} remained unsold. Poll closed.`;
@@ -1447,7 +1469,7 @@ function renderAuction(data, prevData = null) {
 
   renderCurrentPoolBanner();
 
-  renderPlayerSpotlight(player);
+  renderPlayerSpotlight(player, data.status);
   renderBidDisplay(data, player);
   updateProgressBar();
 
@@ -1463,12 +1485,13 @@ function renderAuction(data, prevData = null) {
   }
 }
 
-function renderPlayerSpotlight(player) {
+function renderPlayerSpotlight(player, status = '') {
   const color = getRoleColor(player.role);
   const initials = getPlayerInitials(player.name);
   const flag = getCountryFlag(player.country);
   const icon = getRoleIcon(player.role);
   const inWatchlist = !!watchlistForMe[player.id];
+  const isUnsold = String(status || '') === 'unsold';
   const ageText = player.age ? ` · Age ${player.age}` : '';
   const categoryText = String(player.category || '').trim();
   const roleText = String(player.role || '').trim();
@@ -1508,9 +1531,10 @@ function renderPlayerSpotlight(player) {
   const numberBadgeHtml = buildPlayerNumberBadgeHtml(player);
 
   document.getElementById('playerSpotlight').innerHTML = `
-    <div class="player-avatar pulse-ring ${avatarBorderVariantClass}" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
+    <div class="player-avatar pulse-ring ${avatarBorderVariantClass} ${isUnsold ? 'is-unsold' : ''}" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
       ${numberBadgeHtml}
       ${avatarInner}
+      <img class="unsold-cross-tag" src="assets/image.png" alt="UNSOLD" loading="eager" decoding="async" />
     </div>
     <div class="player-info-card">
       <h2 class="player-name">${player.name}</h2>
@@ -1545,11 +1569,12 @@ function renderBidDisplay(data, player = null) {
   if (data.highestBidder) {
     const team = teamsData[data.highestBidder];
     const t = getRoomTeamMeta(data.highestBidder);
+    const teamLabel = getTeamDisplayName({ ...(t || {}), ...(team || {}) }, data.highestBidder);
     const accent = t?.primary || '#FFCB30';
     if (chipEl) {
       chipEl.style.borderColor = (t?.primary || '#FFD700') + '80';
       chipEl.style.color = t?.primary || 'var(--gold)';
-      chipEl.innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${t.short} logo" loading="lazy" decoding="async" />` : ''} ${team?.name || data.highestBidder}`;
+      chipEl.innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${escapeHtml(teamLabel)} logo" loading="lazy" decoding="async" />` : ''} ${escapeHtml(teamLabel || data.highestBidder)}`;
     }
 
     if (playerBidTeamTileEl) {
@@ -1559,8 +1584,8 @@ function renderBidDisplay(data, player = null) {
       playerBidTeamTileEl.innerHTML = `
         <div class="player-bid-team-label">CURRENT BID TEAM</div>
         <div class="player-bid-team-name" style="color:${accent};">
-          ${t?.logo ? `<img class="player-bid-team-logo" src="${t.logo}" alt="${t.short} logo" loading="eager" decoding="async" />` : ''}
-          <span class="player-bid-team-text">${team?.name || data.highestBidder}</span>
+          ${t?.logo ? `<img class="player-bid-team-logo" src="${t.logo}" alt="${escapeHtml(teamLabel)} logo" loading="eager" decoding="async" />` : ''}
+          <span class="player-bid-team-text">${escapeHtml(teamLabel || data.highestBidder)}</span>
         </div>
       `;
     }
@@ -1637,7 +1662,7 @@ function renderBidDisplay(data, player = null) {
       sellNowBtn.disabled = !canUseSellNow;
       if (canUseSellNow) {
         const winnerMeta = data.highestBidder ? (teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {}) : {};
-        const winnerName = winnerMeta.short || winnerMeta.name || data.highestBidder;
+        const winnerName = getTeamDisplayName(winnerMeta, data.highestBidder);
         sellNowBtn.textContent = `✅ SOLD NOW (${winnerName} · ${formatPrice(data.currentBid)})`;
       } else {
         sellNowBtn.textContent = '✅ SOLD NOW';
@@ -1676,9 +1701,9 @@ function renderBidDisplay(data, player = null) {
         withdrawnTeamsWrap.style.display = 'block';
         withdrawnTeamsList.innerHTML = withdrawnTeamIds.map((tId) => {
           const team = teamsData[tId] || getRoomTeamMeta(tId) || {};
-          const short = team.short || tId;
-          const logo = team.logo ? `<img src="${team.logo}" alt="${short} logo" loading="lazy" decoding="async" />` : '';
-          return `<span class="withdrawn-team-chip">${logo}${short}</span>`;
+          const teamLabel = getTeamDisplayName(team, tId);
+          const logo = team.logo ? `<img src="${team.logo}" alt="${escapeHtml(teamLabel)} logo" loading="lazy" decoding="async" />` : '';
+          return `<span class="withdrawn-team-chip">${logo}${escapeHtml(teamLabel || tId)}</span>`;
         }).join('');
       } else {
         withdrawnTeamsWrap.style.display = 'none';
@@ -2087,8 +2112,8 @@ function renderBidHistory(data) {
   const recent = history.slice(-12).reverse();
   listEl.innerHTML = recent.map((entry, idx) => {
     const team = teamsData[entry.teamId] || getRoomTeamMeta(entry.teamId) || {};
-    const teamShort = team.short || entry.teamId || 'TEAM';
-    const teamName = team.name || teamShort;
+    const teamLabel = getTeamDisplayName(team, entry.teamId) || 'TEAM';
+    const teamName = team.name || teamLabel;
     const jumpText = entry.isBaseBid ? 'Base Bid' : `+${formatPrice(entry.jump || 0)}`;
     const bidText = formatPrice(entry.bid || 0);
     const stamp = entry.ts ? new Date(entry.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--';
@@ -2096,7 +2121,7 @@ function renderBidHistory(data) {
     return `
       <div class="bid-history-item${latestCls}">
         <div class="bid-history-left">
-          <span class="bid-history-team" title="${teamName}">${teamShort}</span>
+          <span class="bid-history-team" title="${escapeHtml(teamName)}">${escapeHtml(teamLabel)}</span>
           <span class="bid-history-jump">${jumpText}</span>
         </div>
         <div class="bid-history-right">
@@ -2124,8 +2149,8 @@ function renderSpectatorBidHistory(data) {
   const recent = history.slice(-12).reverse();
   listEl.innerHTML = recent.map((entry, idx) => {
     const team = teamsData[entry.teamId] || getRoomTeamMeta(entry.teamId) || {};
-    const teamShort = team.short || entry.teamId || 'TEAM';
-    const teamName = team.name || teamShort;
+    const teamLabel = getTeamDisplayName(team, entry.teamId) || 'TEAM';
+    const teamName = team.name || teamLabel;
     const jumpText = entry.isBaseBid ? 'Base Bid' : `+${formatPrice(entry.jump || 0)}`;
     const bidText = formatPrice(entry.bid || 0);
     const stamp = entry.ts ? new Date(entry.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--';
@@ -2133,7 +2158,7 @@ function renderSpectatorBidHistory(data) {
     return `
       <div class="bid-history-item${latestCls}">
         <div class="bid-history-left">
-          <span class="bid-history-team" title="${teamName}">${teamShort}</span>
+          <span class="bid-history-team" title="${escapeHtml(teamName)}">${escapeHtml(teamLabel)}</span>
           <span class="bid-history-jump">${jumpText}</span>
         </div>
         <div class="bid-history-right">
@@ -2981,7 +3006,7 @@ function renderLivePlayerListRows() {
     ? basePlayers.filter((player) => {
         const soldInfo = soldPlayersData[player.id] || soldPlayersData[String(player.id)] || null;
         const buyer = soldInfo?.teamId ? (teamsData[soldInfo.teamId] || getRoomTeamMeta(soldInfo.teamId) || null) : null;
-        const buyerLabel = buyer ? (buyer.name || buyer.short || soldInfo.teamId) : '';
+        const buyerLabel = buyer ? getTeamDisplayName(buyer, soldInfo.teamId) : '';
         const searchText = [
           player.name,
           player.role,
@@ -2998,7 +3023,7 @@ function renderLivePlayerListRows() {
     const status = getLivePlayerStatus(player.id);
     const soldInfo = soldPlayersData[player.id] || soldPlayersData[String(player.id)] || null;
     const buyer = soldInfo?.teamId ? (teamsData[soldInfo.teamId] || getRoomTeamMeta(soldInfo.teamId) || null) : null;
-    const buyerLabel = buyer ? (buyer.short || buyer.name || soldInfo.teamId) : '';
+    const buyerLabel = buyer ? getTeamDisplayName(buyer, soldInfo.teamId) : '';
     const avatarHtml = player.photo_url
       ? `<img src="${player.photo_url}" alt="${player.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${getPlayerInitials(player.name)}')" />`
       : getPlayerInitials(player.name);
@@ -3109,7 +3134,7 @@ function showCurrentPoolDetails() {
     const buyerTeam = soldInfo?.teamId ? teamsData[soldInfo.teamId] : null;
     const buyerDef = soldInfo?.teamId ? getRoomTeamMeta(soldInfo.teamId) : null;
     const soldTeamCode = status === 'sold'
-      ? (buyerTeam?.short || buyerDef?.short || soldInfo?.teamId || 'TEAM')
+      ? (getTeamDisplayName({ ...(buyerDef || {}), ...(buyerTeam || {}) }, soldInfo?.teamId) || 'TEAM')
       : '';
     const soldTeamColor = buyerDef?.primary || '#00C48C';
     const soldPriceText = status === 'sold' && soldInfo?.soldPrice
@@ -3275,7 +3300,8 @@ async function removeTeamFromAuction(targetTeamId) {
     return;
   }
 
-  if (!confirm(`Remove ${target.ownerName} (${target.short}) from this auction?`)) return;
+  const targetLabel = getTeamDisplayName(target, targetTeamId) || targetTeamId;
+  if (!confirm(`Remove ${target.ownerName} (${targetLabel}) from this auction?`)) return;
 
   try {
     await db.ref(`rooms/${roomCode}/teams/${targetTeamId}`).remove();
@@ -3317,7 +3343,9 @@ function showTeamSquad(teamId) {
   const t = getRoomTeamMeta(teamId);
   const squadEntries = normalizeTeamSquadEntries(team);
 
-  document.getElementById('teamModalTitle').innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${team.short} logo" loading="lazy" decoding="async" />` : ''} ${team.name} Squad`;
+  const teamLabel = getTeamDisplayName({ ...(t || {}), ...(team || {}) }, teamId) || team.name || teamId;
+
+  document.getElementById('teamModalTitle').innerHTML = `${t?.logo ? `<img class="chip-team-logo" src="${t.logo}" alt="${escapeHtml(teamLabel)} logo" loading="lazy" decoding="async" />` : ''} ${escapeHtml(team.name || teamLabel)} Squad`;
 
   const roleSections = [
     { key: 'Batsman', label: 'Batsman' },
@@ -3528,7 +3556,7 @@ function handleAudioEvents(data, prevData) {
     if (data.status === 'sold') {
       playSoldSfx();
       const winner = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder);
-      const winnerName = winner?.short || winner?.name || 'Unknown team';
+      const winnerName = getTeamDisplayName(winner, data.highestBidder) || 'Unknown team';
       speakCallout(`Sold to ${winnerName} for ${formatPrice(data.currentBid)}`);
     } else {
       playUnsoldSfx();
@@ -3637,7 +3665,7 @@ function initVoiceSocket() {
         roomCode,
         teamId: myTeamId,
         ownerName: myTeam.ownerName || playerName || 'Player',
-        short: myTeam.short || myTeamId,
+        short: getTeamDisplayName(myTeam, myTeamId) || myTeamId,
         isHost: !!isHost
       });
     }
@@ -3765,7 +3793,7 @@ async function joinVoiceChat() {
         roomCode,
         teamId: myTeamId,
         ownerName: myTeam.ownerName || playerName || 'Player',
-        short: myTeam.short || myTeamId,
+        short: getTeamDisplayName(myTeam, myTeamId) || myTeamId,
         isHost: !!isHost
       });
     } else {
@@ -4013,7 +4041,7 @@ function renderVoiceParticipants() {
     mergedParticipants[myTeamId] = {
       teamId: myTeamId,
       ownerName: myTeam.ownerName || playerName || 'You',
-      short: myTeam.short || myTeamId,
+      short: getTeamDisplayName(myTeam, myTeamId) || myTeamId,
       joinedAt: Date.now(),
       isHost: !!isHost,
       localOnly: true
@@ -4029,7 +4057,7 @@ function renderVoiceParticipants() {
 
   listEl.innerHTML = participants.map(([teamId, info]) => {
     const team = teamsData[teamId] || getRoomTeamMeta(teamId) || {};
-    const short = team.short || info.short || teamId;
+    const short = getTeamDisplayName(team, info.short || teamId) || info.short || teamId;
     const owner = team.ownerName || info.ownerName || 'Player';
     const isMe = teamId === myTeamId;
     const isMuted = !!voiceHostMutedMap[teamId];
@@ -4204,7 +4232,7 @@ function renderChatMessages() {
   el.innerHTML = visibleRows.map(msg => {
     const senderTeam = msg.senderTeamId;
     const team = teamsData[senderTeam] || getRoomTeamMeta(senderTeam) || {};
-    const short = team.short || msg.senderShort || senderTeam || 'TEAM';
+    const short = getTeamDisplayName(team, msg.senderShort || senderTeam || 'TEAM') || msg.senderShort || senderTeam || 'TEAM';
     const owner = team.ownerName || msg.senderName || 'Unknown';
     const isMine = senderTeam === myTeamId;
     const isMuted = !!chatMutedMap[senderTeam];
@@ -4258,7 +4286,7 @@ async function sendChatMessage(presetText = '', options = {}) {
   try {
     await db.ref(`rooms/${roomCode}/chat/messages`).push({
       senderTeamId: myTeamId,
-      senderShort: myTeam.short || myTeamId,
+      senderShort: getTeamDisplayName(myTeam, myTeamId) || myTeamId,
       senderName: myTeam.ownerName || playerName,
       text,
       quick: !!options.quick,

@@ -2466,89 +2466,98 @@ async function randomChangeCurrentPlayer() {
     return;
   }
 
-  const soldSet = new Set(Object.keys(soldPlayersData || {}).map((id) => String(id || '').trim()));
-  const candidates = playerQueue
-    .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
-    .filter(({ id, idx }) => id && idx >= startIndex && id !== currentPlayerId && !soldSet.has(id));
-
-  if (!candidates.length) {
-    showToast('No available players left for random change.', 'error');
-    return;
-  }
-
-  let latestQueue = null;
-  let latestChosenId = null;
-
   try {
-    const txn = await db.ref(`rooms/${roomCode}`).transaction((room) => {
-      if (!room || !room.currentAuction || room.currentAuction.status !== 'bidding') return;
-
-      const queue = normalizePlayerQueue(room.playerQueue);
-      if (!queue.length) return;
-
-      const liveIndex = Number(room.currentIndex || 0);
-      if (!Number.isFinite(liveIndex) || liveIndex < 0 || liveIndex >= queue.length) return;
-
-      const livePlayerId = String(room.currentAuction.playerId || '').trim();
-      if (!livePlayerId) return;
-
-      // Keep queue and active spotlight aligned at currentIndex so changed player remains available later.
-      let livePlayerQueueIndex = queue.findIndex((id) => String(id || '').trim() === livePlayerId);
-      if (livePlayerQueueIndex < 0) livePlayerQueueIndex = liveIndex;
-      if (livePlayerQueueIndex !== liveIndex) {
-        const tmp = queue[liveIndex];
-        queue[liveIndex] = queue[livePlayerQueueIndex];
-        queue[livePlayerQueueIndex] = tmp;
-      }
-
-      const soldMap = room.soldPlayers || {};
-      const dynamicCandidates = queue
-        .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
-        .filter(({ id, idx }) => id && idx >= liveIndex && id !== livePlayerId && !soldMap[id]);
-      if (!dynamicCandidates.length) return;
-
-      const pick = dynamicCandidates[Math.floor(Math.random() * dynamicCandidates.length)];
-      const displacedId = queue[liveIndex];
-      queue[liveIndex] = pick.id;
-      queue[pick.idx] = displacedId;
-
-      const nextPlayer = playerMap[pick.id];
-      if (!nextPlayer) return;
-
-      const nextPool = getPoolMetaAtIndex(liveIndex);
-
-      room.playerQueue = queue;
-      room.currentAuction = {
-        playerId: pick.id,
-        currentBid: Number(nextPlayer.base_price_lakh || 0),
-        highestBidder: null,
-        bidHistory: [],
-        poolId: nextPool?.poolId || null,
-        poolLabel: nextPool?.poolLabel || null,
-        skipVotes: {},
-        poolSkipVotes: {},
-        withdrawnTeams: {},
-        timerEnd: unlimitedTimer ? null : (getSyncedNowMs() + timerSeconds * 1000),
-        status: 'bidding'
-      };
-
-      latestQueue = queue.slice();
-      latestChosenId = pick.id;
-      return room;
-    });
-
-    if (!txn?.committed || !latestChosenId) {
-      showToast('Could not change player. Try again.', 'error');
+    const roomSnap = await db.ref(`rooms/${roomCode}`).get();
+    if (!roomSnap.exists()) {
+      showToast('Auction room not found.', 'error');
       return;
     }
 
-    if (Array.isArray(latestQueue) && latestQueue.length) {
-      playerQueue = latestQueue;
-      buildPoolIndexMap();
+    const room = roomSnap.val() || {};
+    const liveAuction = room.currentAuction || {};
+    if (liveAuction.status !== 'bidding') {
+      showToast('Player change is available only during live bidding.', 'error');
+      return;
     }
 
-    const nextPlayer = playerMap[latestChosenId];
-    showToast(`Random player: ${nextPlayer?.name || latestChosenId}`, 'success');
+    const queue = normalizePlayerQueue(room.playerQueue);
+    if (!queue.length) {
+      showToast('Player queue is empty.', 'error');
+      return;
+    }
+
+    const liveIndex = Number(room.currentIndex || 0);
+    if (!Number.isFinite(liveIndex) || liveIndex < 0 || liveIndex >= queue.length) {
+      showToast('Player queue index is invalid.', 'error');
+      return;
+    }
+
+    const livePlayerId = String(liveAuction.playerId || '').trim();
+    if (!livePlayerId) {
+      showToast('No active player to replace.', 'error');
+      return;
+    }
+
+    // Keep queue and active spotlight aligned at currentIndex so changed player remains available later.
+    let livePlayerQueueIndex = queue.findIndex((id) => String(id || '').trim() === livePlayerId);
+    if (livePlayerQueueIndex < 0) livePlayerQueueIndex = liveIndex;
+    if (livePlayerQueueIndex !== liveIndex) {
+      const tmp = queue[liveIndex];
+      queue[liveIndex] = queue[livePlayerQueueIndex];
+      queue[livePlayerQueueIndex] = tmp;
+    }
+
+    const soldMap = room.soldPlayers || {};
+    const dynamicCandidates = queue
+      .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
+      .filter(({ id, idx }) => id && idx >= liveIndex && id !== livePlayerId && !soldMap[id]);
+    if (!dynamicCandidates.length) {
+      showToast('No available players left for random change.', 'error');
+      return;
+    }
+
+    const pick = dynamicCandidates[Math.floor(Math.random() * dynamicCandidates.length)];
+    const displacedId = queue[liveIndex];
+    queue[liveIndex] = pick.id;
+    queue[pick.idx] = displacedId;
+
+    const roomManualPlayers = Array.isArray(room.manualPlayers) ? room.manualPlayers : [];
+    const nextPlayer = playerMap[pick.id] || roomManualPlayers.find((p) => String(p?.id || '') === pick.id);
+    if (!nextPlayer) {
+      showToast('Random player data not found. Try again.', 'error');
+      return;
+    }
+
+    const nextPool = getPoolMetaAtIndex(liveIndex);
+    const nextAuction = {
+      playerId: pick.id,
+      currentBid: Number(nextPlayer.base_price_lakh || 0),
+      highestBidder: null,
+      bidHistory: [],
+      poolId: nextPool?.poolId || null,
+      poolLabel: nextPool?.poolLabel || null,
+      skipVotes: {},
+      poolSkipVotes: {},
+      withdrawnTeams: {},
+      timerEnd: unlimitedTimer ? null : (getSyncedNowMs() + timerSeconds * 1000),
+      status: 'bidding'
+    };
+
+    const queuePayload = Array.isArray(room.playerQueue)
+      ? queue
+      : queue.reduce((acc, id, idx) => {
+          acc[idx] = id;
+          return acc;
+        }, {});
+
+    await db.ref(`rooms/${roomCode}`).update({
+      playerQueue: queuePayload,
+      currentAuction: nextAuction
+    });
+
+    playerQueue = queue.slice();
+    buildPoolIndexMap();
+    showToast(`Random player: ${nextPlayer?.name || pick.id}`, 'success');
   } catch (err) {
     console.error('Random player change failed:', err);
     showToast('Failed to change player.', 'error');

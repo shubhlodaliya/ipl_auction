@@ -4495,26 +4495,45 @@ window.openAllTeamsModal = function() {
     const meta = getRoomTeamMeta(tId) || {};
     const displayName = team.name || meta.name || meta.short || team.short || tId;
     const logo = meta.logo
-      ? `<img src="${meta.logo}" alt="${displayName} logo" class="sidebar-team-logo" loading="lazy" decoding="async" />`
-      : '';
+      ? `<img src="${meta.logo}" alt="${displayName} logo" class="all-teams-logo-img" loading="lazy" decoding="async" />`
+      : `<div class="all-teams-logo-fallback">${escapeHtml(displayName).slice(0, 2).toUpperCase()}</div>`;
     const squadCount = normalizeTeamSquadEntries(team).length;
     const minSquad = Math.max(0, Number(roomConfig?.minSquadSize || 0));
+    const maxSquad = Math.max(minSquad, Number(roomConfig?.maxSquadSize || 25));
     const minPlayers = Math.max(0, minSquad - squadCount);
-    const minNoteClass = minPlayers > 0 ? 'required' : 'satisfied';
+    const reserveBal = Math.max(0, minPlayers * getMinReserveBasePrice());
     const purseText = formatPrice(team.purse);
     const maxBidText = formatPrice(getTeamMaxBid(team));
+    const reserveText = formatPrice(reserveBal);
+    const reserveClass = minPlayers > 0 ? 'warn' : 'ok';
     
     return `
-      <button class="broadcast-team-list-card" onclick="closeAllTeamsModal(); showTeamSquad('${tId}')">
-        <div class="team-row-top">
+      <button class="all-teams-grid-card" onclick="closeAllTeamsModal(); showTeamSquad('${tId}')">
+        <div class="all-teams-logo-col">
           ${logo}
-          <span class="team-short-badge">${displayName}</span>
         </div>
-        <div class="team-row-bottom">
-          <span class="team-stat">💰 <span>${purseText}</span></span>
-          <span class="team-stat">🏃 <span>${squadCount}/25 players</span><small class="team-max-bid-note">Max bid ${maxBidText}</small></span>
+        <div class="all-teams-stats-col">
+          <div class="all-teams-stat-row">
+            <span class="all-teams-stat-label">Team</span>
+            <span class="all-teams-stat-value">${displayName}</span>
+          </div>
+          <div class="all-teams-stat-row">
+            <span class="all-teams-stat-label">Squad Size</span>
+            <span class="all-teams-stat-value">${squadCount}/${maxSquad}</span>
+          </div>
+          <div class="all-teams-stat-row">
+            <span class="all-teams-stat-label">Balance</span>
+            <span class="all-teams-stat-value">${purseText}</span>
+          </div>
+          <div class="all-teams-stat-row">
+            <span class="all-teams-stat-label">Max Bid</span>
+            <span class="all-teams-stat-value max-bid">${maxBidText}</span>
+          </div>
+          <div class="all-teams-stat-row ${reserveClass}">
+            <span class="all-teams-stat-label">Reserve Bal.</span>
+            <span class="all-teams-stat-value">${reserveText}</span>
+          </div>
         </div>
-        <span class="team-min-note ${minNoteClass}">min ${minPlayers} required</span>
       </button>
     `;
   }).join('');

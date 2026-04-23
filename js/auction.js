@@ -2909,17 +2909,37 @@ function getLivePlayerStatus(playerId) {
   return 'available';
 }
 
-function openLivePlayerListModal(type) {
-  const safeType = type === 'sold' || type === 'unsold' ? type : 'available';
-  const overlayEl = document.getElementById('livePlayerListModalOverlay');
-  const titleEl = document.getElementById('livePlayerListModalTitle');
+let livePlayerListType = 'available';
+
+function renderLivePlayerListRows() {
+  const safeType = livePlayerListType === 'sold' || livePlayerListType === 'unsold' ? livePlayerListType : 'available';
   const summaryEl = document.getElementById('livePlayerListSummary');
   const contentEl = document.getElementById('livePlayerListContent');
-  if (!overlayEl || !titleEl || !summaryEl || !contentEl) return;
+  const searchEl = document.getElementById('livePlayerListSearch');
+  if (!summaryEl || !contentEl) return;
 
-  const filteredPlayers = [...allPlayers]
+  const query = String(searchEl?.value || '').trim().toLowerCase();
+
+  const basePlayers = [...allPlayers]
     .filter((player) => getLivePlayerStatus(player.id) === safeType)
     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+
+  const filteredPlayers = query
+    ? basePlayers.filter((player) => {
+        const soldInfo = soldPlayersData[player.id] || soldPlayersData[String(player.id)] || null;
+        const buyer = soldInfo?.teamId ? (teamsData[soldInfo.teamId] || getRoomTeamMeta(soldInfo.teamId) || null) : null;
+        const buyerLabel = buyer ? (buyer.name || buyer.short || soldInfo.teamId) : '';
+        const searchText = [
+          player.name,
+          player.role,
+          player.country,
+          formatPrice(player.base_price_lakh),
+          buyerLabel,
+          soldInfo?.soldPrice ? formatPrice(Number(soldInfo.soldPrice)) : ''
+        ].join(' ').toLowerCase();
+        return searchText.includes(query);
+      })
+    : basePlayers;
 
   const rows = filteredPlayers.map((player) => {
     const status = getLivePlayerStatus(player.id);
@@ -2949,10 +2969,32 @@ function openLivePlayerListModal(type) {
     `;
   }).join('');
 
+  summaryEl.innerHTML = `
+    <span class="pool-summary-pill ${safeType}">${filteredPlayers.length} players</span>
+    <span class="pool-summary-total">of ${basePlayers.length}</span>
+  `;
+  contentEl.innerHTML = rows || '<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players found for this search.</p></div>';
+}
+
+function openLivePlayerListModal(type) {
+  const safeType = type === 'sold' || type === 'unsold' ? type : 'available';
+  const overlayEl = document.getElementById('livePlayerListModalOverlay');
+  const titleEl = document.getElementById('livePlayerListModalTitle');
+  const searchEl = document.getElementById('livePlayerListSearch');
+  if (!overlayEl || !titleEl) return;
+
+  livePlayerListType = safeType;
   titleEl.textContent = `${safeType.charAt(0).toUpperCase()}${safeType.slice(1)} Players`;
-  summaryEl.innerHTML = `<span class="pool-summary-pill ${safeType}">${filteredPlayers.length} players</span>`;
-  contentEl.innerHTML = rows || '<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players found for this view.</p></div>';
+  if (searchEl) {
+    searchEl.value = '';
+    searchEl.placeholder = `Search ${safeType} players...`;
+  }
+  renderLivePlayerListRows();
   overlayEl.classList.add('visible');
+}
+
+function filterLivePlayerList() {
+  renderLivePlayerListRows();
 }
 
 function closeLivePlayerListModal() {

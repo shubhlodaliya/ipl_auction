@@ -3495,6 +3495,24 @@ body.spectator-mode #voiceStatusBadge {
 .live-player-list-modal {
   width: min(860px, 94vw);
 }
+.live-player-search-wrap {
+  padding: 0 1rem 0.7rem;
+}
+.live-player-search-input {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+}
+.live-player-search-input:focus {
+  outline: none;
+  border-color: rgba(255, 203, 48, 0.6);
+  box-shadow: 0 0 0 2px rgba(255, 203, 48, 0.14);
+}
 .live-player-row {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) auto;

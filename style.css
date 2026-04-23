@@ -6858,3 +6858,132 @@ body.broadcast-mode {
   }
 }
 
+/* ===============================
+   ALL TEAMS (Broadcast modal)
+   Grid cards + click → squad modal
+   =============================== */
+
+.broadcast-teams-modal-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .broadcast-teams-modal-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.all-teams-grid-card {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+  padding: 0.85rem 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: stretch;
+  gap: 0.9rem;
+  font: inherit;
+  color: inherit;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.all-teams-grid-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-hover);
+  background: rgba(255, 203, 48, 0.06);
+}
+
+.all-teams-grid-card:active {
+  transform: translateY(0);
+}
+
+.all-teams-grid-card:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+.all-teams-logo-col {
+  width: 86px;
+  flex: 0 0 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.all-teams-logo-img {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+}
+
+.all-teams-logo-fallback {
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+  font-size: 1.25rem;
+  color: var(--gold);
+}
+
+.all-teams-stats-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.all-teams-stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.all-teams-stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-sec);
+  white-space: nowrap;
+}
+
+.all-teams-stat-value {
+  font-size: 0.98rem;
+  font-weight: 900;
+  color: var(--text);
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.all-teams-stat-value.max-bid {
+  color: var(--gold);
+}
+
+.all-teams-stat-row.warn .all-teams-stat-value {
+  color: var(--red);
+}
+
+.all-teams-stat-row.ok .all-teams-stat-value {
+  color: var(--green);
+}
+

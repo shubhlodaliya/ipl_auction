@@ -21,6 +21,16 @@ let iconPicks = {};
 let iconPicksListener = null;
 let hasMyTeam = false;
 let iconPickTeamId = null;
+let lobbyInitWatchdog = null;
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 async function waitForAuthBootstrap(timeoutMs = 5000) {
   if (typeof waitForAuthReady !== 'function') return;
@@ -221,6 +231,19 @@ window.addEventListener('DOMContentLoaded', initLobby);
 
 function initLobby() {
   if (!session) return;
+  lobbyInitWatchdog = window.setTimeout(() => {
+    const loading = document.getElementById('loadingScreen');
+    const content = document.getElementById('lobbyContent');
+    if (!loading || !content || content.style.display === 'block') return;
+    loading.innerHTML = `
+      <div class="state-empty" style="text-align:center;">
+        <p style="color:var(--red);margin-bottom:0.5rem;">Room connection timed out.</p>
+        <p style="color:var(--text-dim);font-size:0.8rem;margin-bottom:0.8rem;">Please retry. If this repeats, check Firebase rules/network.</p>
+        <button class="btn btn-secondary" onclick="window.location.reload()">Retry</button>
+      </div>
+    `;
+  }, 12000);
+
   // Show room code
   document.getElementById('roomCodeDisplay').textContent = roomCode;
 
@@ -336,6 +359,10 @@ function initLobby() {
     // Show lobby content
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('lobbyContent').style.display = 'block';
+    if (lobbyInitWatchdog) {
+      window.clearTimeout(lobbyInitWatchdog);
+      lobbyInitWatchdog = null;
+    }
 
     db.ref(`rooms/${roomCode}/teams`).get().then(teamSnap => {
       renderTeamSlots(teamSnap.val() || {});
@@ -350,6 +377,10 @@ function initLobby() {
     }
   }).catch((err) => {
     console.error('Failed to load lobby room data:', err);
+    if (lobbyInitWatchdog) {
+      window.clearTimeout(lobbyInitWatchdog);
+      lobbyInitWatchdog = null;
+    }
     const errCode = String(err?.code || 'unknown');
     const errMessage = String(err?.message || 'Unknown room connection error.');
     const loading = document.getElementById('loadingScreen');

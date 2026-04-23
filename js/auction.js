@@ -4501,11 +4501,8 @@ window.openAllTeamsModal = function() {
     const minSquad = Math.max(0, Number(roomConfig?.minSquadSize || 0));
     const maxSquad = Math.max(minSquad, Number(roomConfig?.maxSquadSize || 25));
     const minPlayers = Math.max(0, minSquad - squadCount);
-    const reserveBal = Math.max(0, minPlayers * getMinReserveBasePrice());
     const purseText = formatPrice(team.purse);
     const maxBidText = formatPrice(getTeamMaxBid(team));
-    const reserveText = formatPrice(reserveBal);
-    const reserveClass = minPlayers > 0 ? 'warn' : 'ok';
     
     return `
       <button class="all-teams-grid-card" onclick="closeAllTeamsModal(); showTeamSquad('${tId}')">
@@ -4528,10 +4525,6 @@ window.openAllTeamsModal = function() {
           <div class="all-teams-stat-row">
             <span class="all-teams-stat-label">Max Bid</span>
             <span class="all-teams-stat-value max-bid">${maxBidText}</span>
-          </div>
-          <div class="all-teams-stat-row ${reserveClass}">
-            <span class="all-teams-stat-label">Reserve Bal.</span>
-            <span class="all-teams-stat-value">${reserveText}</span>
           </div>
         </div>
       </button>

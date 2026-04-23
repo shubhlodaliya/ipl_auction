@@ -1461,7 +1461,7 @@ function renderAuction(data, prevData = null) {
 
   renderCurrentPoolBanner();
 
-  renderPlayerSpotlight(player);
+  renderPlayerSpotlight(player, data.status);
   renderBidDisplay(data, player);
   updateProgressBar();
 
@@ -1477,12 +1477,13 @@ function renderAuction(data, prevData = null) {
   }
 }
 
-function renderPlayerSpotlight(player) {
+function renderPlayerSpotlight(player, status = '') {
   const color = getRoleColor(player.role);
   const initials = getPlayerInitials(player.name);
   const flag = getCountryFlag(player.country);
   const icon = getRoleIcon(player.role);
   const inWatchlist = !!watchlistForMe[player.id];
+  const isUnsold = String(status || '') === 'unsold';
   const ageText = player.age ? ` · Age ${player.age}` : '';
   const categoryText = String(player.category || '').trim();
   const roleText = String(player.role || '').trim();
@@ -1522,9 +1523,10 @@ function renderPlayerSpotlight(player) {
   const numberBadgeHtml = buildPlayerNumberBadgeHtml(player);
 
   document.getElementById('playerSpotlight').innerHTML = `
-    <div class="player-avatar pulse-ring ${avatarBorderVariantClass}" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
+    <div class="player-avatar pulse-ring ${avatarBorderVariantClass} ${isUnsold ? 'is-unsold' : ''}" style="background: linear-gradient(135deg, ${color}99, ${color}44);">
       ${numberBadgeHtml}
       ${avatarInner}
+      <img class="unsold-cross-tag" src="assets/image.png" alt="UNSOLD" loading="eager" decoding="async" />
     </div>
     <div class="player-info-card">
       <h2 class="player-name">${player.name}</h2>
@@ -3026,7 +3028,7 @@ function renderLivePlayerListRows() {
 
     return `
       <div class="live-player-row ${status}">
-        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${numberBadgeHtml}${avatarHtml}</div>
+        <div class="result-player-avatar ${status === 'unsold' ? 'is-unsold' : ''}" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${numberBadgeHtml}${avatarHtml}${status === 'unsold' ? '<img class=\"unsold-cross-tag unsold-cross-tag--small\" src=\"assets/image.png\" alt=\"UNSOLD\" loading=\"lazy\" decoding=\"async\" />' : ''}</div>
         <div class="live-player-main">
           <div class="result-player-name">${player.name}</div>
           <div class="live-player-sub">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>

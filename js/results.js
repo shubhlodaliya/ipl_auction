@@ -2482,8 +2482,7 @@ async function exportResultsPdf() {
     soldCount,
     unsoldCount,
     totalSales,
-    roomTeamCatalog,
-    isManualAuction
+    roomTeamCatalog
   } = resultsExportState;
 
   if (!roomCode || !sortedTeams.length) {
@@ -2499,7 +2498,7 @@ async function exportResultsPdf() {
   const doc = createPdfDocument();
   const generatedAt = new Date();
 
-  renderPdfHeader(doc, isManualAuction ? 'My Auction Report' : 'IPL Auction Report', roomCode, generatedAt);
+  renderPdfHeader(doc, 'IPL Auction Report', roomCode, generatedAt);
   renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSales);
 
   for (let i = 0; i < sortedTeams.length; i++) {

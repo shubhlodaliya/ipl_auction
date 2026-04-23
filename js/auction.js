@@ -2460,36 +2460,65 @@ async function randomChangeCurrentPlayer() {
     return;
   }
 
+  const startIndex = Number(currentIndex || 0);
+  if (!Number.isFinite(startIndex) || startIndex < 0 || startIndex >= playerQueue.length) {
+    showToast('Player queue is not ready. Try again.', 'error');
+    return;
+  }
+
+  const soldSet = new Set(Object.keys(soldPlayersData || {}).map((id) => String(id || '').trim()));
   const candidates = playerQueue
     .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
-    .filter(({ id, idx }) => {
-      if (!id) return false;
-      if (id === currentPlayerId) return false;
-      if (idx < Number(currentIndex || 0)) return false;
-      return !soldPlayersData[id];
-    });
+    .filter(({ id, idx }) => id && idx >= startIndex && id !== currentPlayerId && !soldSet.has(id));
 
   if (!candidates.length) {
     showToast('No available players left for random change.', 'error');
     return;
   }
 
-  const pick = candidates[Math.floor(Math.random() * candidates.length)];
-  const nextPlayer = playerMap[pick.id];
-  if (!nextPlayer) {
-    showToast('Random player data not found. Try again.', 'error');
-    return;
-  }
-
-  const nextPool = getPoolMetaAtIndex(pick.idx);
+  let latestQueue = null;
+  let latestChosenId = null;
 
   try {
-    await db.ref(`rooms/${roomCode}/currentAuction`).transaction((auction) => {
-      if (!auction || auction.status !== 'bidding') return;
-      const auctionPlayerId = String(auction.playerId || '').trim();
-      if (!auctionPlayerId) return;
+    const txn = await db.ref(`rooms/${roomCode}`).transaction((room) => {
+      if (!room || !room.currentAuction || room.currentAuction.status !== 'bidding') return;
 
-      return {
+      const queue = normalizePlayerQueue(room.playerQueue);
+      if (!queue.length) return;
+
+      const liveIndex = Number(room.currentIndex || 0);
+      if (!Number.isFinite(liveIndex) || liveIndex < 0 || liveIndex >= queue.length) return;
+
+      const livePlayerId = String(room.currentAuction.playerId || '').trim();
+      if (!livePlayerId) return;
+
+      // Keep queue and active spotlight aligned at currentIndex so changed player remains available later.
+      let livePlayerQueueIndex = queue.findIndex((id) => String(id || '').trim() === livePlayerId);
+      if (livePlayerQueueIndex < 0) livePlayerQueueIndex = liveIndex;
+      if (livePlayerQueueIndex !== liveIndex) {
+        const tmp = queue[liveIndex];
+        queue[liveIndex] = queue[livePlayerQueueIndex];
+        queue[livePlayerQueueIndex] = tmp;
+      }
+
+      const soldMap = room.soldPlayers || {};
+      const dynamicCandidates = queue
+        .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
+        .filter(({ id, idx }) => id && idx >= liveIndex && id !== livePlayerId && !soldMap[id]);
+      if (!dynamicCandidates.length) return;
+
+      const pick = dynamicCandidates[Math.floor(Math.random() * dynamicCandidates.length)];
+      const displacedId = queue[liveIndex];
+      queue[liveIndex] = pick.id;
+      queue[pick.idx] = displacedId;
+
+      const nextPlayer = playerMap[pick.id];
+      if (!nextPlayer) return;
+
+      const nextPool = getPoolMetaAtIndex(liveIndex);
+
+      room.playerQueue = queue;
+      room.currentAuction = {
         playerId: pick.id,
         currentBid: Number(nextPlayer.base_price_lakh || 0),
         highestBidder: null,
@@ -2502,9 +2531,24 @@ async function randomChangeCurrentPlayer() {
         timerEnd: unlimitedTimer ? null : (getSyncedNowMs() + timerSeconds * 1000),
         status: 'bidding'
       };
+
+      latestQueue = queue.slice();
+      latestChosenId = pick.id;
+      return room;
     });
 
-    showToast(`Random player: ${nextPlayer.name}`, 'success');
+    if (!txn?.committed || !latestChosenId) {
+      showToast('Could not change player. Try again.', 'error');
+      return;
+    }
+
+    if (Array.isArray(latestQueue) && latestQueue.length) {
+      playerQueue = latestQueue;
+      buildPoolIndexMap();
+    }
+
+    const nextPlayer = playerMap[latestChosenId];
+    showToast(`Random player: ${nextPlayer?.name || latestChosenId}`, 'success');
   } catch (err) {
     console.error('Random player change failed:', err);
     showToast('Failed to change player.', 'error');

@@ -664,7 +664,7 @@ function getTeamLabelById(teamId, teams, roomTeamCatalog) {
   const team = teams?.[teamId] || roomTeamCatalog?.[teamId] || getTeam(teamId);
   return {
     name: team?.name || team?.short || teamId || 'Unknown Team',
-    short: team?.short || teamId || '—'
+    short: team?.name || team?.short || teamId || '—'
   };
 }
 
@@ -1230,12 +1230,11 @@ async function loadResults() {
         <div class="result-team-card fade-in" style="animation-delay:${idx * 0.07}s;--team-color:${t?.primary || '#888'}">
           <div class="result-team-header">
             <div class="result-team-emoji-wrap">
-              ${t?.logo ? `<img class="result-team-logo" src="${t.logo}" alt="${team.short} logo" loading="lazy" decoding="async" />` : `<div class="result-team-emoji">${team.short}</div>`}
+              ${t?.logo ? `<img class="result-team-logo" src="${t.logo}" alt="${team.name} logo" loading="lazy" decoding="async" />` : `<div class="result-team-emoji">${getPlayerInitials(team.name)}</div>`}
               ${medal ? `<span class="result-medal">${medal}</span>` : ''}
             </div>
             <div class="result-team-info">
               <div class="result-team-name">${team.name}</div>
-              <div class="result-owner-name">👤 ${team.ownerName}</div>
             </div>
             <div class="result-team-actions">
               <button class="btn btn-ghost result-export-card-btn" onclick="exportTeamPdfById('${tId}')" title="Download ${team.name} PDF" aria-label="Download ${team.name} PDF">

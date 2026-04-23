@@ -347,16 +347,14 @@ function renderHostProxyBidPanel() {
     const team = getHostProxyTeamState(teamId) || {};
     const meta = getRoomTeamMeta(teamId) || {};
     const name = team.name || meta.name || teamId;
-    const short = team.short || meta.short || teamId;
     const activeClass = teamId === hostProxyBidTeamId ? 'active' : '';
     const logo = meta.logo
-      ? `<img class="host-proxy-team-logo" src="${meta.logo}" alt="${short} logo" loading="lazy" decoding="async" />`
+      ? `<img class="host-proxy-team-logo" src="${meta.logo}" alt="${name} logo" loading="lazy" decoding="async" />`
       : '';
     return `
       <button type="button" class="host-proxy-team-btn ${activeClass}" onclick="handleHostProxyBidTeamClick('${teamId}')">
         ${logo}
         <span class="host-proxy-team-text">
-          <span class="host-proxy-team-short">${short}</span>
           <span class="host-proxy-team-name">${name}</span>
         </span>
       </button>
@@ -3041,8 +3039,7 @@ function renderSidebar() {
            onclick="showTeamSquad('${tId}')"
            style="--team-color:${t?.primary || '#888'}">
         <div class="team-row-top">
-          <span class="team-short-badge">${t?.logo ? `<img class="sidebar-team-logo" src="${t.logo}" alt="${team.short} logo" loading="lazy" decoding="async" />` : ''} ${team.short}</span>
-          <span class="team-owner-name">${team.ownerName}</span>
+          <span class="team-short-badge">${t?.logo ? `<img class="sidebar-team-logo" src="${t.logo}" alt="${team.name} logo" loading="lazy" decoding="async" />` : ''} ${team.name || team.short || tId}</span>
           ${(isHost && !isMe) ? `<button class="team-remove-btn" onclick="event.stopPropagation(); removeTeamFromAuction('${tId}')" title="Remove ${team.ownerName}">Remove</button>` : ''}
           ${team.isHost ? '<span class="leading-crown">👑</span>' : ''}
         </div>
@@ -4286,10 +4283,9 @@ window.openAllTeamsModal = function() {
   content.innerHTML = teamIds.map(tId => {
     const team = teamsData[tId];
     const meta = getRoomTeamMeta(tId) || {};
-    const short = meta.short || team.short || team.name || tId;
-    const owner = team.ownerName || 'Unknown owner';
+    const displayName = team.name || meta.name || meta.short || team.short || tId;
     const logo = meta.logo
-      ? `<img src="${meta.logo}" alt="${short} logo" class="sidebar-team-logo" loading="lazy" decoding="async" />`
+      ? `<img src="${meta.logo}" alt="${displayName} logo" class="sidebar-team-logo" loading="lazy" decoding="async" />`
       : '';
     const squadCount = normalizeTeamSquadEntries(team).length;
     const minPlayers = Number(team.minPlayers) > 0 ? Number(team.minPlayers) : 0;
@@ -4298,9 +4294,8 @@ window.openAllTeamsModal = function() {
     return `
       <button class="broadcast-team-list-card" onclick="closeAllTeamsModal(); showTeamSquad('${tId}')">
         <div class="team-row-top">
-          <span class="team-short-badge">${short}</span>
           ${logo}
-          <span class="team-owner-name">${owner}</span>
+          <span class="team-short-badge">${displayName}</span>
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${purseText}</span></span>

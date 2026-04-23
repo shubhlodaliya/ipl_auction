@@ -982,11 +982,16 @@ input[type=range]::-webkit-slider-thumb {
 .team-short-badge {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   color: var(--team-color, var(--text-sec));
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sidebar-team-logo {
   width: 20px;
@@ -998,14 +1003,6 @@ input[type=range]::-webkit-slider-thumb {
   object-fit: contain;
   object-position: center;
   flex-shrink: 0;
-}
-.team-owner-name {
-  font-size: 0.68rem;
-  color: var(--text-dim);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .team-remove-btn {
   border: 1px solid rgba(255, 77, 77, 0.45);
@@ -2627,12 +2624,6 @@ body.spectator-mode #voiceStatusBadge {
   flex-direction: column;
   gap: 0.05rem;
   min-width: 0;
-}
-
-.host-proxy-team-short {
-  font-size: 0.82rem;
-  color: var(--text-sec);
-  font-weight: 800;
 }
 
 .host-proxy-team-name {
@@ -4423,7 +4414,6 @@ body.spectator-mode #voiceStatusBadge {
   margin-bottom: 0.14rem;
   word-break: break-word;
 }
-.result-owner-name { font-size: 0.8rem; color: var(--text-sec); }
 .result-team-actions {
   display: flex;
   flex-direction: column;

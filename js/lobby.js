@@ -638,7 +638,6 @@ function renderTeamSlots(teams) {
   grid.innerHTML = teamCatalogList.map(t => {
     const joined = teams[t.id];
     const isMe = t.id === myTeamId;
-    const teamIsHost = joined && joined.isHost;
 
     let cls = 'lobby-team-slot';
     if (isMe) cls += ' mine';
@@ -647,16 +646,15 @@ function renderTeamSlots(teams) {
 
     let badge = '';
     if (isMe) badge = `<div class="slot-badge you">YOU</div>`;
-    else if (teamIsHost) badge = `<div class="slot-badge host">HOST</div>`;
 
     return `
        <div class="${cls}" style="--team-color:${t.primary}"
          onclick="${(!isHost && !joined && !isMe) ? `joinTeamFromLobby('${t.id}')` : ''}">
         ${badge}
-        <img class="slot-logo" src="${t.logo}" alt="${t.short} logo" loading="lazy" decoding="async" />
-        <div class="slot-name" style="color:${t.primary}">${t.short}</div>
+        <img class="slot-logo" src="${t.logo}" alt="${t.name || t.short} logo" loading="lazy" decoding="async" />
+        <div class="slot-name" style="color:${t.primary}">${t.name || t.short}</div>
         <div class="slot-owner">
-          ${joined ? `<span style="color:var(--green)">✓ ${joined.ownerName}</span>` : `<span style="color:var(--text-dim)">Available</span>`}
+          ${joined ? `<span style="color:var(--green)">✓ Joined</span>` : `<span style="color:var(--text-dim)">Available</span>`}
         </div>
       </div>
     `;

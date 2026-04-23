@@ -87,6 +87,14 @@ function getAuctionBrandTitle() {
   return roomConfig?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
 }
 
+function normalizePlayerQueue(queueVal) {
+  if (Array.isArray(queueVal)) return queueVal;
+  if (!queueVal || typeof queueVal !== 'object') return [];
+  return Object.keys(queueVal)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((key) => queueVal[key]);
+}
+
 function getSoldConfettiFx() {
   if (soldConfettiFx) return soldConfettiFx;
   if (typeof confetti !== 'function') return null;
@@ -637,9 +645,7 @@ async function initAuction() {
   // Load player queue
   const queueSnap = await db.ref(`rooms/${roomCode}/playerQueue`).get();
   if (queueSnap.exists()) {
-    const queueVal = queueSnap.val();
-    if (Array.isArray(queueVal)) playerQueue = queueVal;
-    else playerQueue = Object.values(queueVal || {});
+    playerQueue = normalizePlayerQueue(queueSnap.val());
   }
 
   const poolSnap = await db.ref(`rooms/${roomCode}/poolByIndex`).get();
@@ -2815,9 +2821,7 @@ function getPoolStats(poolId) {
 function getPlayerQueueIndex(playerId) {
   const normalized = String(playerId || '').trim();
   if (!normalized) return -1;
-  const idx = playerQueue.findIndex((id) => String(id) === normalized);
-  if (idx >= 0) return idx;
-  return allPlayers.findIndex((player) => String(player.id) === normalized);
+  return playerQueue.findIndex((id) => String(id || '').trim() === normalized);
 }
 
 function getLivePlayerStatus(playerId) {

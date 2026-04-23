@@ -1046,26 +1046,32 @@ function updateBroadcastView(data) {
     if (anim && animText) {
       const team = teamsData[data.highestBidder] || getRoomTeamMeta(data.highestBidder) || {};
       const teamName = team.name || team.short || data.highestBidder;
-      animText.innerHTML = `${player.name}<br>sold to ${teamName}<br>for ${formatPrice(data.currentBid)}`;
+      animText.innerHTML = `
+        <span class="firecracker-player">${escapeHtml(player.name)}</span>
+        <span class="firecracker-team">SOLD TO ${escapeHtml(teamName)}</span>
+        <span class="firecracker-price">FOR ${escapeHtml(formatPrice(data.currentBid))}</span>
+      `;
       anim.style.display = 'flex';
       
       // Trigger canvas-confetti from both sides
       if (typeof confetti === 'function') {
-        const duration = 3000;
+        const duration = 2600;
         const end = Date.now() + duration;
 
         (function frame() {
           confetti({
-            particleCount: 5,
+            particleCount: 12,
             angle: 60,
-            spread: 55,
+            spread: 78,
+            startVelocity: 40,
             origin: { x: 0, y: 0.8 },
             colors: ['#facc15', '#ef4444', '#3b82f6', '#10b981']
           });
           confetti({
-            particleCount: 5,
+            particleCount: 12,
             angle: 120,
-            spread: 55,
+            spread: 78,
+            startVelocity: 40,
             origin: { x: 1, y: 0.8 },
             colors: ['#facc15', '#ef4444', '#3b82f6', '#10b981']
           });

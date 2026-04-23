@@ -3036,7 +3036,7 @@ function renderLivePlayerListRows() {
 
     return `
       <div class="live-player-row ${status}">
-        <div class="result-player-avatar ${status === 'unsold' ? 'is-unsold' : ''}" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${numberBadgeHtml}${avatarHtml}${status === 'unsold' ? '<img class=\"unsold-cross-tag unsold-cross-tag--small\" src=\"assets/image.png\" alt=\"UNSOLD\" loading=\"lazy\" decoding=\"async\" />' : ''}</div>
+        <div class="result-player-avatar" style="background:linear-gradient(135deg,${getRoleColor(player.role)}99,${getRoleColor(player.role)}44)">${numberBadgeHtml}${avatarHtml}</div>
         <div class="live-player-main">
           <div class="result-player-name">${player.name}</div>
           <div class="live-player-sub">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</div>

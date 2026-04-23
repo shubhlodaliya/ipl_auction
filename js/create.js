@@ -50,12 +50,16 @@ function mapRoomToHistoryRow(roomCode, room) {
   const updatedAt = Number(config.updatedAt || config.finishedAt || config.terminatedAt || createdAt) || createdAt;
   const auctionType = config.auctionType || (room?.manualPlayers ? 'manual' : 'random');
   const fallbackTitle = auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
+  const terminatedAt = Number(config.terminatedAt || 0) || 0;
   return {
     roomCode,
     title: String(config.auctionTitle || '').trim() || fallbackTitle,
     status: normalizeHistoryStatus(config.status),
     auctionType,
     hostTeamId: config.hostTeamId || null,
+    terminatedAt,
+    terminatedBy: config.terminatedBy || null,
+    finishedAt: Number(config.finishedAt || 0) || 0,
     createdAt,
     updatedAt,
     migratedFromRoom: true
@@ -171,6 +175,9 @@ async function renderPastAuctions() {
       const roomCode = escapeHtml(String(row.roomCode || '').toUpperCase());
       const status = String(row.status || 'lobby').toLowerCase();
       const statusClass = status === 'auction' ? 'auction' : status === 'finished' ? 'finished' : 'lobby';
+      const isTerminated = Number(row.terminatedAt || 0) > 0;
+      const canReopen = status !== 'finished' && !isTerminated;
+      const canRestart = isTerminated;
       const updatedAtLabel = formatHistoryDate(row.updatedAt || row.createdAt);
       return `
         <div class="past-auction-card">
@@ -183,8 +190,8 @@ async function renderPastAuctions() {
           </div>
           <div class="past-auction-meta">Updated: ${escapeHtml(updatedAtLabel)}</div>
           <div class="past-auction-actions">
-            <button class="btn btn-secondary" type="button" onclick="reopenPastAuction('${roomCode}')">Reopen</button>
-            <button class="btn btn-ghost" type="button" onclick="restartPastAuction('${roomCode}')">Restart</button>
+            ${canReopen ? `<button class="btn btn-secondary" type="button" onclick="reopenPastAuction('${roomCode}')">Reopen</button>` : ''}
+            ${canRestart ? `<button class="btn btn-ghost" type="button" onclick="restartPastAuction('${roomCode}')">Restart</button>` : ''}
           </div>
         </div>
       `;
@@ -236,23 +243,34 @@ async function reopenPastAuction(roomCode) {
       return;
     }
 
+    const terminatedAt = Number(config.terminatedAt || 0) || 0;
+    const statusText = String(config.status || 'lobby').toLowerCase();
+    if (terminatedAt || statusText === 'finished') {
+      showToast('This auction was terminated. Use Restart to create a fresh room.', 'error');
+      return;
+    }
+
     const hostTeamId = config.hostTeamId || Object.keys(room.teams || {}).find((id) => room.teams[id]?.isHost) || Object.keys(room.teams || {})[0] || null;
     const hostName = room.teams?.[hostTeamId]?.ownerName || String(localStorage.getItem('ipl_auth_name') || '').trim() || 'Host';
 
-    let targetStatus = String(config.status || 'lobby').toLowerCase();
+    let targetStatus = statusText;
     const queue = Array.isArray(room.playerQueue) ? room.playerQueue : [];
     const idx = Number(room.currentIndex || 0);
     const hasRemainingPlayers = queue.length > 0 && idx < queue.length;
 
     // Reopen should resume from existing room state without resetting sold/unsold progress.
-    // If a room is marked finished but still has remaining players, move it back to live auction.
-    if (targetStatus === 'finished' && hasRemainingPlayers) {
-      targetStatus = 'auction';
-      await db.ref(`rooms/${roomCode}/config`).update({
-        status: 'auction',
-        reopenedAt: Date.now(),
-        reopenedBy: authUid
-      });
+    if (targetStatus !== 'auction') {
+      if (hasRemainingPlayers) {
+        targetStatus = 'auction';
+        await db.ref(`rooms/${roomCode}/config`).update({
+          status: 'auction',
+          reopenedAt: Date.now(),
+          reopenedBy: authUid
+        });
+      } else {
+        showToast('This auction has already been completed. Use Restart for a fresh room.', 'error');
+        return;
+      }
     }
 
     await upsertAuctionHistory(authUid, roomCode, {
@@ -298,6 +316,12 @@ async function restartPastAuction(sourceCode) {
       return;
     }
 
+    const terminatedAt = Number(sourceConfig.terminatedAt || 0) || 0;
+    if (!terminatedAt) {
+      showToast('Restart is available only after the host terminates the auction.', 'error');
+      return;
+    }
+
     const code = await reserveAvailableRoomCode();
     const hostTeamId = sourceConfig.hostTeamId || Object.keys(sourceRoom.teams || {}).find((id) => sourceRoom.teams[id]?.isHost) || Object.keys(sourceRoom.teams || {})[0] || null;
     if (!hostTeamId) {
@@ -317,6 +341,13 @@ async function restartPastAuction(sourceCode) {
       : (getTeam(hostTeamId) || sourceHostTeam);
     const hostName = sourceHostTeam.ownerName || String(localStorage.getItem('ipl_auth_name') || '').trim() || 'Host';
     const budget = Number(sourceConfig.budget || sourceHostTeam.purse || 2000);
+    const baseConfig = JSON.parse(JSON.stringify(sourceConfig || {}));
+    delete baseConfig.terminatedAt;
+    delete baseConfig.terminatedBy;
+    delete baseConfig.finishedAt;
+    delete baseConfig.reopenedAt;
+    delete baseConfig.reopenedBy;
+    delete baseConfig.updatedAt;
 
     const sourceTeams = sourceRoom.teams || {};
     const sourceTeamIds = Object.keys(sourceTeams);
@@ -354,6 +385,7 @@ async function restartPastAuction(sourceCode) {
 
     const roomPayload = {
       config: {
+        ...baseConfig,
         hostTeamId,
         hostUid: authUid,
         currentHostUid: authUid,

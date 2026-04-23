@@ -8,6 +8,15 @@ let customPlayerFields = [];
 const MANUAL_ASSET_CACHE_KEY = 'ipl_manual_asset_cache_v1';
 const MANUAL_ASSET_CACHE_LIMIT = 500;
 
+async function reserveAvailableRoomCode(maxAttempts = 30) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const code = generateRoomCode();
+    const snap = await db.ref(`rooms/${code}`).get();
+    if (!snap.exists()) return code;
+  }
+  throw new Error('Could not generate unique room code');
+}
+
 window.addEventListener('DOMContentLoaded', initManualSetup);
 
 function initManualSetup() {
@@ -775,7 +784,7 @@ async function createManualRoom() {
   btn.textContent = 'Uploading assets...';
 
   try {
-    const code = generateRoomCode();
+    const code = await reserveAvailableRoomCode();
 
     await uploadManualAssets(code, teams, players);
 

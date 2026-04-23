@@ -3,7 +3,9 @@
 // ============================================================
 
 const session = requireSession();
-if (!session) throw new Error('No session');
+if (!session) {
+  window.location.href = 'index.html';
+}
 
 const { roomCode, teamId: myTeamId, playerName, isHost } = session;
 
@@ -172,6 +174,7 @@ function buildPlayerQueue(players, mode) {
 window.addEventListener('DOMContentLoaded', initLobby);
 
 function initLobby() {
+  if (!session) return;
   // Show room code
   document.getElementById('roomCodeDisplay').textContent = roomCode;
 
@@ -298,6 +301,20 @@ function initLobby() {
       }).catch(err => {
         console.error('Failed to load players for watchlist:', err);
       });
+    }
+  }).catch((err) => {
+    console.error('Failed to load lobby room data:', err);
+    const loading = document.getElementById('loadingScreen');
+    if (loading) {
+      loading.innerHTML = `
+        <div class="state-empty" style="text-align:center;">
+          <p style="color:var(--red);margin-bottom:0.6rem;">Could not connect to this room.</p>
+          <button class="btn btn-secondary" onclick="window.location.reload()">Retry</button>
+        </div>
+      `;
+    }
+    if (typeof showToast === 'function') {
+      showToast('Failed to connect room. Check network and try again.', 'error');
     }
   });
 

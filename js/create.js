@@ -601,7 +601,7 @@ async function createRoom() {
   btn.textContent = 'Creating...';
 
   try {
-    const code = generateRoomCode();
+    const code = await reserveAvailableRoomCode();
     const team = getTeam(teamId);
 
     await db.ref(`rooms/${code}`).set({

@@ -71,6 +71,7 @@ let currentHostUid = null;
 let hostPresenceMap = {};
 let hostPresenceRef = null;
 let hostClaimInFlight = false;
+let soldConfettiFx = null;
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = false;
 const voiceRtcConfig = {
@@ -84,6 +85,15 @@ function getAuctionBrandTitle() {
   const title = String(roomConfig?.auctionTitle || '').trim();
   if (title) return title;
   return roomConfig?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
+}
+
+function getSoldConfettiFx() {
+  if (soldConfettiFx) return soldConfettiFx;
+  if (typeof confetti !== 'function') return null;
+  const canvas = document.getElementById('firecrackerConfettiCanvas');
+  if (!canvas) return null;
+  soldConfettiFx = confetti.create(canvas, { resize: true, useWorker: true });
+  return soldConfettiFx;
 }
 
 function getPlayerDisplayNumber(player) {
@@ -1054,12 +1064,13 @@ function updateBroadcastView(data) {
       anim.style.display = 'flex';
       
       // Trigger canvas-confetti from both sides
-      if (typeof confetti === 'function') {
+      const soldFx = getSoldConfettiFx();
+      if (soldFx) {
         const duration = 2600;
         const end = Date.now() + duration;
 
         (function frame() {
-          confetti({
+          soldFx({
             particleCount: 12,
             angle: 60,
             spread: 78,
@@ -1067,7 +1078,7 @@ function updateBroadcastView(data) {
             origin: { x: 0, y: 0.8 },
             colors: ['#facc15', '#ef4444', '#3b82f6', '#10b981']
           });
-          confetti({
+          soldFx({
             particleCount: 12,
             angle: 120,
             spread: 78,

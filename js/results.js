@@ -1173,16 +1173,6 @@ async function loadResults() {
       renderTeamPowerInsights(teamPowerData);
     }
 
-    const highlightsMoments = buildAuctionMoments({
-      soldPlayers,
-      teams,
-      playerMap,
-      roomTeamCatalog,
-      playerQueue,
-      teamPowerData
-    });
-    renderHighlightsReel(highlightsMoments, roomCode);
-
     const sortedTeams = isManualAuction
       ? Object.entries(teams)
         .sort((a, b) => {
@@ -2064,6 +2054,11 @@ async function startReAuctionFromResults() {
   const timerSec = room.config?.timerSeconds || 30;
   const unlimitedTimer = !!room.config?.unlimitedTimer || room.config?.timerMode === 'unlimited' || Number(room.config?.timerSeconds) === 0;
   const reAuctionRound = (room.config?.reAuctionRound || 0) + 1;
+  const liveUnsoldMap = room.unsoldPlayers || {};
+  const nextUnsoldMap = { ...liveUnsoldMap };
+  selectedQueue.forEach((pid) => {
+    delete nextUnsoldMap[String(pid)];
+  });
 
   const updates = {};
   updates[`rooms/${roomCode}/playerQueue`] = selectedQueue;
@@ -2089,6 +2084,7 @@ async function startReAuctionFromResults() {
   updates[`rooms/${roomCode}/reAuction/started`] = true;
   updates[`rooms/${roomCode}/reAuction/startedAt`] = now;
   updates[`rooms/${roomCode}/reAuction/startedBy`] = session.teamId;
+  updates[`rooms/${roomCode}/unsoldPlayers`] = nextUnsoldMap;
 
   await db.ref().update(updates);
 }

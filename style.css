@@ -1056,6 +1056,15 @@ input[type=range]::-webkit-slider-thumb {
   border-color: rgba(34, 197, 94, 0.35);
   background: rgba(34, 197, 94, 0.14);
 }
+
+.team-max-bid-note {
+  display: block;
+  margin-top: 0.16rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: #ffe29b;
+}
 .sidebar-squad-preview {
   margin-top: 0.4rem;
   display: grid;

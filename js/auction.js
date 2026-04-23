@@ -3101,6 +3101,29 @@ function normalizeTeamSquadEntries(team) {
     .filter(Boolean);
 }
 
+function getMinReserveBasePrice() {
+  const values = allPlayers
+    .map((player) => Number(player?.base_price_lakh || 0))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  if (!values.length) return 1;
+  return Math.max(1, Math.min(...values));
+}
+
+function getTeamMaxBid(team) {
+  const purse = Number(team?.purse || 0);
+  if (!Number.isFinite(purse) || purse <= 0) return 0;
+
+  const squadCount = normalizeTeamSquadEntries(team).length;
+  const maxSquad = Number(roomConfig?.maxSquadSize || 0);
+  if (maxSquad > 0 && squadCount >= maxSquad) return 0;
+
+  const minSquad = Math.max(0, Number(roomConfig?.minSquadSize || 0));
+  const reserveBase = getMinReserveBasePrice();
+  const playersNeededAfterThisBuy = Math.max(0, minSquad - (squadCount + 1));
+  const minReserve = playersNeededAfterThisBuy * reserveBase;
+  return Math.max(0, purse - minReserve);
+}
+
 function renderSidebar() {
   const container = document.getElementById('sidebarTeams');
   const sortedTeams = Object.entries(teamsData).sort((a, b) => {
@@ -3123,6 +3146,8 @@ function renderSidebar() {
     const minNoteText = minRequiredRemaining > 0
       ? `min ${minRequiredRemaining} required`
       : 'minimum satisfied';
+    const maxBid = getTeamMaxBid(team);
+    const maxBidText = formatPrice(maxBid);
 
     return `
       <div class="sidebar-team ${isLeading ? 'leading' : ''} ${isMe ? 'mine' : ''}"
@@ -3135,7 +3160,7 @@ function renderSidebar() {
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${formatPrice(team.purse)}</span></span>
-          <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note ${minNoteClass}">${minNoteText}</small></span>
+          <span class="team-stat">🏃 <span>${squadText} players</span><small class="team-min-note ${minNoteClass}">${minNoteText}</small><small class="team-max-bid-note">Max bid ${maxBidText}</small></span>
         </div>
       </div>
     `;
@@ -4378,9 +4403,11 @@ window.openAllTeamsModal = function() {
       ? `<img src="${meta.logo}" alt="${displayName} logo" class="sidebar-team-logo" loading="lazy" decoding="async" />`
       : '';
     const squadCount = normalizeTeamSquadEntries(team).length;
-    const minPlayers = Number(team.minPlayers) > 0 ? Number(team.minPlayers) : 0;
+    const minSquad = Math.max(0, Number(roomConfig?.minSquadSize || 0));
+    const minPlayers = Math.max(0, minSquad - squadCount);
     const minNoteClass = minPlayers > 0 ? 'required' : 'satisfied';
     const purseText = formatPrice(team.purse);
+    const maxBidText = formatPrice(getTeamMaxBid(team));
     
     return `
       <button class="broadcast-team-list-card" onclick="closeAllTeamsModal(); showTeamSquad('${tId}')">
@@ -4390,7 +4417,7 @@ window.openAllTeamsModal = function() {
         </div>
         <div class="team-row-bottom">
           <span class="team-stat">💰 <span>${purseText}</span></span>
-          <span class="team-stat">🏃 <span>${squadCount}/25 players</span></span>
+          <span class="team-stat">🏃 <span>${squadCount}/25 players</span><small class="team-max-bid-note">Max bid ${maxBidText}</small></span>
         </div>
         <span class="team-min-note ${minNoteClass}">min ${minPlayers} required</span>
       </button>

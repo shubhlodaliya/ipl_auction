@@ -4434,6 +4434,38 @@ body.spectator-mode #voiceStatusBadge {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.25rem;
 }
+
+/* Results page: viewer (spectator) quick-access mode */
+body.results-viewer-mode #reAuctionSection,
+body.results-viewer-mode #resultsGrid {
+  display: none !important;
+}
+
+body.results-viewer-mode .results-summary-card {
+  cursor: pointer;
+  user-select: none;
+}
+
+body.results-viewer-mode .results-summary-card:active {
+  transform: scale(0.985);
+}
+
+body.results-viewer-mode .results-summary-card:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.viewer-unsold-meta {
+  color: var(--text-sec);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.viewer-unsold-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 .result-team-card {
   border-radius: var(--radius);
   border: 1px solid var(--border);

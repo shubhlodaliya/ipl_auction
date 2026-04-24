@@ -172,6 +172,19 @@
     </div>
   </div>
 
+  <!-- Viewer Quick View Modal (Unsold / Teams) -->
+  <div class="team-modal-overlay" id="viewerQuickModalOverlay" onclick="closeViewerQuickModal()">
+    <div class="team-modal viewer-quick-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="viewerQuickModalTitle">Details</h3>
+        <button class="btn btn-ghost" onclick="closeViewerQuickModal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="viewerQuickModalContent">
+        <!-- Content rendered by JS -->
+      </div>
+    </div>
+  </div>
+
   <script>
     async function newAuction() {
       const session = getSession();

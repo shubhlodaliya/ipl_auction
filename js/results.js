@@ -1036,6 +1036,11 @@ async function loadResults() {
   const params = new URLSearchParams(window.location.search);
   const roomCode = (session && session.roomCode) || params.get('room');
 
+  const isViewer = !!(session?.isSpectator || params.get('view') === 'spectator' || params.get('view') === 'viewer');
+  if (isViewer) {
+    document.body.classList.add('results-viewer-mode');
+  }
+
   if (!roomCode) {
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('resultsContent').style.display = 'block';
@@ -1121,23 +1126,23 @@ async function loadResults() {
     const topPickPrice = topPickEntry ? formatPrice(topPickEntry.price) : '—';
 
     document.getElementById('summaryStats').innerHTML = `
-      <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
+      <div class="glass results-summary-card" id="summarySoldCard" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Players Sold</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--gold)">${soldCount}</div>
       </div>
-      <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
+      <div class="glass results-summary-card" id="summaryUnsoldCard" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Unsold</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--red)">${unsoldCount}</div>
       </div>
-      <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
+      <div class="glass results-summary-card" id="summaryTeamsCard" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Teams</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--blue)">${Object.keys(teams).length}</div>
       </div>
-      <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;">
+      <div class="glass results-summary-card" id="summarySpentCard" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Total Spent</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--green)">${formatPrice(totalSales)}</div>
       </div>
-      <div class="glass" style="padding:0.8rem 1.5rem;text-align:center;min-width:210px;">
+      <div class="glass results-summary-card" id="summaryTopPickCard" style="padding:0.8rem 1.5rem;text-align:center;min-width:210px;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Top Pick</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;color:var(--gold);line-height:1.2;">${topPickName}</div>
         <div style="font-size:0.85rem;color:var(--text-sec);margin-top:0.2rem;">${topPickTeamName} • ${topPickPrice}</div>
@@ -1277,6 +1282,10 @@ async function loadResults() {
       `;
     }).join('');
 
+    if (isViewer) {
+      setupViewerQuickCards();
+    }
+
     // Update subtitle
     document.getElementById('resultsSub').textContent = isManualAuction
       ? `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams`
@@ -1294,6 +1303,111 @@ async function loadResults() {
       <p style="color:var(--red)">Failed to load results. <button class="btn btn-ghost" onclick="location.reload()">Retry</button></p>`;
   }
 }
+
+function setupViewerQuickCards() {
+  const unsold = document.getElementById('summaryUnsoldCard');
+  const teams = document.getElementById('summaryTeamsCard');
+
+  const attach = (el, type, label) => {
+    if (!el) return;
+    el.setAttribute('role', 'button');
+    el.tabIndex = 0;
+    el.setAttribute('aria-label', label);
+    el.addEventListener('click', () => openViewerQuickModal(type));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openViewerQuickModal(type);
+      }
+    });
+  };
+
+  attach(unsold, 'unsold', 'View unsold players');
+  attach(teams, 'teams', 'View all teams');
+}
+
+function closeViewerQuickModal() {
+  const overlay = document.getElementById('viewerQuickModalOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('visible');
+}
+
+function openViewerQuickModal(type) {
+  const overlay = document.getElementById('viewerQuickModalOverlay');
+  const titleEl = document.getElementById('viewerQuickModalTitle');
+  const contentEl = document.getElementById('viewerQuickModalContent');
+  if (!overlay || !titleEl || !contentEl) return;
+
+  if (type === 'teams') {
+    titleEl.textContent = 'All Teams';
+    const grid = document.getElementById('resultsGrid');
+    contentEl.innerHTML = grid?.innerHTML || '<div class="state-empty"><p>No teams found.</p></div>';
+    overlay.classList.add('visible');
+    return;
+  }
+
+  if (type === 'unsold') {
+    titleEl.textContent = 'Unsold Players';
+    const playersById = reAuctionState.playersById || {};
+    const queue = Array.isArray(reAuctionState.unsoldQueue) ? reAuctionState.unsoldQueue : [];
+
+    if (!queue.length && Number(resultsExportState?.unsoldCount || 0) > 0) {
+      contentEl.innerHTML = '<div class="state-empty"><p>Loading unsold players...</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    const rows = queue
+      .map((pid) => {
+        const player = playersById[pid] || playersById[String(pid)] || null;
+        return player ? {
+          id: String(pid),
+          name: player.name || String(pid),
+          role: player.role || '',
+          country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
+          base: Number(player.base_price_lakh) || 0,
+          photo: player.photo_url || ''
+        } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+    if (!rows.length) {
+      contentEl.innerHTML = '<div class="state-empty"><p>No unsold players.</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    contentEl.innerHTML = `
+      <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> unsold players</div>
+      <div class="viewer-unsold-list">
+        ${rows.map((p) => {
+          const initials = getPlayerInitials(p.name);
+          const color = getRoleColor(p.role);
+          const icon = getRoleIcon(p.role);
+          const avatarHtml = p.photo
+            ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+            : escapeHtml(initials);
+          const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
+          return `
+            <div class="result-player-row">
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="result-player-name">${escapeHtml(p.name)}</div>
+                <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
+              </div>
+              <div class="result-player-price">${formatPrice(p.base)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    overlay.classList.add('visible');
+  }
+}
+
+window.openViewerQuickModal = openViewerQuickModal;
+window.closeViewerQuickModal = closeViewerQuickModal;
 
 // ============================================================
 // PLAYING 11 SETUP

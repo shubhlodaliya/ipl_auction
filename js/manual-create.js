@@ -814,9 +814,17 @@ async function createManualRoom() {
     }));
 
     const baseQueue = finalPlayers.map(p => p.id);
-    const playerQueue = typeof shuffleArray === 'function'
+    let playerQueue = typeof shuffleArray === 'function'
       ? shuffleArray(baseQueue)
       : [...baseQueue].sort(() => Math.random() - 0.5);
+
+    const fixedPlayer = finalPlayers.find(p => Number(p.player_number) === 15);
+    if (fixedPlayer) {
+      const remainingQueue = playerQueue.filter(pid => pid !== fixedPlayer.id);
+      const fixedIndex = Math.min(3, remainingQueue.length);
+      remainingQueue.splice(fixedIndex, 0, fixedPlayer.id);
+      playerQueue = remainingQueue;
+    }
 
     btn.textContent = 'Creating room...';
 

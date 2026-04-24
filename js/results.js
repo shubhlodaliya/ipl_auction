@@ -1936,7 +1936,7 @@ function renderReAuctionSection() {
   const teams = room?.teams || {};
   const myTeamId = session?.teamId;
   const amHost = isResultsHostSession(session, room);
-  const isHostControlledMode = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && amHost);
+  const isHostControlledMode = !!(amHost && room?.config?.auctionType === 'manual');
   const myEligible = !!myTeamId && eligibleTeamIds.includes(myTeamId);
 
   if (!unsoldQueue.length) {
@@ -1945,7 +1945,7 @@ function renderReAuctionSection() {
     return;
   }
 
-  if (!eligibleTeamIds.length) {
+  if (!eligibleTeamIds.length && !isHostControlledMode) {
     hint.textContent = 'All teams have full squads. Re-auction is not available.';
     body.innerHTML = `<div class="state-empty"><p>No team has an empty slot.</p></div>`;
     return;
@@ -2123,7 +2123,7 @@ async function toggleReAuctionPlayer(playerId) {
     showToast('Only host can select re-auction players in paddle mode.', 'error');
     return;
   }
-  const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && isResultsHostSession(session, room));
+  const hostControlled = !!(room?.config?.auctionType === 'manual' && isResultsHostSession(session, room));
   if (!roomCode) return;
 
   const selectionOwner = hostControlled ? '__host__' : session?.teamId;
@@ -2192,7 +2192,7 @@ async function startReAuctionFromResults() {
   const reAuction = room.reAuction || {};
   const selections = reAuction.selections || {};
   const readyMap = reAuction.ready || {};
-  const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.hostBidsForAllTeams);
+  const hostControlled = !!(room.config?.auctionType === 'manual' && isResultsHostSession(session, room));
 
   const allReady = hostControlled
     ? true

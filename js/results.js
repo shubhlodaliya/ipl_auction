@@ -65,6 +65,24 @@ const highlightsUiState = {
   autoplayDelayMs: 3400
 };
 
+function getResultsBrandTitle(room) {
+  const title = String(room?.config?.auctionTitle || '').trim();
+  if (title) return title;
+  return room?.config?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
+}
+
+function applyResultsBranding(room) {
+  const title = getResultsBrandTitle(room);
+  const logo = document.querySelector('.header .logo');
+  if (logo) logo.textContent = `🏏 ${title}`;
+  document.title = `Results — ${title}`;
+
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) ogTitle.setAttribute('content', `${title} Results`);
+  const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+  if (twitterTitle) twitterTitle.setAttribute('content', `${title} Results`);
+}
+
 const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
 
 I will provide a PDF generated from an IPL auction game.
@@ -1087,6 +1105,7 @@ async function loadResults() {
     }
 
     const room = roomSnap.val();
+    applyResultsBranding(room);
     applyResultsRoleUi(session, room);
     const isManualAuction = room.config?.auctionType === 'manual';
     const teamPowerToggleBtn = document.getElementById('teamPowerToggleBtn');

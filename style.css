@@ -564,26 +564,6 @@ input[type=range]::-webkit-slider-thumb {
   letter-spacing: 0.8px;
   text-transform: uppercase;
   border-radius: 999px;
-  padding: 0.16rem 0.48rem;
-  border: 1px solid rgba(255,255,255,0.16);
-  color: var(--text-sec);
-}
-
-.past-auction-status.lobby {
-  color: #9fd6ff;
-  border-color: rgba(29,160,255,0.42);
-  background: rgba(29,160,255,0.12);
-}
-
-.past-auction-status.auction {
-  color: #9dffde;
-  border-color: rgba(0,196,140,0.45);
-  background: rgba(0,196,140,0.12);
-}
-
-.past-auction-status.finished {
-  color: #ffe8a8;
-  border-color: rgba(255,203,48,0.45);
   background: rgba(255,203,48,0.13);
 }
 

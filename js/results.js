@@ -1963,22 +1963,6 @@ function renderReAuctionSection() {
     ? selectedQueue.length > 0
     : eligibleTeamIds.every(teamId => !!readyMap[teamId]);
 
-  const teamReadyHtml = eligibleTeamIds.map(teamId => {
-    const team = teams[teamId];
-    const label = room?.config?.auctionType === 'manual'
-      ? (team?.name || teamId)
-      : (team?.short || teamId);
-    const selectedCount = Object.keys(selections[teamId] || {}).filter(pid => (selections[teamId] || {})[pid]).length;
-    const ready = !!readyMap[teamId];
-    return `
-      <div class="reauction-team-chip ${ready ? 'ready' : ''}">
-        <span>${label} · ${team?.ownerName || 'Team'}</span>
-        <span>${selectedCount} selected</span>
-        <span>${ready ? 'Ready' : 'Pending'}</span>
-      </div>
-    `;
-  }).join('');
-
   const mySelection = isHostControlledMode
     ? (selections.__host__ || {})
     : (selections[myTeamId] || {});
@@ -2042,8 +2026,6 @@ function renderReAuctionSection() {
         <div class="reauction-stat-value">${selectedQueue.length}</div>
       </div>
     </div>
-
-    <div class="reauction-team-ready-list">${teamReadyHtml}</div>
 
     ${(myEligible || isHostControlledMode) ? `
       <div class="reauction-controls">

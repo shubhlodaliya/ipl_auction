@@ -4436,7 +4436,6 @@ body.spectator-mode #voiceStatusBadge {
 }
 
 /* Results page: viewer (spectator) quick-access mode */
-body.results-viewer-mode #reAuctionSection,
 body.results-viewer-mode #resultsGrid {
   display: none !important;
 }

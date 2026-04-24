@@ -1038,13 +1038,10 @@ function isPaddleModeRoom(room) {
 function applyResultsRoleUi(session, room) {
   const isHost = !!session?.isHost;
   const hasTeam = !!session?.teamId;
-  const isPaddleMode = isPaddleModeRoom(room);
-  const isViewerReadOnly = isPaddleMode && !isHost;
 
   const headerNewAuctionBtn = document.getElementById('newAuctionHeaderBtn');
   const bottomNewAuctionBtn = document.getElementById('newAuctionBottomBtn');
   const playing11Btn = document.getElementById('playing11Btn');
-  const reAuctionSection = document.getElementById('reAuctionSection');
 
   if (headerNewAuctionBtn) {
     headerNewAuctionBtn.style.display = isHost ? 'inline-flex' : 'none';
@@ -1056,10 +1053,6 @@ function applyResultsRoleUi(session, room) {
   if (playing11Btn) {
     // Playing 11 is only meaningful for users attached to a team.
     playing11Btn.style.display = hasTeam ? 'inline-flex' : 'none';
-  }
-
-  if (isViewerReadOnly && reAuctionSection) {
-    reAuctionSection.style.display = 'none';
   }
 }
 
@@ -1810,20 +1803,7 @@ function setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPla
   const section = document.getElementById('reAuctionSection');
   if (!section) return;
 
-   const canManageReAuction = !isPaddleModeRoom(room) || !!session?.isHost;
-
-  section.style.display = canManageReAuction ? 'block' : 'none';
-
-  // In paddle mode, non-host users should only see read-only results.
-  // Keep status listener so viewers automatically move back to auction when re-auction starts.
-  if (!canManageReAuction) {
-    reAuctionState.listeners.status = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
-      if (snap.val() === 'auction') {
-        window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}`;
-      }
-    });
-    return;
-  }
+  section.style.display = 'block';
 
   reAuctionState.listeners.reAuction = db.ref(`rooms/${roomCode}/reAuction`).on('value', snap => {
     reAuctionState.data = snap.val() || {};

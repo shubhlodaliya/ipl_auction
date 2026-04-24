@@ -818,6 +818,16 @@ async function createManualRoom() {
       ? shuffleArray(baseQueue)
       : [...baseQueue].sort(() => Math.random() - 0.5);
 
+    const fixedPlayer = finalPlayers.find(p => Number(p.player_number) === 15);
+    if (fixedPlayer?.id) {
+      const existingIndex = playerQueue.indexOf(fixedPlayer.id);
+      if (existingIndex >= 0) {
+        playerQueue.splice(existingIndex, 1);
+        const targetIndex = Math.min(3, playerQueue.length);
+        playerQueue.splice(targetIndex, 0, fixedPlayer.id);
+      }
+    }
+
     btn.textContent = 'Creating room...';
 
     const initialTeams = {};

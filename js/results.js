@@ -1034,21 +1034,9 @@ function isPaddleModeRoom(room) {
   return !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams);
 }
 
-function isResultsHostSession(session, room) {
-  if (session?.isHost) return true;
-
-  const authUid = String(getAuthUid() || '').trim();
-  const roomHostUid = String(room?.config?.hostUid || room?.config?.currentHostUid || '').trim();
-  if (authUid && roomHostUid && authUid === roomHostUid) return true;
-
-  const hostTeamId = String(room?.config?.hostTeamId || '').trim();
-  if (hostTeamId && session?.teamId && String(session.teamId) === hostTeamId) return true;
-
-  return false;
-}
 
 function applyResultsRoleUi(session, room) {
-  const isHost = isResultsHostSession(session, room);
+  const isHost = !!session?.isHost;
   const hasTeam = !!session?.teamId;
   const isPaddleMode = isPaddleModeRoom(room);
   const isViewerReadOnly = isPaddleMode && !isHost;
@@ -1328,7 +1316,9 @@ async function loadResults() {
       `;
     }).join('');
 
-    setupViewerQuickCards();
+      if (isViewer) {
+      setupViewerQuickCards();
+    }
 
     // Update subtitle
     document.getElementById('resultsSub').textContent = isManualAuction
@@ -1357,7 +1347,7 @@ function setupViewerQuickCards() {
     el.setAttribute('role', 'button');
     el.tabIndex = 0;
     el.setAttribute('aria-label', label);
-    el.style.cursor = 'pointer';
+    
     el.addEventListener('click', () => openViewerQuickModal(type));
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -1820,7 +1810,7 @@ function setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPla
   const section = document.getElementById('reAuctionSection');
   if (!section) return;
 
-  const canManageReAuction = !isPaddleModeRoom(room) || isResultsHostSession(session, room);
+   const canManageReAuction = !isPaddleModeRoom(room) || !!session?.isHost;
 
   section.style.display = canManageReAuction ? 'block' : 'none';
 
@@ -1935,7 +1925,7 @@ function renderReAuctionSection() {
   const { room, session, unsoldQueue, eligibleTeamIds, data } = reAuctionState;
   const teams = room?.teams || {};
   const myTeamId = session?.teamId;
-  const amHost = isResultsHostSession(session, room);
+  const amHost = !!session?.isHost;
   const isHostControlledMode = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && amHost);
   const myEligible = !!myTeamId && eligibleTeamIds.includes(myTeamId);
 
@@ -2119,11 +2109,11 @@ function renderReAuctionSection() {
 
 async function toggleReAuctionPlayer(playerId) {
   const { roomCode, room, session, eligibleTeamIds, data } = reAuctionState;
-  if (isPaddleModeRoom(room) && !isResultsHostSession(session, room)) {
+  if (isPaddleModeRoom(room) && !session?.isHost) {
     showToast('Only host can select re-auction players in paddle mode.', 'error');
     return;
   }
-  const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && isResultsHostSession(session, room));
+    const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && session?.isHost);
 
   const selectionOwner = hostControlled ? '__host__' : session?.teamId;
   if (!selectionOwner) return;
@@ -2147,7 +2137,7 @@ async function toggleReAuctionPlayer(playerId) {
 
 async function toggleReAuctionReady() {
   const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
-  if (isPaddleModeRoom(reAuctionState.room) && !isResultsHostSession(session, reAuctionState.room)) {
+    if (isPaddleModeRoom(reAuctionState.room) && !session?.isHost) {
     showToast('Only host can control re-auction in paddle mode.', 'error');
     return;
   }
@@ -2170,7 +2160,7 @@ async function toggleReAuctionReady() {
 
 async function startReAuctionFromResults() {
   const { roomCode, session, playersById } = reAuctionState;
-  if (!roomCode || !isResultsHostSession(session, reAuctionState.room)) return;
+  if (!roomCode || !session?.isHost) return;
 
   const roomSnap = await db.ref(`rooms/${roomCode}`).get();
   if (!roomSnap.exists()) {

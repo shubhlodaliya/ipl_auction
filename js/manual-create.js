@@ -814,9 +814,30 @@ async function createManualRoom() {
     }));
 
     const baseQueue = finalPlayers.map(p => p.id);
-    const playerQueue = typeof shuffleArray === 'function'
-      ? shuffleArray(baseQueue)
-      : [...baseQueue].sort(() => Math.random() - 0.5);
+
+    // Find player #15 and ensure they're at position 4 (index 3)
+    const player15Id = finalPlayers.find(p => p.player_number === 15)?.id;
+
+    let playerQueue;
+    if (player15Id && baseQueue.includes(player15Id)) {
+      // Remove player #15 from the base queue
+      const queueWithoutPlayer15 = baseQueue.filter(id => id !== player15Id);
+      
+      // Shuffle remaining players
+      const shuffledRest = typeof shuffleArray === 'function'
+        ? shuffleArray(queueWithoutPlayer15)
+        : queueWithoutPlayer15.sort(() => Math.random() - 0.5);
+      
+      // Insert player #15 at position 4 (index 3)
+      const insertIndex = Math.min(3, shuffledRest.length);
+      shuffledRest.splice(insertIndex, 0, player15Id);
+      playerQueue = shuffledRest;
+    } else {
+      // No player #15, just shuffle normally
+      playerQueue = typeof shuffleArray === 'function'
+        ? shuffleArray(baseQueue)
+        : [...baseQueue].sort(() => Math.random() - 0.5);
+    }
 
     btn.textContent = 'Creating room...';
 

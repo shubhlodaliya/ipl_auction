@@ -1030,6 +1030,38 @@ async function copyHighlightsSummary() {
   }
 }
 
+function isPaddleModeRoom(room) {
+  return !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams);
+}
+
+function applyResultsRoleUi(session, room) {
+  const isHost = !!session?.isHost;
+  const hasTeam = !!session?.teamId;
+  const isPaddleMode = isPaddleModeRoom(room);
+  const isViewerReadOnly = isPaddleMode && !isHost;
+
+  const headerNewAuctionBtn = document.getElementById('newAuctionHeaderBtn');
+  const bottomNewAuctionBtn = document.getElementById('newAuctionBottomBtn');
+  const playing11Btn = document.getElementById('playing11Btn');
+  const reAuctionSection = document.getElementById('reAuctionSection');
+
+  if (headerNewAuctionBtn) {
+    headerNewAuctionBtn.style.display = isHost ? 'inline-flex' : 'none';
+  }
+  if (bottomNewAuctionBtn) {
+    bottomNewAuctionBtn.style.display = isHost ? 'inline-flex' : 'none';
+  }
+
+  if (playing11Btn) {
+    // Playing 11 is only meaningful for users attached to a team.
+    playing11Btn.style.display = hasTeam ? 'inline-flex' : 'none';
+  }
+
+  if (isViewerReadOnly && reAuctionSection) {
+    reAuctionSection.style.display = 'none';
+  }
+}
+
 async function loadResults() {
   // Try to get roomCode from session, or from URL param
   const session = getSession();
@@ -1056,6 +1088,7 @@ async function loadResults() {
     }
 
     const room = roomSnap.val();
+    applyResultsRoleUi(session, room);
     const isManualAuction = room.config?.auctionType === 'manual';
     const teamPowerToggleBtn = document.getElementById('teamPowerToggleBtn');
     const teamPowerHint = document.getElementById('teamPowerHint');
@@ -1661,7 +1694,20 @@ function setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPla
   const section = document.getElementById('reAuctionSection');
   if (!section) return;
 
-  section.style.display = 'block';
+  const canManageReAuction = !isPaddleModeRoom(room) || !!session?.isHost;
+
+  section.style.display = canManageReAuction ? 'block' : 'none';
+
+  // In paddle mode, non-host users should only see read-only results.
+  // Keep status listener so viewers automatically move back to auction when re-auction starts.
+  if (!canManageReAuction) {
+    reAuctionState.listeners.status = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
+      if (snap.val() === 'auction') {
+        window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}`;
+      }
+    });
+    return;
+  }
 
   reAuctionState.listeners.reAuction = db.ref(`rooms/${roomCode}/reAuction`).on('value', snap => {
     reAuctionState.data = snap.val() || {};
@@ -1947,6 +1993,10 @@ function renderReAuctionSection() {
 
 async function toggleReAuctionPlayer(playerId) {
   const { roomCode, room, session, eligibleTeamIds, data } = reAuctionState;
+  if (isPaddleModeRoom(room) && !session?.isHost) {
+    showToast('Only host can select re-auction players in paddle mode.', 'error');
+    return;
+  }
   const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && session?.isHost);
   if (!roomCode) return;
 
@@ -1972,6 +2022,10 @@ async function toggleReAuctionPlayer(playerId) {
 
 async function toggleReAuctionReady() {
   const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
+  if (isPaddleModeRoom(reAuctionState.room) && !session?.isHost) {
+    showToast('Only host can control re-auction in paddle mode.', 'error');
+    return;
+  }
   if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
 
   const teamId = session.teamId;

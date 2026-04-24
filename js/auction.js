@@ -1740,18 +1740,20 @@ function renderBidDisplay(data, player = null) {
       withdrawBtn.textContent = 'Withdraw For This Player';
     }
 
+    const paddleHostSkipMode = !!(isHostProxyBidderActive() && isHost && canDriveAuctionEngine());
+
     if (data.highestBidder) {
       passBtn.disabled = true;
       passBtn.textContent = 'Skip Closed After First Bid';
     } else if (squadFull) {
       passBtn.disabled = true;
       passBtn.textContent = 'Squad Full';
-    } else if (skipVoted) {
+    } else if (!paddleHostSkipMode && skipVoted) {
       passBtn.disabled = true;
       passBtn.textContent = `Skip Voted (${skipCount}/${totalTeams})`;
     } else {
       passBtn.disabled = paused || !canActAsTeam;
-      passBtn.textContent = `Skip Player (${skipCount}/${totalTeams})`;
+      passBtn.textContent = paddleHostSkipMode ? 'Skip Player' : `Skip Player (${skipCount}/${totalTeams})`;
     }
 
     if (!canSkipPool) {
@@ -2458,6 +2460,24 @@ async function passPlayer() {
     return;
   }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
+
+  if (isHostProxyBidderActive() && isHost && canDriveAuctionEngine()) {
+    if (currentAuctionData.highestBidder) {
+      showToast('Skip is only available before the first bid.', 'error');
+      return;
+    }
+
+    if (processingRound) return;
+    processingRound = true;
+    try {
+      await processAsUnsold();
+    } catch (err) {
+      console.error('Paddle skip failed:', err);
+      showToast('Failed to skip player.', 'error');
+      processingRound = false;
+    }
+    return;
+  }
 
   ensureHostProxyBidTeamSelected();
   const actingTeamId = getActingTeamIdForBidUi();

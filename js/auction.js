@@ -75,12 +75,150 @@ let hostClaimInFlight = false;
 let soldConfettiFx = null;
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = false;
+const PLAYER_IMAGE_PRELOAD_AHEAD = 8;
+const PLAYER_IMAGE_PRELOAD_BEHIND = 2;
+const playerImagePreloadCache = new Map();
+let playerSpotlightImageToken = 0;
+let broadcastImageToken = 0;
 const voiceRtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' }
   ]
 };
+
+function getPlayerPhotoCandidate(player) {
+  if (!player || typeof player !== 'object') return '';
+  const source = String(player.photo_url || player.image || player.image_url || '').trim();
+  return source;
+}
+
+function preloadPlayerImage(url, options = {}) {
+  const normalized = String(url || '').trim();
+  if (!normalized) return Promise.resolve(false);
+
+  const existing = playerImagePreloadCache.get(normalized);
+  if (existing) {
+    if (existing.status === 'loaded') return Promise.resolve(true);
+    if (existing.status === 'failed') return Promise.resolve(false);
+    return existing.promise;
+  }
+
+  const loader = new Image();
+  loader.decoding = 'async';
+  if (options.fetchPriority === 'high') {
+    try { loader.fetchPriority = 'high'; } catch (_) {}
+  }
+
+  let resolvePromise;
+  const promise = new Promise((resolve) => {
+    resolvePromise = resolve;
+  });
+
+  playerImagePreloadCache.set(normalized, { status: 'loading', promise });
+
+  loader.onload = () => {
+    playerImagePreloadCache.set(normalized, { status: 'loaded', promise: Promise.resolve(true) });
+    resolvePromise(true);
+  };
+  loader.onerror = () => {
+    playerImagePreloadCache.set(normalized, { status: 'failed', promise: Promise.resolve(false) });
+    resolvePromise(false);
+  };
+  loader.src = normalized;
+
+  return promise;
+}
+
+function preloadPlayersAroundIndex(centerIndex = 0, radiusAhead = PLAYER_IMAGE_PRELOAD_AHEAD, radiusBehind = PLAYER_IMAGE_PRELOAD_BEHIND) {
+  if (!Array.isArray(playerQueue) || !playerQueue.length) return;
+  const start = Math.max(0, Number(centerIndex || 0) - Number(radiusBehind || 0));
+  const end = Math.min(playerQueue.length - 1, Number(centerIndex || 0) + Number(radiusAhead || 0));
+
+  for (let idx = start; idx <= end; idx += 1) {
+    const playerId = playerQueue[idx];
+    const player = playerMap[playerId];
+    const photo = getPlayerPhotoCandidate(player);
+    if (photo) preloadPlayerImage(photo, { fetchPriority: idx === centerIndex ? 'high' : 'auto' });
+  }
+}
+
+function renderSpotlightImage(player) {
+  const wrap = document.querySelector('#playerSpotlight .player-avatar');
+  if (!wrap) return;
+
+  const imgEl = wrap.querySelector('img.player-headshot');
+  const fallbackEl = wrap.querySelector('.player-avatar-fallback');
+  if (!imgEl || !fallbackEl) return;
+
+  const photo = getPlayerPhotoCandidate(player);
+  if (!photo) {
+    imgEl.style.display = 'none';
+    fallbackEl.style.display = 'inline-flex';
+    return;
+  }
+
+  const token = ++playerSpotlightImageToken;
+  const showFallback = () => {
+    if (token !== playerSpotlightImageToken) return;
+    imgEl.style.display = 'none';
+    fallbackEl.style.display = 'inline-flex';
+  };
+
+  const showImage = () => {
+    if (token !== playerSpotlightImageToken) return;
+    imgEl.src = photo;
+    imgEl.style.display = 'block';
+    fallbackEl.style.display = 'none';
+  };
+
+  const cached = playerImagePreloadCache.get(photo);
+  if (cached?.status === 'loaded') {
+    showImage();
+    return;
+  }
+
+  showFallback();
+  preloadPlayerImage(photo, { fetchPriority: 'high' }).then((ok) => {
+    if (!ok) {
+      showFallback();
+      return;
+    }
+    showImage();
+  });
+}
+
+function renderBroadcastPlayerImage(player, fallbackAvatar) {
+  const pImg = document.getElementById('broadcastPlayerImg');
+  if (!pImg) return;
+
+  const photo = getPlayerPhotoCandidate(player);
+  const token = ++broadcastImageToken;
+  pImg.onerror = () => {
+    if (token !== broadcastImageToken) return;
+    pImg.src = fallbackAvatar;
+  };
+
+  if (!photo) {
+    pImg.src = fallbackAvatar;
+    return;
+  }
+
+  const cached = playerImagePreloadCache.get(photo);
+  if (cached?.status === 'loaded') {
+    pImg.src = photo;
+    return;
+  }
+
+  pImg.src = fallbackAvatar;
+  preloadPlayerImage(photo, { fetchPriority: 'high' }).then((ok) => {
+    if (!ok || token !== broadcastImageToken) {
+      pImg.src = fallbackAvatar;
+      return;
+    }
+    pImg.src = photo;
+  });
+}
 
 function getAuctionBrandTitle() {
   const title = String(roomConfig?.auctionTitle || '').trim();
@@ -656,6 +794,7 @@ async function initAuction() {
   if (queueSnap.exists()) {
     playerQueue = normalizePlayerQueue(queueSnap.val());
   }
+  preloadPlayersAroundIndex(currentIndex);
 
   const poolSnap = await db.ref(`rooms/${roomCode}/poolByIndex`).get();
   if (poolSnap.exists()) poolByIndex = poolSnap.val() || {};
@@ -738,12 +877,14 @@ async function initAuction() {
   // Listen to currentIndex
   listeners.index = db.ref(`rooms/${roomCode}/currentIndex`).on('value', snap => {
     if (snap.val() !== null) currentIndex = snap.val();
+    preloadPlayersAroundIndex(currentIndex);
     updateProgressBar();
     renderCurrentPoolBanner();
   });
 
   listeners.playerQueue = db.ref(`rooms/${roomCode}/playerQueue`).on('value', snap => {
     playerQueue = snap.exists() ? normalizePlayerQueue(snap.val()) : [];
+    preloadPlayersAroundIndex(currentIndex);
     buildPoolIndexMap();
     renderCurrentPoolBanner();
     updateProgressBar();
@@ -760,6 +901,8 @@ async function initAuction() {
     if (!snap.exists()) return;
     const prevAuctionData = currentAuctionData;
     currentAuctionData = snap.val();
+    const queueIndex = Array.isArray(playerQueue) ? playerQueue.indexOf(currentAuctionData.playerId) : -1;
+    if (queueIndex >= 0) preloadPlayersAroundIndex(queueIndex);
     processingRound = false;
     renderAuction(currentAuctionData, prevAuctionData);
     if (isSpectator && !isHostProxyBidderActive()) {
@@ -1013,11 +1156,7 @@ function updateBroadcastView(data) {
   if (player) {
     const pName = document.getElementById('broadcastPlayerName');
     if (pName) pName.textContent = player.name;
-    const pImg = document.getElementById('broadcastPlayerImg');
-    if (pImg) {
-      pImg.src = player.photo_url || player.image || player.image_url || fallbackAvatar;
-      pImg.onerror = () => { pImg.src = fallbackAvatar; };
-    }
+    renderBroadcastPlayerImage(player, fallbackAvatar);
     
     const pMeta = document.getElementById('broadcastPlayerMeta');
     if (pMeta) {
@@ -1543,9 +1682,10 @@ function renderPlayerSpotlight(player, status = '') {
       const safeVal = String(value || '').trim();
       return `<span class="badge badge-extra-field">${label}: ${safeVal}</span>`;
     }).join('');
-  const avatarInner = player.photo_url
-    ? `<img src="${player.photo_url}" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" onerror="handlePlayerImageError(this, '${initials}')" />`
-    : initials;
+  const avatarInner = `
+    <span class="player-avatar-fallback">${initials}</span>
+    <img class="player-headshot" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" style="display:none;" />
+  `;
   const numberBadgeHtml = buildPlayerNumberBadgeHtml(player);
 
   document.getElementById('playerSpotlight').innerHTML = `
@@ -1567,6 +1707,8 @@ function renderPlayerSpotlight(player, status = '') {
       <div class="player-bid-team-tile" id="playerBidTeamTile" style="display:none;"></div>
     </div>
   `;
+
+  renderSpotlightImage(player);
 }
 
 function renderBidDisplay(data, player = null) {

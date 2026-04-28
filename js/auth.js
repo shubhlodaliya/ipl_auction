@@ -6,6 +6,8 @@ let authMode = 'login';
 let authReadyResolved = false;
 let authReadyResolver = null;
 let currentAuthUser = null;
+let phoneRecaptchaVerifier = null;
+let phoneConfirmationResult = null;
 
 const authReadyPromise = new Promise((resolve) => {
   authReadyResolver = resolve;
@@ -125,6 +127,11 @@ function openAuthModal(mode = 'login') {
   switchAuthMode(mode);
   const overlay = document.getElementById('authModalOverlay');
   if (overlay) overlay.classList.add('visible');
+  // reset phone UI when opening
+  const phoneWrap = document.getElementById('authPhoneWrap');
+  const otpWrap = document.getElementById('authOtpWrap');
+  if (phoneWrap) phoneWrap.style.display = 'block';
+  if (otpWrap) otpWrap.style.display = 'none';
 }
 
 function closeAuthModal() {
@@ -148,6 +155,86 @@ function getAuthFriendlyError(code) {
     'auth/popup-blocked': 'Popup was blocked by browser. Please allow popups and try again.'
   };
   return map[code] || 'Authentication failed. Please try again.';
+}
+
+function initPhoneRecaptcha() {
+  if (phoneRecaptchaVerifier) return;
+  try {
+    phoneRecaptchaVerifier = new firebase.auth.RecaptchaVerifier('authRecaptcha', {
+      size: 'invisible'
+    });
+    phoneRecaptchaVerifier.render().catch(() => {});
+  } catch (err) {
+    console.warn('Recaptcha init failed', err);
+  }
+}
+
+async function sendPhoneOtp() {
+  setAuthError('');
+  const phoneEl = document.getElementById('authPhone');
+  const sendBtn = document.getElementById('authPhoneSendBtn');
+  const phone = String(phoneEl?.value || '').trim();
+  if (!phone) {
+    setAuthError('Please enter your phone number.');
+    return;
+  }
+  if (sendBtn) sendBtn.disabled = true;
+  try {
+    initPhoneRecaptcha();
+    phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phone, phoneRecaptchaVerifier);
+    const otpWrap = document.getElementById('authOtpWrap');
+    const phoneWrap = document.getElementById('authPhoneWrap');
+    if (otpWrap) otpWrap.style.display = 'block';
+    if (phoneWrap) phoneWrap.style.display = 'none';
+    setAuthError('OTP sent to your phone.');
+  } catch (err) {
+    console.error('Phone OTP send failed:', err);
+    setAuthError(getAuthFriendlyError(err?.code) || 'Could not send OTP.');
+    if (phoneRecaptchaVerifier && typeof phoneRecaptchaVerifier.clear === 'function') {
+      try { phoneRecaptchaVerifier.clear(); } catch (e) {}
+      phoneRecaptchaVerifier = null;
+    }
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
+async function verifyPhoneOtp() {
+  setAuthError('');
+  const code = String(document.getElementById('authOtp')?.value || '').trim();
+  const verifyBtn = document.getElementById('authOtpVerifyBtn');
+  if (!code) {
+    setAuthError('Please enter the OTP.');
+    return;
+  }
+  if (verifyBtn) verifyBtn.disabled = true;
+  try {
+    if (!phoneConfirmationResult) throw new Error('No OTP request in progress');
+    const cred = await phoneConfirmationResult.confirm(code);
+    const user = cred.user || firebase.auth().currentUser;
+    await upsertUserProfile(user);
+    setAuthCache(user);
+    applyAuthUi(user);
+    closeAuthModal();
+  } catch (err) {
+    console.error('OTP verify failed:', err);
+    setAuthError(getAuthFriendlyError(err?.code) || 'OTP verification failed.');
+  } finally {
+    if (verifyBtn) verifyBtn.disabled = false;
+  }
+}
+
+function cancelPhoneAuth() {
+  const otpWrap = document.getElementById('authOtpWrap');
+  const phoneWrap = document.getElementById('authPhoneWrap');
+  if (otpWrap) otpWrap.style.display = 'none';
+  if (phoneWrap) phoneWrap.style.display = 'block';
+  setAuthError('');
+  if (phoneRecaptchaVerifier && typeof phoneRecaptchaVerifier.clear === 'function') {
+    try { phoneRecaptchaVerifier.clear(); } catch (e) {}
+    phoneRecaptchaVerifier = null;
+  }
+  phoneConfirmationResult = null;
 }
 
 async function sendVerificationIfPossible(user) {
@@ -308,3 +395,6 @@ window.enforceAuthPage = enforceAuthPage;
 window.waitForAuthReady = waitForAuthReady;
 window.getCurrentAuthUser = () => currentAuthUser;
 window.signInWithGoogle = signInWithGoogle;
+window.sendPhoneOtp = sendPhoneOtp;
+window.verifyPhoneOtp = verifyPhoneOtp;
+window.cancelPhoneAuth = cancelPhoneAuth;

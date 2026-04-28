@@ -391,6 +391,23 @@
         <label class="form-label">Password</label>
         <input class="form-input" id="authPassword" type="password" placeholder="Enter password" minlength="6" />
       </div>
+      <div class="form-group auth-group" id="authPhoneWrap" style="margin-top:0.6rem;">
+        <label class="form-label">Phone (optional)</label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <input class="form-input" id="authPhone" type="tel" placeholder="+91 98765 43210" />
+          <button class="btn btn-outline" id="authPhoneSendBtn" onclick="sendPhoneOtp()">Send OTP</button>
+        </div>
+        <div id="authRecaptcha" style="margin-top:0.5rem;"></div>
+      </div>
+
+      <div class="form-group auth-group" id="authOtpWrap" style="display:none;">
+        <label class="form-label">Enter OTP</label>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <input class="form-input" id="authOtp" type="text" placeholder="One-time code" />
+          <button class="btn btn-primary" id="authOtpVerifyBtn" onclick="verifyPhoneOtp()">Verify</button>
+        </div>
+        <div style="margin-top:0.5rem;"><button class="btn btn-ghost" onclick="cancelPhoneAuth()">Cancel</button></div>
+      </div>
       <button class="btn btn-primary btn-lg btn-full auth-submit-btn" id="authSubmitBtn" onclick="submitAuthForm()">Login</button>
       <div class="auth-divider"><span>or</span></div>
       <button class="btn btn-secondary btn-lg btn-full auth-google-btn" id="authGoogleBtn" onclick="signInWithGoogle()">

@@ -8,6 +8,7 @@ let authReadyResolver = null;
 let currentAuthUser = null;
 let phoneRecaptchaVerifier = null;
 let phoneConfirmationResult = null;
+let phoneOtpInProgress = false;
 
 const authReadyPromise = new Promise((resolve) => {
   authReadyResolver = resolve;
@@ -200,6 +201,11 @@ async function sendPhoneOtp() {
     setAuthError('Please enter your phone number.');
     return;
   }
+  if (phoneOtpInProgress) {
+    console.debug('OTP send already in progress, ignoring duplicate request');
+    return;
+  }
+  phoneOtpInProgress = true;
   if (sendBtn) sendBtn.disabled = true;
   try {
     initPhoneRecaptcha();
@@ -229,6 +235,7 @@ async function sendPhoneOtp() {
     }
   } finally {
     if (sendBtn) sendBtn.disabled = false;
+    phoneOtpInProgress = false;
   }
 }
 
@@ -238,9 +245,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('authPhoneSendBtn');
     const verifyBtn = document.getElementById('authOtpVerifyBtn');
     const cancelBtn = document.querySelector('#authOtpWrap .btn-ghost') || document.querySelector('#authPhoneWrap .btn-ghost');
-    if (sendBtn) sendBtn.addEventListener('click', (e) => { e.preventDefault(); sendPhoneOtp(); });
-    if (verifyBtn) verifyBtn.addEventListener('click', (e) => { e.preventDefault(); verifyPhoneOtp(); });
-    if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.preventDefault(); cancelPhoneAuth(); });
+    if (sendBtn) {
+      // remove any inline onclick to avoid double-calls
+      sendBtn.removeAttribute('onclick');
+      sendBtn.addEventListener('click', (e) => { e.preventDefault(); sendPhoneOtp(); });
+    }
+    if (verifyBtn) {
+      verifyBtn.removeAttribute('onclick');
+      verifyBtn.addEventListener('click', (e) => { e.preventDefault(); verifyPhoneOtp(); });
+    }
+    if (cancelBtn) {
+      cancelBtn.removeAttribute('onclick');
+      cancelBtn.addEventListener('click', (e) => { e.preventDefault(); cancelPhoneAuth(); });
+    }
   } catch (e) {
     console.debug('Auth phone button binding skipped:', e);
   }

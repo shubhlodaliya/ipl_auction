@@ -173,7 +173,17 @@ async function sendPhoneOtp() {
   setAuthError('');
   const phoneEl = document.getElementById('authPhone');
   const sendBtn = document.getElementById('authPhoneSendBtn');
-  const phone = String(phoneEl?.value || '').trim();
+  let phone = String(phoneEl?.value || '').trim();
+  // normalize common user input: remove spaces and non-digit/+ characters
+  let normalized = phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
+  // if user entered 10-digit local number, assume India (+91)
+  if (/^\d{10}$/.test(normalized)) {
+    normalized = '+91' + normalized;
+  } else if (/^0\d{10}$/.test(normalized)) {
+    // leading 0 -> drop and prefix +91
+    normalized = '+91' + normalized.slice(1);
+  }
+  phone = normalized;
   if (!phone) {
     setAuthError('Please enter your phone number.');
     return;
@@ -181,6 +191,7 @@ async function sendPhoneOtp() {
   if (sendBtn) sendBtn.disabled = true;
   try {
     initPhoneRecaptcha();
+    console.log('Attempting phone OTP send to', phone);
     phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phone, phoneRecaptchaVerifier);
     const otpWrap = document.getElementById('authOtpWrap');
     const phoneWrap = document.getElementById('authPhoneWrap');
@@ -189,7 +200,13 @@ async function sendPhoneOtp() {
     setAuthError('OTP sent to your phone.');
   } catch (err) {
     console.error('Phone OTP send failed:', err);
-    setAuthError(getAuthFriendlyError(err?.code) || 'Could not send OTP.');
+    const message = err?.message || String(err || 'Could not send OTP');
+    // Provide actionable hint for common origin/domain problems
+    let hint = '';
+    if (/authorize|origin|domain/i.test(message)) {
+      hint = ' Check Firebase Console -> Authentication -> Authorized domains.';
+    }
+    setAuthError((getAuthFriendlyError(err?.code) || message) + hint);
     if (phoneRecaptchaVerifier && typeof phoneRecaptchaVerifier.clear === 'function') {
       try { phoneRecaptchaVerifier.clear(); } catch (e) {}
       phoneRecaptchaVerifier = null;

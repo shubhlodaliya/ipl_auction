@@ -159,13 +159,25 @@ function getAuthFriendlyError(code) {
 
 function initPhoneRecaptcha() {
   if (phoneRecaptchaVerifier) return;
+  if (!window.firebase || !firebase.auth) {
+    console.error('Firebase auth not loaded; cannot init recaptcha');
+    setAuthError('Firebase Auth not loaded. Ensure firebase-auth script is included.');
+    return;
+  }
+  if (typeof firebase.auth.RecaptchaVerifier !== 'function') {
+    console.error('RecaptchaVerifier unavailable on firebase.auth');
+    setAuthError('reCAPTCHA not available. Check Firebase SDK version.');
+    return;
+  }
   try {
     phoneRecaptchaVerifier = new firebase.auth.RecaptchaVerifier('authRecaptcha', {
       size: 'invisible'
     });
-    phoneRecaptchaVerifier.render().catch(() => {});
+    // render quietly; ignore render errors
+    phoneRecaptchaVerifier.render().catch((e) => { console.debug('Recaptcha render warning', e); });
   } catch (err) {
     console.warn('Recaptcha init failed', err);
+    setAuthError('Could not initialize reCAPTCHA.');
   }
 }
 
@@ -191,7 +203,11 @@ async function sendPhoneOtp() {
   if (sendBtn) sendBtn.disabled = true;
   try {
     initPhoneRecaptcha();
+    if (!phoneRecaptchaVerifier) {
+      throw new Error('Recaptcha verifier not initialized');
+    }
     console.log('Attempting phone OTP send to', phone);
+    if (!firebase || !firebase.auth) throw new Error('Firebase auth missing');
     phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phone, phoneRecaptchaVerifier);
     const otpWrap = document.getElementById('authOtpWrap');
     const phoneWrap = document.getElementById('authPhoneWrap');
@@ -215,6 +231,20 @@ async function sendPhoneOtp() {
     if (sendBtn) sendBtn.disabled = false;
   }
 }
+
+// Ensure buttons are bound in case inline handlers fail
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const sendBtn = document.getElementById('authPhoneSendBtn');
+    const verifyBtn = document.getElementById('authOtpVerifyBtn');
+    const cancelBtn = document.querySelector('#authOtpWrap .btn-ghost') || document.querySelector('#authPhoneWrap .btn-ghost');
+    if (sendBtn) sendBtn.addEventListener('click', (e) => { e.preventDefault(); sendPhoneOtp(); });
+    if (verifyBtn) verifyBtn.addEventListener('click', (e) => { e.preventDefault(); verifyPhoneOtp(); });
+    if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.preventDefault(); cancelPhoneAuth(); });
+  } catch (e) {
+    console.debug('Auth phone button binding skipped:', e);
+  }
+});
 
 async function verifyPhoneOtp() {
   setAuthError('');

@@ -6,9 +6,6 @@ let authMode = 'login';
 let authReadyResolved = false;
 let authReadyResolver = null;
 let currentAuthUser = null;
-let phoneRecaptchaVerifier = null;
-let phoneConfirmationResult = null;
-let phoneOtpInProgress = false;
 
 const authReadyPromise = new Promise((resolve) => {
   authReadyResolver = resolve;
@@ -128,11 +125,6 @@ function openAuthModal(mode = 'login') {
   switchAuthMode(mode);
   const overlay = document.getElementById('authModalOverlay');
   if (overlay) overlay.classList.add('visible');
-  // reset phone UI when opening
-  const phoneWrap = document.getElementById('authPhoneWrap');
-  const otpWrap = document.getElementById('authOtpWrap');
-  if (phoneWrap) phoneWrap.style.display = 'block';
-  if (otpWrap) otpWrap.style.display = 'none';
 }
 
 function closeAuthModal() {
@@ -156,149 +148,6 @@ function getAuthFriendlyError(code) {
     'auth/popup-blocked': 'Popup was blocked by browser. Please allow popups and try again.'
   };
   return map[code] || 'Authentication failed. Please try again.';
-}
-
-function initPhoneRecaptcha() {
-  if (phoneRecaptchaVerifier) return;
-  if (!window.firebase || !firebase.auth) {
-    console.error('Firebase auth not loaded; cannot init recaptcha');
-    setAuthError('Firebase Auth not loaded. Ensure firebase-auth script is included.');
-    return;
-  }
-  if (typeof firebase.auth.RecaptchaVerifier !== 'function') {
-    console.error('RecaptchaVerifier unavailable on firebase.auth');
-    setAuthError('reCAPTCHA not available. Check Firebase SDK version.');
-    return;
-  }
-  try {
-    phoneRecaptchaVerifier = new firebase.auth.RecaptchaVerifier('authRecaptcha', {
-      size: 'invisible'
-    });
-    // render quietly; ignore render errors
-    phoneRecaptchaVerifier.render().catch((e) => { console.debug('Recaptcha render warning', e); });
-  } catch (err) {
-    console.warn('Recaptcha init failed', err);
-    setAuthError('Could not initialize reCAPTCHA.');
-  }
-}
-
-async function sendPhoneOtp() {
-  setAuthError('');
-  const phoneEl = document.getElementById('authPhone');
-  const sendBtn = document.getElementById('authPhoneSendBtn');
-  let phone = String(phoneEl?.value || '').trim();
-  // normalize common user input: remove spaces and non-digit/+ characters
-  let normalized = phone.replace(/\s+/g, '').replace(/[^+\d]/g, '');
-  // if user entered 10-digit local number, assume India (+91)
-  if (/^\d{10}$/.test(normalized)) {
-    normalized = '+91' + normalized;
-  } else if (/^0\d{10}$/.test(normalized)) {
-    // leading 0 -> drop and prefix +91
-    normalized = '+91' + normalized.slice(1);
-  }
-  phone = normalized;
-  if (!phone) {
-    setAuthError('Please enter your phone number.');
-    return;
-  }
-  if (phoneOtpInProgress) {
-    console.debug('OTP send already in progress, ignoring duplicate request');
-    return;
-  }
-  phoneOtpInProgress = true;
-  if (sendBtn) sendBtn.disabled = true;
-  try {
-    initPhoneRecaptcha();
-    if (!phoneRecaptchaVerifier) {
-      throw new Error('Recaptcha verifier not initialized');
-    }
-    console.log('Attempting phone OTP send to', phone);
-    if (!firebase || !firebase.auth) throw new Error('Firebase auth missing');
-    phoneConfirmationResult = await firebase.auth().signInWithPhoneNumber(phone, phoneRecaptchaVerifier);
-    const otpWrap = document.getElementById('authOtpWrap');
-    const phoneWrap = document.getElementById('authPhoneWrap');
-    if (otpWrap) otpWrap.style.display = 'block';
-    if (phoneWrap) phoneWrap.style.display = 'none';
-    setAuthError('OTP sent to your phone.');
-  } catch (err) {
-    console.error('Phone OTP send failed:', err);
-    const message = err?.message || String(err || 'Could not send OTP');
-    // Provide actionable hint for common origin/domain problems
-    let hint = '';
-    if (/authorize|origin|domain/i.test(message)) {
-      hint = ' Check Firebase Console -> Authentication -> Authorized domains.';
-    }
-    setAuthError((getAuthFriendlyError(err?.code) || message) + hint);
-    if (phoneRecaptchaVerifier && typeof phoneRecaptchaVerifier.clear === 'function') {
-      try { phoneRecaptchaVerifier.clear(); } catch (e) {}
-      phoneRecaptchaVerifier = null;
-    }
-  } finally {
-    if (sendBtn) sendBtn.disabled = false;
-    phoneOtpInProgress = false;
-  }
-}
-
-// Ensure buttons are bound in case inline handlers fail
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    const sendBtn = document.getElementById('authPhoneSendBtn');
-    const verifyBtn = document.getElementById('authOtpVerifyBtn');
-    const cancelBtn = document.querySelector('#authOtpWrap .btn-ghost') || document.querySelector('#authPhoneWrap .btn-ghost');
-    if (sendBtn) {
-      // remove any inline onclick to avoid double-calls
-      sendBtn.removeAttribute('onclick');
-      sendBtn.addEventListener('click', (e) => { e.preventDefault(); sendPhoneOtp(); });
-    }
-    if (verifyBtn) {
-      verifyBtn.removeAttribute('onclick');
-      verifyBtn.addEventListener('click', (e) => { e.preventDefault(); verifyPhoneOtp(); });
-    }
-    if (cancelBtn) {
-      cancelBtn.removeAttribute('onclick');
-      cancelBtn.addEventListener('click', (e) => { e.preventDefault(); cancelPhoneAuth(); });
-    }
-  } catch (e) {
-    console.debug('Auth phone button binding skipped:', e);
-  }
-});
-
-async function verifyPhoneOtp() {
-  setAuthError('');
-  const code = String(document.getElementById('authOtp')?.value || '').trim();
-  const verifyBtn = document.getElementById('authOtpVerifyBtn');
-  if (!code) {
-    setAuthError('Please enter the OTP.');
-    return;
-  }
-  if (verifyBtn) verifyBtn.disabled = true;
-  try {
-    if (!phoneConfirmationResult) throw new Error('No OTP request in progress');
-    const cred = await phoneConfirmationResult.confirm(code);
-    const user = cred.user || firebase.auth().currentUser;
-    await upsertUserProfile(user);
-    setAuthCache(user);
-    applyAuthUi(user);
-    closeAuthModal();
-  } catch (err) {
-    console.error('OTP verify failed:', err);
-    setAuthError(getAuthFriendlyError(err?.code) || 'OTP verification failed.');
-  } finally {
-    if (verifyBtn) verifyBtn.disabled = false;
-  }
-}
-
-function cancelPhoneAuth() {
-  const otpWrap = document.getElementById('authOtpWrap');
-  const phoneWrap = document.getElementById('authPhoneWrap');
-  if (otpWrap) otpWrap.style.display = 'none';
-  if (phoneWrap) phoneWrap.style.display = 'block';
-  setAuthError('');
-  if (phoneRecaptchaVerifier && typeof phoneRecaptchaVerifier.clear === 'function') {
-    try { phoneRecaptchaVerifier.clear(); } catch (e) {}
-    phoneRecaptchaVerifier = null;
-  }
-  phoneConfirmationResult = null;
 }
 
 async function sendVerificationIfPossible(user) {
@@ -459,6 +308,3 @@ window.enforceAuthPage = enforceAuthPage;
 window.waitForAuthReady = waitForAuthReady;
 window.getCurrentAuthUser = () => currentAuthUser;
 window.signInWithGoogle = signInWithGoogle;
-window.sendPhoneOtp = sendPhoneOtp;
-window.verifyPhoneOtp = verifyPhoneOtp;
-window.cancelPhoneAuth = cancelPhoneAuth;

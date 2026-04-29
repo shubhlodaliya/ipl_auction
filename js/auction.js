@@ -2652,8 +2652,40 @@ async function passPlayer() {
   }
 }
 
-// ---- RANDOM CHANGE PLAYER (host only) ----
+// ---- MANUAL PLAYER CHANGE (host only) ----
 async function randomChangeCurrentPlayer() {
+  await openManualAuctionPlayer({ mode: 'random' });
+}
+
+async function openPlayerByNumber() {
+  if (!isHost) {
+    showToast('Only host can change current player.', 'error');
+    return;
+  }
+  if (!isManualAuction) {
+    showToast('Player number selection is available only in manual auction.', 'error');
+    return;
+  }
+
+  const rawValue = window.prompt('Enter player number to open:', '');
+  if (rawValue === null) return;
+
+  const playerNumber = Number(String(rawValue || '').trim());
+  if (!Number.isInteger(playerNumber) || playerNumber <= 0) {
+    showToast('Enter a valid player number.', 'error');
+    return;
+  }
+
+  const targetPlayer = allPlayers.find((player) => Number(getPlayerDisplayNumber(player)) === playerNumber) || null;
+  if (!targetPlayer) {
+    showToast(`Player number ${playerNumber} was not found.`, 'error');
+    return;
+  }
+
+  await openManualAuctionPlayer({ mode: 'specific', targetPlayer });
+}
+
+async function openManualAuctionPlayer({ mode, targetPlayer = null }) {
   if (!isHost) {
     showToast('Only host can change current player.', 'error');
     return;
@@ -2707,7 +2739,6 @@ async function randomChangeCurrentPlayer() {
       return;
     }
 
-    // Keep queue and active spotlight aligned at currentIndex so changed player remains available later.
     let livePlayerQueueIndex = queue.findIndex((id) => String(id || '').trim() === livePlayerId);
     if (livePlayerQueueIndex < 0) livePlayerQueueIndex = liveIndex;
     if (livePlayerQueueIndex !== liveIndex) {
@@ -2717,15 +2748,45 @@ async function randomChangeCurrentPlayer() {
     }
 
     const soldMap = room.soldPlayers || {};
-    const dynamicCandidates = queue
-      .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
-      .filter(({ id, idx }) => id && idx >= liveIndex && id !== livePlayerId && !soldMap[id]);
-    if (!dynamicCandidates.length) {
-      showToast('No available players left for random change.', 'error');
-      return;
+    let pick = null;
+
+    if (mode === 'random') {
+      const dynamicCandidates = queue
+        .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
+        .filter(({ id, idx }) => id && idx >= liveIndex && id !== livePlayerId && !soldMap[id]);
+      if (!dynamicCandidates.length) {
+        showToast('No available players left for random change.', 'error');
+        return;
+      }
+      pick = dynamicCandidates[Math.floor(Math.random() * dynamicCandidates.length)];
+    } else {
+      const targetId = String(targetPlayer?.id || '').trim();
+      if (!targetId) {
+        showToast('Could not resolve the selected player.', 'error');
+        return;
+      }
+      if (targetId === livePlayerId) {
+        showToast('That player is already open.', 'error');
+        return;
+      }
+
+      const targetQueueIndex = queue.findIndex((pid) => String(pid || '').trim() === targetId);
+      if (targetQueueIndex < 0) {
+        showToast('Selected player is not in the queue.', 'error');
+        return;
+      }
+      if (targetQueueIndex < liveIndex) {
+        showToast('Selected player has already been processed.', 'error');
+        return;
+      }
+      if (soldMap[targetId]) {
+        showToast('Selected player has already been sold.', 'error');
+        return;
+      }
+
+      pick = { id: targetId, idx: targetQueueIndex };
     }
 
-    const pick = dynamicCandidates[Math.floor(Math.random() * dynamicCandidates.length)];
     const displacedId = queue[liveIndex];
     queue[liveIndex] = pick.id;
     queue[pick.idx] = displacedId;
@@ -2733,7 +2794,7 @@ async function randomChangeCurrentPlayer() {
     const roomManualPlayers = Array.isArray(room.manualPlayers) ? room.manualPlayers : [];
     const nextPlayer = playerMap[pick.id] || roomManualPlayers.find((p) => String(p?.id || '') === pick.id);
     if (!nextPlayer) {
-      showToast('Random player data not found. Try again.', 'error');
+      showToast('Player data not found. Try again.', 'error');
       return;
     }
 
@@ -2766,7 +2827,7 @@ async function randomChangeCurrentPlayer() {
 
     playerQueue = queue.slice();
     buildPoolIndexMap();
-    showToast(`Random player: ${nextPlayer?.name || pick.id}`, 'success');
+    showToast(mode === 'random' ? `Random player: ${nextPlayer?.name || pick.id}` : `Opened player: ${nextPlayer?.name || pick.id}`, 'success');
   } catch (err) {
     console.error('Random player change failed:', err);
     showToast('Failed to change player.', 'error');

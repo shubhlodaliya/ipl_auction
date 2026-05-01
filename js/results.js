@@ -65,6 +65,24 @@ const highlightsUiState = {
   autoplayDelayMs: 3400
 };
 
+function getResultsBrandTitle(room) {
+  const title = String(room?.config?.auctionTitle || '').trim();
+  if (title) return title;
+  return room?.config?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
+}
+
+function applyResultsBranding(room) {
+  const title = getResultsBrandTitle(room);
+  const logo = document.querySelector('.header .logo');
+  if (logo) logo.textContent = `🏏 ${title}`;
+  document.title = `Results — ${title}`;
+
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) ogTitle.setAttribute('content', `${title} Results`);
+  const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+  if (twitterTitle) twitterTitle.setAttribute('content', `${title} Results`);
+}
+
 const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
 
 I will provide a PDF generated from an IPL auction game.
@@ -1030,6 +1048,32 @@ async function copyHighlightsSummary() {
   }
 }
 
+function isPaddleModeRoom(room) {
+  return !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams);
+}
+
+
+function applyResultsRoleUi(session, room) {
+  const isHost = !!session?.isHost;
+  const hasTeam = !!session?.teamId;
+
+  const headerNewAuctionBtn = document.getElementById('newAuctionHeaderBtn');
+  const bottomNewAuctionBtn = document.getElementById('newAuctionBottomBtn');
+  const playing11Btn = document.getElementById('playing11Btn');
+
+  if (headerNewAuctionBtn) {
+    headerNewAuctionBtn.style.display = isHost ? 'inline-flex' : 'none';
+  }
+  if (bottomNewAuctionBtn) {
+    bottomNewAuctionBtn.style.display = isHost ? 'inline-flex' : 'none';
+  }
+
+  if (playing11Btn) {
+    // Playing 11 is only meaningful for users attached to a team.
+    playing11Btn.style.display = hasTeam ? 'inline-flex' : 'none';
+  }
+}
+
 async function loadResults() {
   // Try to get roomCode from session, or from URL param
   const session = getSession();
@@ -1061,6 +1105,8 @@ async function loadResults() {
     }
 
     const room = roomSnap.val();
+    applyResultsBranding(room);
+    applyResultsRoleUi(session, room);
     const isManualAuction = room.config?.auctionType === 'manual';
     const teamPowerToggleBtn = document.getElementById('teamPowerToggleBtn');
     const teamPowerHint = document.getElementById('teamPowerHint');
@@ -1282,7 +1328,7 @@ async function loadResults() {
       `;
     }).join('');
 
-    if (isViewer) {
+      if (isViewer) {
       setupViewerQuickCards();
     }
 
@@ -1313,6 +1359,7 @@ function setupViewerQuickCards() {
     el.setAttribute('role', 'button');
     el.tabIndex = 0;
     el.setAttribute('aria-label', label);
+    
     el.addEventListener('click', () => openViewerQuickModal(type));
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -1887,7 +1934,7 @@ function renderReAuctionSection() {
     return;
   }
 
-  if (!eligibleTeamIds.length) {
+  if (!eligibleTeamIds.length ) {
     hint.textContent = 'All teams have full squads. Re-auction is not available.';
     body.innerHTML = `<div class="state-empty"><p>No team has an empty slot.</p></div>`;
     return;
@@ -1915,22 +1962,6 @@ function renderReAuctionSection() {
   const allReady = isHostControlledMode
     ? selectedQueue.length > 0
     : eligibleTeamIds.every(teamId => !!readyMap[teamId]);
-
-  const teamReadyHtml = eligibleTeamIds.map(teamId => {
-    const team = teams[teamId];
-    const label = room?.config?.auctionType === 'manual'
-      ? (team?.name || teamId)
-      : (team?.short || teamId);
-    const selectedCount = Object.keys(selections[teamId] || {}).filter(pid => (selections[teamId] || {})[pid]).length;
-    const ready = !!readyMap[teamId];
-    return `
-      <div class="reauction-team-chip ${ready ? 'ready' : ''}">
-        <span>${label} · ${team?.ownerName || 'Team'}</span>
-        <span>${selectedCount} selected</span>
-        <span>${ready ? 'Ready' : 'Pending'}</span>
-      </div>
-    `;
-  }).join('');
 
   const mySelection = isHostControlledMode
     ? (selections.__host__ || {})
@@ -1996,8 +2027,6 @@ function renderReAuctionSection() {
       </div>
     </div>
 
-    <div class="reauction-team-ready-list">${teamReadyHtml}</div>
-
     ${(myEligible || isHostControlledMode) ? `
       <div class="reauction-controls">
         <span>${isHostControlledMode ? 'Host selection' : 'Your selection'}: ${mySelectedCount}</span>
@@ -2061,8 +2090,11 @@ function renderReAuctionSection() {
 
 async function toggleReAuctionPlayer(playerId) {
   const { roomCode, room, session, eligibleTeamIds, data } = reAuctionState;
-  const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && session?.isHost);
-  if (!roomCode) return;
+  if (isPaddleModeRoom(room) && !session?.isHost) {
+    showToast('Only host can select re-auction players in paddle mode.', 'error');
+    return;
+  }
+    const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && session?.isHost);
 
   const selectionOwner = hostControlled ? '__host__' : session?.teamId;
   if (!selectionOwner) return;
@@ -2086,6 +2118,10 @@ async function toggleReAuctionPlayer(playerId) {
 
 async function toggleReAuctionReady() {
   const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
+    if (isPaddleModeRoom(reAuctionState.room) && !session?.isHost) {
+    showToast('Only host can control re-auction in paddle mode.', 'error');
+    return;
+  }
   if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
 
   const teamId = session.teamId;
@@ -2126,7 +2162,7 @@ async function startReAuctionFromResults() {
   const reAuction = room.reAuction || {};
   const selections = reAuction.selections || {};
   const readyMap = reAuction.ready || {};
-  const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.hostBidsForAllTeams);
+const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.hostBidsForAllTeams);
 
   const allReady = hostControlled
     ? true

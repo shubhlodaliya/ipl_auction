@@ -75,12 +75,150 @@ let hostClaimInFlight = false;
 let soldConfettiFx = null;
 const avatarBorderVariantClass = 'border-bold';
 const voiceFeatureEnabled = false;
+const PLAYER_IMAGE_PRELOAD_AHEAD = 8;
+const PLAYER_IMAGE_PRELOAD_BEHIND = 2;
+const playerImagePreloadCache = new Map();
+let playerSpotlightImageToken = 0;
+let broadcastImageToken = 0;
 const voiceRtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' }
   ]
 };
+
+function getPlayerPhotoCandidate(player) {
+  if (!player || typeof player !== 'object') return '';
+  const source = String(player.photo_url || player.image || player.image_url || '').trim();
+  return source;
+}
+
+function preloadPlayerImage(url, options = {}) {
+  const normalized = String(url || '').trim();
+  if (!normalized) return Promise.resolve(false);
+
+  const existing = playerImagePreloadCache.get(normalized);
+  if (existing) {
+    if (existing.status === 'loaded') return Promise.resolve(true);
+    if (existing.status === 'failed') return Promise.resolve(false);
+    return existing.promise;
+  }
+
+  const loader = new Image();
+  loader.decoding = 'async';
+  if (options.fetchPriority === 'high') {
+    try { loader.fetchPriority = 'high'; } catch (_) {}
+  }
+
+  let resolvePromise;
+  const promise = new Promise((resolve) => {
+    resolvePromise = resolve;
+  });
+
+  playerImagePreloadCache.set(normalized, { status: 'loading', promise });
+
+  loader.onload = () => {
+    playerImagePreloadCache.set(normalized, { status: 'loaded', promise: Promise.resolve(true) });
+    resolvePromise(true);
+  };
+  loader.onerror = () => {
+    playerImagePreloadCache.set(normalized, { status: 'failed', promise: Promise.resolve(false) });
+    resolvePromise(false);
+  };
+  loader.src = normalized;
+
+  return promise;
+}
+
+function preloadPlayersAroundIndex(centerIndex = 0, radiusAhead = PLAYER_IMAGE_PRELOAD_AHEAD, radiusBehind = PLAYER_IMAGE_PRELOAD_BEHIND) {
+  if (!Array.isArray(playerQueue) || !playerQueue.length) return;
+  const start = Math.max(0, Number(centerIndex || 0) - Number(radiusBehind || 0));
+  const end = Math.min(playerQueue.length - 1, Number(centerIndex || 0) + Number(radiusAhead || 0));
+
+  for (let idx = start; idx <= end; idx += 1) {
+    const playerId = playerQueue[idx];
+    const player = playerMap[playerId];
+    const photo = getPlayerPhotoCandidate(player);
+    if (photo) preloadPlayerImage(photo, { fetchPriority: idx === centerIndex ? 'high' : 'auto' });
+  }
+}
+
+function renderSpotlightImage(player) {
+  const wrap = document.querySelector('#playerSpotlight .player-avatar');
+  if (!wrap) return;
+
+  const imgEl = wrap.querySelector('img.player-headshot');
+  const fallbackEl = wrap.querySelector('.player-avatar-fallback');
+  if (!imgEl || !fallbackEl) return;
+
+  const photo = getPlayerPhotoCandidate(player);
+  if (!photo) {
+    imgEl.style.display = 'none';
+    fallbackEl.style.display = 'inline-flex';
+    return;
+  }
+
+  const token = ++playerSpotlightImageToken;
+  const showFallback = () => {
+    if (token !== playerSpotlightImageToken) return;
+    imgEl.style.display = 'none';
+    fallbackEl.style.display = 'inline-flex';
+  };
+
+  const showImage = () => {
+    if (token !== playerSpotlightImageToken) return;
+    imgEl.src = photo;
+    imgEl.style.display = 'block';
+    fallbackEl.style.display = 'none';
+  };
+
+  const cached = playerImagePreloadCache.get(photo);
+  if (cached?.status === 'loaded') {
+    showImage();
+    return;
+  }
+
+  showFallback();
+  preloadPlayerImage(photo, { fetchPriority: 'high' }).then((ok) => {
+    if (!ok) {
+      showFallback();
+      return;
+    }
+    showImage();
+  });
+}
+
+function renderBroadcastPlayerImage(player, fallbackAvatar) {
+  const pImg = document.getElementById('broadcastPlayerImg');
+  if (!pImg) return;
+
+  const photo = getPlayerPhotoCandidate(player);
+  const token = ++broadcastImageToken;
+  pImg.onerror = () => {
+    if (token !== broadcastImageToken) return;
+    pImg.src = fallbackAvatar;
+  };
+
+  if (!photo) {
+    pImg.src = fallbackAvatar;
+    return;
+  }
+
+  const cached = playerImagePreloadCache.get(photo);
+  if (cached?.status === 'loaded') {
+    pImg.src = photo;
+    return;
+  }
+
+  pImg.src = fallbackAvatar;
+  preloadPlayerImage(photo, { fetchPriority: 'high' }).then((ok) => {
+    if (!ok || token !== broadcastImageToken) {
+      pImg.src = fallbackAvatar;
+      return;
+    }
+    pImg.src = photo;
+  });
+}
 
 function getAuctionBrandTitle() {
   const title = String(roomConfig?.auctionTitle || '').trim();
@@ -656,6 +794,7 @@ async function initAuction() {
   if (queueSnap.exists()) {
     playerQueue = normalizePlayerQueue(queueSnap.val());
   }
+  preloadPlayersAroundIndex(currentIndex);
 
   const poolSnap = await db.ref(`rooms/${roomCode}/poolByIndex`).get();
   if (poolSnap.exists()) poolByIndex = poolSnap.val() || {};
@@ -738,12 +877,14 @@ async function initAuction() {
   // Listen to currentIndex
   listeners.index = db.ref(`rooms/${roomCode}/currentIndex`).on('value', snap => {
     if (snap.val() !== null) currentIndex = snap.val();
+    preloadPlayersAroundIndex(currentIndex);
     updateProgressBar();
     renderCurrentPoolBanner();
   });
 
   listeners.playerQueue = db.ref(`rooms/${roomCode}/playerQueue`).on('value', snap => {
     playerQueue = snap.exists() ? normalizePlayerQueue(snap.val()) : [];
+    preloadPlayersAroundIndex(currentIndex);
     buildPoolIndexMap();
     renderCurrentPoolBanner();
     updateProgressBar();
@@ -760,6 +901,8 @@ async function initAuction() {
     if (!snap.exists()) return;
     const prevAuctionData = currentAuctionData;
     currentAuctionData = snap.val();
+    const queueIndex = Array.isArray(playerQueue) ? playerQueue.indexOf(currentAuctionData.playerId) : -1;
+    if (queueIndex >= 0) preloadPlayersAroundIndex(queueIndex);
     processingRound = false;
     renderAuction(currentAuctionData, prevAuctionData);
     if (isSpectator && !isHostProxyBidderActive()) {
@@ -1013,11 +1156,7 @@ function updateBroadcastView(data) {
   if (player) {
     const pName = document.getElementById('broadcastPlayerName');
     if (pName) pName.textContent = player.name;
-    const pImg = document.getElementById('broadcastPlayerImg');
-    if (pImg) {
-      pImg.src = player.photo_url || player.image || player.image_url || fallbackAvatar;
-      pImg.onerror = () => { pImg.src = fallbackAvatar; };
-    }
+    renderBroadcastPlayerImage(player, fallbackAvatar);
     
     const pMeta = document.getElementById('broadcastPlayerMeta');
     if (pMeta) {
@@ -1543,9 +1682,10 @@ function renderPlayerSpotlight(player, status = '') {
       const safeVal = String(value || '').trim();
       return `<span class="badge badge-extra-field">${label}: ${safeVal}</span>`;
     }).join('');
-  const avatarInner = player.photo_url
-    ? `<img src="${player.photo_url}" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" onerror="handlePlayerImageError(this, '${initials}')" />`
-    : initials;
+  const avatarInner = `
+    <span class="player-avatar-fallback">${initials}</span>
+    <img class="player-headshot" alt="${player.name}" loading="eager" decoding="async" fetchpriority="high" style="display:none;" />
+  `;
   const numberBadgeHtml = buildPlayerNumberBadgeHtml(player);
 
   document.getElementById('playerSpotlight').innerHTML = `
@@ -1567,6 +1707,8 @@ function renderPlayerSpotlight(player, status = '') {
       <div class="player-bid-team-tile" id="playerBidTeamTile" style="display:none;"></div>
     </div>
   `;
+
+  renderSpotlightImage(player);
 }
 
 function renderBidDisplay(data, player = null) {
@@ -1740,18 +1882,20 @@ function renderBidDisplay(data, player = null) {
       withdrawBtn.textContent = 'Withdraw For This Player';
     }
 
+    const paddleHostSkipMode = !!(isHostProxyBidderActive() && isHost && canDriveAuctionEngine());
+
     if (data.highestBidder) {
       passBtn.disabled = true;
       passBtn.textContent = 'Skip Closed After First Bid';
     } else if (squadFull) {
       passBtn.disabled = true;
       passBtn.textContent = 'Squad Full';
-    } else if (skipVoted) {
+    } else if (!paddleHostSkipMode && skipVoted) {
       passBtn.disabled = true;
       passBtn.textContent = `Skip Voted (${skipCount}/${totalTeams})`;
     } else {
       passBtn.disabled = paused || !canActAsTeam;
-      passBtn.textContent = `Skip Player (${skipCount}/${totalTeams})`;
+      passBtn.textContent = paddleHostSkipMode ? 'Skip Player' : `Skip Player (${skipCount}/${totalTeams})`;
     }
 
     if (!canSkipPool) {
@@ -2459,6 +2603,24 @@ async function passPlayer() {
   }
   if (!currentAuctionData || currentAuctionData.status !== 'bidding' || paused) return;
 
+  if (isHostProxyBidderActive() && isHost && canDriveAuctionEngine()) {
+    if (currentAuctionData.highestBidder) {
+      showToast('Skip is only available before the first bid.', 'error');
+      return;
+    }
+
+    if (processingRound) return;
+    processingRound = true;
+    try {
+      await processAsUnsold();
+    } catch (err) {
+      console.error('Paddle skip failed:', err);
+      showToast('Failed to skip player.', 'error');
+      processingRound = false;
+    }
+    return;
+  }
+
   ensureHostProxyBidTeamSelected();
   const actingTeamId = getActingTeamIdForBidUi();
   const actingTeam = actingTeamId ? getHostProxyTeamState(actingTeamId) : null;
@@ -2490,8 +2652,40 @@ async function passPlayer() {
   }
 }
 
-// ---- RANDOM CHANGE PLAYER (host only) ----
+// ---- MANUAL PLAYER CHANGE (host only) ----
 async function randomChangeCurrentPlayer() {
+  await openManualAuctionPlayer({ mode: 'random' });
+}
+
+async function openPlayerByNumber() {
+  if (!isHost) {
+    showToast('Only host can change current player.', 'error');
+    return;
+  }
+  if (!isManualAuction) {
+    showToast('Player number selection is available only in manual auction.', 'error');
+    return;
+  }
+
+  const rawValue = window.prompt('Enter player number to open:', '');
+  if (rawValue === null) return;
+
+  const playerNumber = Number(String(rawValue || '').trim());
+  if (!Number.isInteger(playerNumber) || playerNumber <= 0) {
+    showToast('Enter a valid player number.', 'error');
+    return;
+  }
+
+  const targetPlayer = allPlayers.find((player) => Number(getPlayerDisplayNumber(player)) === playerNumber) || null;
+  if (!targetPlayer) {
+    showToast(`Player number ${playerNumber} was not found.`, 'error');
+    return;
+  }
+
+  await openManualAuctionPlayer({ mode: 'specific', targetPlayer });
+}
+
+async function openManualAuctionPlayer({ mode, targetPlayer = null }) {
   if (!isHost) {
     showToast('Only host can change current player.', 'error');
     return;
@@ -2545,7 +2739,6 @@ async function randomChangeCurrentPlayer() {
       return;
     }
 
-    // Keep queue and active spotlight aligned at currentIndex so changed player remains available later.
     let livePlayerQueueIndex = queue.findIndex((id) => String(id || '').trim() === livePlayerId);
     if (livePlayerQueueIndex < 0) livePlayerQueueIndex = liveIndex;
     if (livePlayerQueueIndex !== liveIndex) {
@@ -2555,15 +2748,45 @@ async function randomChangeCurrentPlayer() {
     }
 
     const soldMap = room.soldPlayers || {};
-    const dynamicCandidates = queue
-      .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
-      .filter(({ id, idx }) => id && idx >= liveIndex && id !== livePlayerId && !soldMap[id]);
-    if (!dynamicCandidates.length) {
-      showToast('No available players left for random change.', 'error');
-      return;
+    let pick = null;
+
+    if (mode === 'random') {
+      const dynamicCandidates = queue
+        .map((pid, idx) => ({ id: String(pid || '').trim(), idx }))
+        .filter(({ id, idx }) => id && idx >= liveIndex && id !== livePlayerId && !soldMap[id]);
+      if (!dynamicCandidates.length) {
+        showToast('No available players left for random change.', 'error');
+        return;
+      }
+      pick = dynamicCandidates[Math.floor(Math.random() * dynamicCandidates.length)];
+    } else {
+      const targetId = String(targetPlayer?.id || '').trim();
+      if (!targetId) {
+        showToast('Could not resolve the selected player.', 'error');
+        return;
+      }
+      if (targetId === livePlayerId) {
+        showToast('That player is already open.', 'error');
+        return;
+      }
+
+      const targetQueueIndex = queue.findIndex((pid) => String(pid || '').trim() === targetId);
+      if (targetQueueIndex < 0) {
+        showToast('Selected player is not in the queue.', 'error');
+        return;
+      }
+      if (targetQueueIndex < liveIndex) {
+        showToast('Selected player has already been processed.', 'error');
+        return;
+      }
+      if (soldMap[targetId]) {
+        showToast('Selected player has already been sold.', 'error');
+        return;
+      }
+
+      pick = { id: targetId, idx: targetQueueIndex };
     }
 
-    const pick = dynamicCandidates[Math.floor(Math.random() * dynamicCandidates.length)];
     const displacedId = queue[liveIndex];
     queue[liveIndex] = pick.id;
     queue[pick.idx] = displacedId;
@@ -2571,7 +2794,7 @@ async function randomChangeCurrentPlayer() {
     const roomManualPlayers = Array.isArray(room.manualPlayers) ? room.manualPlayers : [];
     const nextPlayer = playerMap[pick.id] || roomManualPlayers.find((p) => String(p?.id || '') === pick.id);
     if (!nextPlayer) {
-      showToast('Random player data not found. Try again.', 'error');
+      showToast('Player data not found. Try again.', 'error');
       return;
     }
 
@@ -2604,7 +2827,7 @@ async function randomChangeCurrentPlayer() {
 
     playerQueue = queue.slice();
     buildPoolIndexMap();
-    showToast(`Random player: ${nextPlayer?.name || pick.id}`, 'success');
+    showToast(mode === 'random' ? `Random player: ${nextPlayer?.name || pick.id}` : `Opened player: ${nextPlayer?.name || pick.id}`, 'success');
   } catch (err) {
     console.error('Random player change failed:', err);
     showToast('Failed to change player.', 'error');

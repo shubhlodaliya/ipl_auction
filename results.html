@@ -58,7 +58,7 @@
   <!-- HEADER -->
   <header class="header">
     <div class="logo">🏏 IPL Auction</div>
-    <button class="btn btn-ghost" onclick="newAuction()">New Auction</button>
+    <button class="btn btn-ghost" id="newAuctionHeaderBtn" onclick="newAuction()">New Auction</button>
   </header>
 
   <!-- LOADING -->
@@ -90,8 +90,8 @@
         <div class="team-power-grid" id="teamPowerGrid"></div>
       </section>
 
-      <div class="results-actions">
-        <button class="btn btn-secondary" onclick="openPlaying11Modal()">My Playing 11</button>
+      <div class="results-actions" id="resultsActions">
+        <button class="btn btn-secondary" id="playing11Btn" onclick="openPlaying11Modal()">My Playing 11</button>
         <button class="btn btn-secondary" id="teamPowerToggleBtn" onclick="toggleTeamPowerRankings()">Show Team Power Ranking</button>
         <button class="btn btn-secondary" onclick="openTopPickModal()">Top 10 Picks</button>
         <button class="btn btn-primary" onclick="exportResultsPdf()">Export All Teams PDF</button>
@@ -113,7 +113,7 @@
       <div class="results-grid" id="resultsGrid"></div>
 
       <div style="text-align:center;margin-top:2rem;">
-        <button class="btn btn-primary btn-lg" onclick="newAuction()">🏏 Start New Auction</button>
+        <button class="btn btn-primary btn-lg" id="newAuctionBottomBtn" onclick="newAuction()">🏏 Start New Auction</button>
       </div>
 
     </div>
@@ -127,8 +127,11 @@
         <a href="guide.html">Guide</a>
         <a href="howto.html">How-To</a>
         <a href="faq.html">FAQ</a>
+        <a href="learning-center.html">Learning Center</a>
         <a href="contact.html">Contact</a>
         <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms.html">Terms</a>
+        <a href="editorial-policy.html">Editorial Policy</a>
       </nav>
     </div>
   </footer>
@@ -188,8 +191,15 @@
   <script>
     async function newAuction() {
       const session = getSession();
-      const urlRoom = new URLSearchParams(window.location.search).get('room');
-      const roomCode = urlRoom || session?.roomCode || '';
+      if (!session?.isHost) {
+        const t = document.getElementById('toast');
+        if (t) {
+          t.textContent = 'Only host can start a new auction.';
+          t.className = 'toast show error';
+          setTimeout(() => { t.className = 'toast'; }, 2200);
+        }
+        return;
+      }
 
       clearSession();
       window.location.href = 'index.html';

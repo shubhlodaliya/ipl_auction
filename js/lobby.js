@@ -744,6 +744,7 @@ function renderTeamSlots(teams) {
   const count = joinedIds.length;
   const teamCatalogList = Object.values(roomTeamCatalog || {});
   const totalTeams = teamCatalogList.length || 10;
+  const isManualAuction = roomConfig?.auctionType === 'manual';
 
   document.getElementById('joinedCount').textContent = `(${count}/${totalTeams} joined)`;
 
@@ -766,7 +767,9 @@ function renderTeamSlots(teams) {
         <img class="slot-logo" src="${t.logo}" alt="${t.name || t.short} logo" loading="lazy" decoding="async" />
         <div class="slot-name" style="color:${t.primary}">${t.name || t.short}</div>
         <div class="slot-owner">
-          ${joined ? `<span style="color:var(--green)">✓ Joined</span>` : `<span style="color:var(--text-dim)">Available</span>`}
+          ${joined
+            ? `<span style="color:var(--green)">✓ Joined${(!isManualAuction && joined.ownerName) ? ` • ${escapeHtml(joined.ownerName)}` : ''}</span>`
+            : `<span style="color:var(--text-dim)">Available</span>`}
         </div>
       </div>
     `;

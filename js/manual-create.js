@@ -660,6 +660,7 @@ async function uploadRemoteSourceWithFallback(source, signPayload) {
 
 async function uploadManualAssets(roomCode, teams, players) {
   const assetCache = readManualAssetCache();
+  const failedAssets = [];
 
   for (const team of teams) {
     if (!team.logoFile) continue;
@@ -671,14 +672,18 @@ async function uploadManualAssets(roomCode, teams, players) {
       continue;
     }
 
-    team.logo = await uploadFileToCloudinary(team.logoFile, {
-      roomCode,
-      entityType: 'team',
-      entityId: team.id,
-      fileName: team.logoFile.name || 'logo',
-      sharedAssetKey: teamAssetKey
-    });
-    setCachedAssetUrl(assetCache, teamAssetKey, team.logo);
+    try {
+      team.logo = await uploadFileToCloudinary(team.logoFile, {
+        roomCode,
+        entityType: 'team',
+        entityId: team.id,
+        fileName: team.logoFile.name || 'logo',
+        sharedAssetKey: teamAssetKey
+      });
+      setCachedAssetUrl(assetCache, teamAssetKey, team.logo);
+    } catch (error) {
+      failedAssets.push(`Team ${team.name}: ${error?.message || String(error)}`);
+    }
   }
 
   for (const player of players) {
@@ -690,14 +695,18 @@ async function uploadManualAssets(roomCode, teams, players) {
         continue;
       }
 
-      player.photo_url = await uploadFileToCloudinary(player.photoFile, {
-        roomCode,
-        entityType: 'player',
-        entityId: player.id,
-        fileName: player.photoFile.name || 'photo',
-        sharedAssetKey: playerAssetKey
-      });
-      setCachedAssetUrl(assetCache, playerAssetKey, player.photo_url);
+      try {
+        player.photo_url = await uploadFileToCloudinary(player.photoFile, {
+          roomCode,
+          entityType: 'player',
+          entityId: player.id,
+          fileName: player.photoFile.name || 'photo',
+          sharedAssetKey: playerAssetKey
+        });
+        setCachedAssetUrl(assetCache, playerAssetKey, player.photo_url);
+      } catch (error) {
+        failedAssets.push(`Player ${player.name}: ${error?.message || String(error)}`);
+      }
       continue;
     }
 
@@ -724,13 +733,19 @@ async function uploadManualAssets(roomCode, teams, players) {
       sharedAssetKey: sourceAssetKey
     };
 
-    player.photo_url = isRemoteUrl
-      ? await uploadRemoteSourceWithFallback(source, signPayload)
-      : await uploadFileToCloudinary(source, signPayload);
-    setCachedAssetUrl(assetCache, sourceAssetKey, player.photo_url);
+    try {
+      player.photo_url = isRemoteUrl
+        ? await uploadRemoteSourceWithFallback(source, signPayload)
+        : await uploadFileToCloudinary(source, signPayload);
+      setCachedAssetUrl(assetCache, sourceAssetKey, player.photo_url);
+    } catch (error) {
+      failedAssets.push(`Player ${player.name}: ${error?.message || String(error)}`);
+    }
   }
 
   saveManualAssetCache(assetCache);
+
+  return failedAssets;
 }
 
 async function createManualRoom() {
@@ -782,11 +797,12 @@ async function createManualRoom() {
   const btn = document.getElementById('createManualRoomBtn');
   btn.disabled = true;
   btn.textContent = 'Uploading assets...';
+  let failedAssets = [];
 
   try {
     const code = await reserveAvailableRoomCode();
 
-    await uploadManualAssets(code, teams, players);
+    failedAssets = await uploadManualAssets(code, teams, players);
 
     const manualTeams = {};
     teams.forEach(t => {
@@ -909,6 +925,10 @@ async function createManualRoom() {
     showError(err.message || 'Failed to create manual room.');
     btn.disabled = false;
     btn.textContent = 'Create Manual Auction Room';
+  }
+
+  if (failedAssets.length > 0) {
+    console.warn('Some manual assets failed to upload:', failedAssets);
   }
 
   function showError(message) {

@@ -1,0 +1,518 @@
+/* ===== HOME REDESIGN CSS ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap');
+
+:root {
+  --ma-red: #cc1f1f;
+  --ma-red-dark: #a01515;
+  --ma-dark: #0a0a0a;
+  --ma-dark2: #111111;
+  --ma-dark3: #1a1a1a;
+  --ma-border: rgba(255,255,255,0.08);
+  --ma-text: #ffffff;
+  --ma-text-dim: #999999;
+  --ma-green: #22c55e;
+  --ma-gold: #f59e0b;
+}
+
+/* RESET */
+.ma-page * { box-sizing: border-box; margin: 0; padding: 0; }
+.ma-page { font-family: 'Inter', sans-serif; background: #f5f5f5; color: #111; }
+
+/* ANNOUNCEMENT BAR */
+.ma-announce {
+  background: #1a1a1a;
+  color: #ccc;
+  font-size: 0.75rem;
+  padding: 0.4rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 0.02em;
+}
+.ma-announce a { color: #ccc; text-decoration: none; }
+
+/* NAV */
+.ma-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 0 2rem;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.ma-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ma-red);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ma-logo span { color: #111; }
+.ma-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+}
+.ma-nav-links a {
+  color: #444;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  transition: color 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.ma-nav-links a:hover, .ma-nav-links a.active {
+  color: var(--ma-red);
+  border-bottom-color: var(--ma-red);
+}
+.ma-nav-actions { display: flex; gap: 0.6rem; align-items: center; margin-left: auto; }
+.ma-btn-outline {
+  border: 1.5px solid var(--ma-red);
+  color: var(--ma-red);
+  background: transparent;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.ma-btn-outline:hover { background: var(--ma-red); color: #fff; }
+.ma-btn-solid {
+  background: var(--ma-red);
+  color: #fff;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.ma-btn-solid:hover { background: var(--ma-red-dark); }
+
+/* HERO */
+.ma-hero {
+  background: #fff;
+  padding: 4rem 4rem 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+  min-height: 520px;
+  overflow: hidden;
+}
+.ma-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--ma-red);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 2px;
+  margin-bottom: 1.2rem;
+  text-transform: uppercase;
+}
+.ma-hero-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.ma-hero h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+.ma-hero-sub {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ma-red);
+  line-height: 1.3;
+  margin-bottom: 1.2rem;
+}
+.ma-hero p {
+  color: #555;
+  line-height: 1.7;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  max-width: 460px;
+}
+.ma-hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+.ma-btn-hero-primary {
+  background: var(--ma-red);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ma-btn-hero-primary:hover { background: var(--ma-red-dark); }
+.ma-btn-hero-outline {
+  background: transparent;
+  color: #333;
+  border: 1.5px solid #333;
+  padding: 0.75rem 1.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ma-btn-hero-outline:hover { border-color: var(--ma-red); color: var(--ma-red); }
+.ma-hero-img-wrap {
+  position: relative;
+  height: 420px;
+  border-radius: 8px 8px 0 0;
+  overflow: visible;
+}
+.ma-hero-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+  display: block;
+}
+.ma-bid-card {
+  position: absolute;
+  bottom: 20px;
+  right: -10px;
+  background: #fff;
+  padding: 0.8rem 1.2rem;
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  min-width: 180px;
+}
+.ma-bid-card-label { font-size: 0.65rem; color: #888; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem; }
+.ma-bid-card-amount { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; color: var(--ma-red); line-height: 1; }
+.ma-bid-card-name { font-size: 0.7rem; font-weight: 700; color: #333; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 0.2rem; }
+
+/* FEATURES */
+.ma-features {
+  background: #111;
+  padding: 3.5rem 4rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+.ma-feat-card { text-align: center; }
+.ma-feat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 1.4rem;
+}
+.ma-feat-icon.red { background: rgba(204,31,31,0.15); color: var(--ma-red); }
+.ma-feat-icon.green { background: rgba(34,197,94,0.15); color: var(--ma-green); }
+.ma-feat-icon.blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.ma-feat-icon.gold { background: rgba(245,158,11,0.15); color: var(--ma-gold); }
+.ma-feat-card h4 { color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.ma-feat-card p { color: #888; font-size: 0.8rem; line-height: 1.6; }
+
+/* TICKER */
+.ma-ticker {
+  background: #0a0a0a;
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+  overflow: hidden;
+  padding: 0.6rem 0;
+}
+.ma-ticker-inner {
+  display: flex;
+  gap: 4rem;
+  animation: ticker 30s linear infinite;
+  white-space: nowrap;
+}
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.ma-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #888;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.ma-ticker-item .tag {
+  font-size: 0.6rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  font-weight: 700;
+}
+.ma-ticker-item .tag.live { background: var(--ma-red); color: #fff; }
+.ma-ticker-item .tag.upcoming { background: #22c55e; color: #fff; }
+.ma-ticker-item .tag.record { background: #f59e0b; color: #000; }
+.ma-ticker-item .tag.active { background: #3b82f6; color: #fff; }
+.ma-ticker-item strong { color: #fff; }
+
+/* ARENA */
+.ma-arena { background: #f9f9f9; padding: 4rem; }
+.ma-section-title {
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.ma-section-divider {
+  width: 60px;
+  height: 3px;
+  background: var(--ma-red);
+  margin: 0 auto 2.5rem;
+}
+.ma-arena-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+  border: 2px dashed #d0e0ff;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+.ma-arena-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 1.75rem;
+  transition: box-shadow 0.2s;
+}
+.ma-arena-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+.ma-arena-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.ma-arena-icon {
+  width: 44px; height: 44px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.ma-arena-icon.red { background: #fff0f0; }
+.ma-arena-icon.green { background: #f0fff4; }
+.ma-arena-trophy { color: #ccc; font-size: 1.5rem; }
+.ma-arena-card h3 { font-size: 1.1rem; font-weight: 700; color: #111; }
+.ma-arena-card > p { color: #666; font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.25rem; }
+.ma-arena-features { list-style: none; margin-bottom: 1.5rem; }
+.ma-arena-features li {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8rem; color: #555; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 0.3rem 0;
+}
+.ma-arena-features li::before { content: '✓'; color: var(--ma-green); font-weight: 700; }
+.ma-arena-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+}
+.ma-arena-btn:hover { background: var(--ma-red); }
+.ma-arena-btn.green-btn { background: #166534; }
+.ma-arena-btn.green-btn:hover { background: #15803d; }
+
+/* LIVE AUCTIONS */
+.ma-live { background: #fff; padding: 4rem; }
+.ma-live-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+.ma-live-header h2 { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; color: #111; text-transform: uppercase; }
+.ma-live-header p { color: #888; font-size: 0.85rem; margin-bottom: 2rem; }
+.ma-view-all { color: var(--ma-red); font-size: 0.85rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.25rem; }
+.ma-view-all:hover { text-decoration: underline; }
+.ma-live-sub { color: #888; font-size: 0.85rem; margin-bottom: 2rem; margin-top: 0.3rem; }
+.ma-auction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.ma-auction-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ma-auction-card-head {
+  background: #111;
+  padding: 0.6rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ma-live-badge {
+  background: var(--ma-red);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+.ma-auction-card-head .ends { color: #888; font-size: 0.7rem; }
+.ma-auction-card-body { padding: 1.25rem; }
+.ma-auction-card-body h4 { font-size: 1rem; font-weight: 700; color: #111; margin-bottom: 0.75rem; }
+.ma-auction-meta { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+.ma-auction-meta-item label { display: block; font-size: 0.65rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.ma-auction-meta-item span { font-size: 0.95rem; font-weight: 700; color: #111; }
+.ma-auction-meta-item span.red { color: var(--ma-red); }
+.ma-join-btn {
+  width: 100%;
+  padding: 0.6rem;
+  background: var(--ma-red);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+}
+.ma-join-btn:hover { background: var(--ma-red-dark); }
+
+/* TOURNAMENTS */
+.ma-tournaments { background: #f9f9f9; padding: 4rem; }
+.ma-tournament-list { display: flex; flex-direction: column; gap: 1rem; max-width: 860px; margin: 0 auto; }
+.ma-tournament-item {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.ma-tournament-date {
+  min-width: 50px;
+  text-align: center;
+  border-right: 2px solid #e5e5e5;
+  padding-right: 1.5rem;
+}
+.ma-tournament-date .day { font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; color: #111; line-height: 1; }
+.ma-tournament-date .month { font-size: 0.65rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+.ma-tournament-info { flex: 1; }
+.ma-tournament-info h4 { font-size: 0.95rem; font-weight: 700; color: #111; margin-bottom: 0.2rem; }
+.ma-tournament-info p { font-size: 0.8rem; color: #888; }
+.ma-tournament-time { font-size: 0.8rem; color: #555; font-weight: 600; text-align: right; }
+.ma-remind-btn {
+  background: transparent;
+  border: 1.5px solid #ccc;
+  color: #555;
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+.ma-remind-btn:hover { border-color: var(--ma-green); color: var(--ma-green); }
+
+/* DARK FOOTER */
+.ma-footer {
+  background: #111;
+  padding: 3rem 4rem 1.5rem;
+  color: #888;
+}
+.ma-footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.ma-footer-brand .ma-logo { display: block; margin-bottom: 0.75rem; font-size: 1.4rem; }
+.ma-footer-brand p { font-size: 0.8rem; line-height: 1.7; color: #666; }
+.ma-footer-col h5 { color: var(--ma-red); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.ma-footer-col a { display: block; color: #888; text-decoration: none; font-size: 0.82rem; margin-bottom: 0.4rem; transition: color 0.2s; }
+.ma-footer-col a:hover { color: #fff; }
+.ma-footer-bottom {
+  border-top: 1px solid #222;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #555;
+}
+.ma-footer-socials { display: flex; gap: 0.75rem; }
+.ma-footer-socials a {
+  width: 30px; height: 30px;
+  border: 1px solid #333;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #888; text-decoration: none; font-size: 0.75rem;
+  transition: all 0.2s;
+}
+.ma-footer-socials a:hover { border-color: var(--ma-red); color: var(--ma-red); }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .ma-hero { grid-template-columns: 1fr; padding: 2rem; }
+  .ma-hero-img-wrap { height: 240px; }
+  .ma-features { grid-template-columns: repeat(2, 1fr); padding: 2rem; }
+  .ma-arena { padding: 2rem; }
+  .ma-arena-grid { grid-template-columns: 1fr; }
+  .ma-live { padding: 2rem; }
+  .ma-auction-grid { grid-template-columns: 1fr; }
+  .ma-tournaments { padding: 2rem; }
+  .ma-footer { padding: 2rem; }
+  .ma-footer-grid { grid-template-columns: 1fr 1fr; }
+  .ma-nav { padding: 0 1rem; gap: 1rem; }
+  .ma-nav-links { display: none; }
+}

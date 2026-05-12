@@ -84,6 +84,7 @@ function applyAuthUi(user) {
   const userLabel = document.getElementById('authUserLabel');
   const loginBtn = document.getElementById('authLoginBtn');
   const signupBtn = document.getElementById('authSignupBtn');
+  const profileBtn = document.getElementById('authProfileBtn');
   const logoutBtn = document.getElementById('authLogoutBtn');
 
   if (userLabel) {
@@ -92,6 +93,7 @@ function applyAuthUi(user) {
   }
   if (loginBtn) loginBtn.style.display = user ? 'none' : 'inline-flex';
   if (signupBtn) signupBtn.style.display = user ? 'none' : 'inline-flex';
+  if (profileBtn) profileBtn.style.display = user ? 'inline-flex' : 'none';
   if (logoutBtn) logoutBtn.style.display = user ? 'inline-flex' : 'none';
 
   if (user) {

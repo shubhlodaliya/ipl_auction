@@ -277,6 +277,7 @@
         style="font-size:0.8rem;color:#666;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none;"></span>
       <button class="ma-btn-outline" id="authLoginBtn" onclick="openAuthModal('login')">Login</button>
       <button class="ma-btn-solid" id="authSignupBtn" onclick="openAuthModal('signup')">Register</button>
+      <button class="ma-btn-outline" id="authProfileBtn" onclick="openProfileModal()" style="display:none;">Profile</button>
       <button class="ma-btn-outline" id="authLogoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
     </div>
   </nav>
@@ -476,14 +477,6 @@
             </div>
             <button class="ma-arena-btn" id="createBtn" onclick="createRoom()">🚀 Create Auction Room</button>
             <p id="createError" style="color:#cc1f1f;font-size:0.82rem;margin-top:0.5rem;display:none;"></p>
-            <div class="ma-past-wrap">
-              <h5>My Past Auctions <button class="ma-past-refresh" onclick="renderPastAuctions()">Refresh</button></h5>
-              <div id="pastAuctionsList">
-                <div class="state-loading" style="padding:0.85rem 0;">
-                  <div class="spinner"></div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -659,6 +652,29 @@
     </div>
   </div>
 
+  <!-- PROFILE MODAL (Past Auctions) -->
+  <div class="team-modal-overlay" id="profileModalOverlay" onclick="closeProfileModal()">
+    <div class="team-modal" onclick="event.stopPropagation()" style="max-width:720px;">
+      <div class="team-modal-header">
+        <h3>Profile</h3>
+        <button class="btn btn-ghost" onclick="closeProfileModal()">Close</button>
+      </div>
+      <div style="padding:1rem 1.1rem 1.1rem;">
+        <div class="ma-past-wrap" style="margin:0;">
+          <h5 style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+            <span>My Past Auctions</span>
+            <button class="ma-past-refresh" onclick="renderPastAuctions()">Refresh</button>
+          </h5>
+          <div id="pastAuctionsList" style="max-height:60vh;overflow:auto;">
+            <div class="state-loading" style="padding:0.85rem 0;">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- FIREBASE -->
   <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -695,6 +711,17 @@
       t.textContent = msg;
       t.className = 'toast show ' + type;
       setTimeout(() => t.className = 'toast', 2500);
+    }
+
+    function openProfileModal() {
+      const overlay = document.getElementById('profileModalOverlay');
+      if (overlay) overlay.classList.add('visible');
+      if (typeof renderPastAuctions === 'function') renderPastAuctions();
+    }
+
+    function closeProfileModal() {
+      const overlay = document.getElementById('profileModalOverlay');
+      if (overlay) overlay.classList.remove('visible');
     }
 
     // ---- LIVE ROOMS LOADER ----

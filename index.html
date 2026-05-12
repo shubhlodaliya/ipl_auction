@@ -55,12 +55,33 @@
   }
   </script>
 </head>
-<body>
+<body class="home-page">
+
+  <!-- TOP BAR -->
+  <div class="home-topbar" role="note" aria-label="Welcome message">
+    <div class="home-topbar-inner">
+      <span class="home-topbar-msg">Welcome to IPL Auction — create or host a realistic cricket auction with friends.</span>
+      <span class="home-topbar-right">
+        <a class="home-topbar-link" href="guide.html">Guide</a>
+        <span class="home-topbar-dot" aria-hidden="true">•</span>
+        <a class="home-topbar-link" href="faq.html">FAQ</a>
+      </span>
+    </div>
+  </div>
 
   <!-- HEADER -->
   <header class="header">
-    <div class="logo">🏏 IPL Auction</div>
-    <div style="display:flex;align-items:center;gap:0.6rem;">
+    <a class="logo" href="index.html" aria-label="IPL Auction home">🏏 IPL Auction</a>
+
+    <nav class="home-nav" aria-label="Primary navigation">
+      <a class="home-nav-link active" href="index.html">Home</a>
+      <a class="home-nav-link" href="manual-setup.html">Manual Setup</a>
+      <a class="home-nav-link" href="learning-center.html">Learning Center</a>
+      <a class="home-nav-link" href="howto.html">How-To</a>
+      <a class="home-nav-link" href="contact.html">Contact</a>
+    </nav>
+
+    <div class="home-auth-actions">
       <span id="authUserLabel" class="header-badge" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Not logged in</span>
       <button class="btn btn-ghost" id="authLoginBtn" onclick="openAuthModal('login')">Login</button>
       <button class="btn btn-secondary" id="authSignupBtn" onclick="openAuthModal('signup')">Sign Up</button>
@@ -69,15 +90,34 @@
   </header>
 
   <!-- HERO -->
-  <main class="page-center">
-    <div class="hero fade-in">
-      <div class="hero-icon">🏆</div>
-      <h1 class="hero-title">IPL Player Auction</h1>
-      <p class="hero-sub">Create a room · Invite friends · Bid live · Win glory</p>
-    </div>
+  <main class="home-main">
+    <section class="home-hero" aria-label="Intro">
+      <div class="home-hero-inner">
+        <div class="home-hero-copy fade-in">
+          <div class="home-hero-kicker">REAL-TIME CRICKET AUCTION</div>
+          <h1 class="home-hero-title">Create realistic auctions in minutes.</h1>
+          <p class="home-hero-sub">Host a room, invite friends, bid live, track squads, export PDFs, and re-auction unsold players — all in one place.</p>
+          <div class="home-hero-ctas">
+            <button class="btn btn-primary" type="button" onclick="switchTab('create'); var el=document.getElementById('createName'); if(el) el.focus();">Create Auction</button>
+            <button class="btn btn-secondary" type="button" onclick="switchTab('join'); var el=document.getElementById('joinCode'); if(el) el.focus();">Join Auction</button>
+            <a class="btn btn-ghost" href="manual-setup.html" style="text-decoration:none;">Manual Auction Setup</a>
+          </div>
+          <div class="home-hero-meta">
+            <span class="home-hero-pill">⚡ Electric blue UI</span>
+            <span class="home-hero-pill">🏆 Gold highlights</span>
+            <span class="home-hero-pill">✅ Works on mobile</span>
+          </div>
+        </div>
 
-    <!-- MAIN CARD -->
-    <div class="glass landing-card fade-in" style="animation-delay:0.1s">
+        <div class="home-hero-card fade-in" style="animation-delay:0.08s">
+          <div class="home-hero-card-head">
+            <div class="home-hero-card-badge">Start here</div>
+            <div class="home-hero-card-title">Create / Join Auction</div>
+            <div class="home-hero-card-sub">All your core actions in one panel.</div>
+          </div>
+
+          <!-- MAIN CARD -->
+          <div class="glass landing-card" style="border:none;">
 
       <!-- TABS -->
       <div class="tabs">
@@ -214,156 +254,80 @@
         <p id="joinError" style="color:var(--red);font-size:0.85rem;display:none;"></p>
       </div>
 
-    </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES / INFO -->
+    <section class="home-section" aria-label="Features">
+      <div class="home-section-head">
+        <div class="home-section-eyebrow">OUR FEATURES</div>
+        <h2 class="home-section-title">Everything you need for an auction night</h2>
+        <p class="home-section-sub">Built for manual auctions first, with IPL mode available for instant play.</p>
+      </div>
+
+      <div class="home-feature-grid">
+        <div class="home-feature-card">
+          <h3 class="home-feature-title">⚡ Real-Time Bidding</h3>
+          <p class="home-feature-text">Instant updates across all players so every bid feels live.</p>
+        </div>
+        <div class="home-feature-card">
+          <h3 class="home-feature-title">🛠️ Manual Auction Setup</h3>
+          <p class="home-feature-text">Upload teams and players, customize rules, and run your own tournament auction.</p>
+        </div>
+        <div class="home-feature-card">
+          <h3 class="home-feature-title">🏏 IPL Mode</h3>
+          <p class="home-feature-text">Jump straight into an IPL auction with ready-made teams and player data.</p>
+        </div>
+        <div class="home-feature-card">
+          <h3 class="home-feature-title">📊 Results & Exports</h3>
+          <p class="home-feature-text">Final squads, team breakdowns, and PDF exports for every team.</p>
+        </div>
+        <div class="home-feature-card">
+          <h3 class="home-feature-title">🔁 Re-Auction Unsold Players</h3>
+          <p class="home-feature-text">Bring unsold players back and run an additional round smoothly.</p>
+        </div>
+        <div class="home-feature-card">
+          <h3 class="home-feature-title">📱 Viewer / Broadcast</h3>
+          <p class="home-feature-text">Spectator-friendly view and broadcast overlays for sharing the auction live.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GUIDES -->
+    <section class="home-section" aria-label="Guides">
+      <div class="home-section-head">
+        <div class="home-section-eyebrow">LEARN</div>
+        <h2 class="home-section-title">Guides, rules, and checklists</h2>
+        <p class="home-section-sub">Use these resources to run smoother auctions and build stronger squads.</p>
+      </div>
+
+      <div class="home-guide-grid">
+        <a class="home-guide-card" href="guide.html">
+          <div class="home-guide-title">📚 Auction Guide</div>
+          <div class="home-guide-sub">Rules, bidding strategy, and best practices.</div>
+        </a>
+        <a class="home-guide-card" href="howto.html">
+          <div class="home-guide-title">🎯 Setup How-To</div>
+          <div class="home-guide-sub">Step-by-step room setup and sharing tips.</div>
+        </a>
+        <a class="home-guide-card" href="manual-setup.html">
+          <div class="home-guide-title">🛠️ Manual Setup</div>
+          <div class="home-guide-sub">Create custom teams, players, budgets, and rules.</div>
+        </a>
+        <a class="home-guide-card" href="faq.html">
+          <div class="home-guide-title">❓ FAQs</div>
+          <div class="home-guide-sub">Common questions about squads, budgets, and timers.</div>
+        </a>
+      </div>
+    </section>
   </main>
-
-  <!-- INFORMATION SECTION -->
-  <section style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); padding: 3rem 1.5rem; max-width: 100%; margin-bottom: 2rem;">
-    <div style="max-width: 1000px; margin: 0 auto;">
-      <h2 style="font-size: 2rem; color: var(--primary); text-align: center; margin-bottom: 2rem;">Experience the Thrill of IPL Auctions</h2>
-      
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">⚡ Real-Time Bidding</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Experience live auction action with instant bidding synchronization across all participants. Watch as prices climb and teams compete for their favorite IPL players.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">🎮 Easy to Use</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">No registration required. Start hosting auctions in seconds. Our intuitive interface makes it easy for anyone to create rooms, invite friends, and manage bids.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">🏏 Real IPL Players</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Bid on authentic IPL players from all franchises. Build your dream team by bidding on star batsmen, world-class bowlers, and emerging talents just like the real IPL auction.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">👥 Multiplayer Experience</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Play with up to 8 teams in one auction. Create private rooms with passcodes. Invite friends and cricket enthusiasts from anywhere in the world.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">⚙️ Customizable Settings</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Control every aspect: budget limits, squad size, bid timer, player ordering. Create auctions tailored exactly to your preferences and playing style.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">📱 Cross-Device Compatible</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Play on desktop, tablet, or smartphone. Fully responsive design works seamlessly on all devices. No apps to download—just open your browser.</p>
-        </div>
-      </div>
-
-      <div style="background: var(--glass); padding: 2rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid rgba(59, 130, 246, 0.3);">
-        <h3 style="font-size: 1.4rem; color: var(--primary); margin-bottom: 1rem;">What is an IPL Auction?</h3>
-        <p style="color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          The Indian Premier League (IPL) auction is where cricket teams bid for player contracts in real-time competitive format. Our platform replicates this thrilling experience, allowing friends and cricket enthusiasts to host their own virtual auctions with real IPL players.
-        </p>
-        <p style="color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          In IPL auctions, teams have limited budgets and must strategically allocate funds across players. It's a game of skill, strategy, and cricket knowledge. Will you overspend on star players or build balanced squads? The decisions are yours!
-        </p>
-        <p style="color: var(--text-main); line-height: 1.8;">
-          Whether you're a hardcore cricket fan, fantasy cricket enthusiast, or someone looking for a fun team activity, IPL auctions offer excitement, strategy, and endless entertainment. Test your cricket knowledge, challenge friends, and experience the adrenaline of competitive bidding.
-        </p>
-      </div>
-
-      <div style="text-align: center;">
-        <h3 style="font-size: 1.3rem; color: var(--primary); margin-bottom: 1rem;">Why Choose Our Platform?</h3>
-        <ul style="list-style: none; padding: 0; display: inline-block; text-align: left; color: var(--text-main);">
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ 100% Free:</strong> No subscriptions, no hidden charges</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ No Registration:</strong> Start immediately without email verification</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Fast & Reliable:</strong> Real-time synchronization with 99.9% uptime</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Fully Customizable:</strong> Control budget, squad size, timer, player order</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Mobile Friendly:</strong> Works perfectly on all devices and browsers</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Secure & Private:</strong> Passcode protection for exclusive auctions</li>
-        </ul>
-      </div>
-
-      <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-        <h3 style="font-size: 1.3rem; color: var(--primary); margin-bottom: 1.5rem; text-align: center;">Perfect For</h3>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">👥 Friends & Family</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Organize exciting auctions for cricket-loving friends and family gatherings.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🎓 Learning & Training</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Teach cricket strategy, player analysis, and auction mechanics to enthusiasts.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🏆 Fantasy Cricket</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Run league-based competitions and tournaments with league standings.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🎮 Gaming Communities</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Host auctions for cricket gaming groups and e-sports communities.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🤝 Team Building</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Remote team activities that engage everyone in strategic competition.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🌍 Global Cricket Fans</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Connect with cricket enthusiasts worldwide through competitive auctions.</p>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top: 3rem; padding: 2rem; background: var(--glass); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3); text-align: center;">
-        <h3 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 1rem;">Want to Learn More?</h3>
-        <p style="color: var(--text-sec); margin-bottom: 1.5rem;">Check out our comprehensive guides to master IPL auction strategies, player analysis, and winning tactics.</p>
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-          <a href="guide.html" class="btn btn-secondary" style="text-decoration: none;">📚 Auction Rules & Bidding Strategies Guide</a>
-          <a href="howto.html" class="btn btn-secondary" style="text-decoration: none;">🎯 Step-by-Step Room Setup Guide</a>
-          <a href="manual-setup.html" class="btn btn-secondary" style="text-decoration: none;">🛠️ Manual Auction Room Setup</a>
-          <a href="faq.html" class="btn btn-secondary" style="text-decoration: none;">❓ IPL Auction FAQ</a>
-          <a href="learning-center.html" class="btn btn-secondary" style="text-decoration: none;">🧠 Learning Center Articles</a>
-        </div>
-      </div>
-
-      <section style="margin-top:2rem;padding:1.4rem;background:var(--glass);border-radius:8px;border:1px solid rgba(59,130,246,0.25);">
-        <h3 style="font-size:1.25rem;color:var(--primary);margin-bottom:0.8rem;">Popular IPL Auction Topics</h3>
-        <p style="color:var(--text-main);line-height:1.7;margin-bottom:0.7rem;">
-          Looking for <strong>auction rules</strong>, practical <strong>bidding strategies</strong>, or a full <strong>room setup guide</strong>?
-          Use these curated resources to improve your mock IPL auction results.
-        </p>
-        <ul style="margin:0;padding-left:1.1rem;color:var(--text-sec);line-height:1.8;">
-          <li><a href="guide.html" style="color:var(--primary);text-decoration:none;">IPL auction rules and bidding strategy guide</a></li>
-          <li><a href="howto.html" style="color:var(--primary);text-decoration:none;">Step-by-step room setup guide for friends</a></li>
-          <li><a href="manual-setup.html" style="color:var(--primary);text-decoration:none;">Manual fantasy auction room configuration</a></li>
-          <li><a href="faq.html" style="color:var(--primary);text-decoration:none;">Frequently asked questions on budgets, squads, and timer settings</a></li>
-          <li><a href="learning-center.html" style="color:var(--primary);text-decoration:none;">Original long-form strategy articles and host checklists</a></li>
-        </ul>
-      </section>
-
-      <section style="margin-top:1rem;padding:1.4rem;background:var(--glass);border-radius:8px;border:1px solid rgba(255,203,48,0.28);">
-        <h3 style="font-size:1.25rem;color:var(--gold);margin-bottom:0.8rem;">Transparency and Content Standards</h3>
-        <p style="color:var(--text-main);line-height:1.75;margin-bottom:0.7rem;">
-          We publish practical guides for auction simulation and keep our instructional content updated when features change.
-          Read our policies to understand how content is reviewed, how privacy is handled, and how platform terms apply.
-        </p>
-        <ul style="margin:0;padding-left:1.1rem;color:var(--text-sec);line-height:1.8;">
-          <li><a href="editorial-policy.html" style="color:var(--gold);text-decoration:none;">Editorial policy and correction standards</a></li>
-          <li><a href="privacy-policy.html" style="color:var(--gold);text-decoration:none;">Privacy policy and advertising information</a></li>
-          <li><a href="terms.html" style="color:var(--gold);text-decoration:none;">Terms of use for auction rooms and platform access</a></li>
-        </ul>
-      </section>
-    </div>
-  </section>
 
   <!-- CONTENT FOOTER PLACEHOLDER -->
   <div style="display:none;">
     <!-- SEO Content Keywords: IPL auction online, free fantasy cricket, virtual player auction, cricket bidding game, IPL team builder, multiplayer cricket games, online auction platform, real-time bidding game, fantasy sports platform, cricket fan engagement -->
   </div>
-
-    </div>
-  </main>
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>

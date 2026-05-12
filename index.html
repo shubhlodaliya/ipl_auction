@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -27,17 +27,21 @@
     type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"IPL Auction","url":"/index.html"},{"@type":"Organization","name":"IPL Auction","url":"/index.html","logo":"/assets/team-logos/csk.png"}]}</script>
   <style>
     .ma-hero-img-wrap {
-      background: linear-gradient(135deg, #0a0a1a, #0f1b3d);
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: visible;
+      height: auto;
     }
 
     .ma-hero-illustration {
       width: 100%;
-      height: 100%;
+      height: auto;
+      max-height: none;
       object-fit: contain;
-      padding: 1rem;
+      display: block;
+      padding: 0;
     }
 
     .ma-live-rooms-grid {
@@ -290,13 +294,8 @@
         <a href="guide.html" class="ma-btn-hero-outline">View Guide</a>
       </div>
     </div>
-    <div class="ma-hero-img-wrap" style="background:transparent;">
+    <div class="ma-hero-img-wrap">
       <img class="ma-hero-illustration" src="assets/main page.jpeg" alt="IPL Auction Platform - Bid and Win Players" />
-      <div class="ma-bid-card">
-        <div class="ma-bid-card-label">Current Record Bid</div>
-        <div class="ma-bid-card-amount">&#8377;24.75Cr</div>
-        <div class="ma-bid-card-name">Rishabh Pant &bull; Marquee Category</div>
-      </div>
     </div>
   </section>
 

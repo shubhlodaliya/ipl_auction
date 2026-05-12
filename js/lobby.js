@@ -875,7 +875,11 @@ async function startAuction() {
     });
 
     // Set room status → triggers redirect in all clients
-    await db.ref(`rooms/${roomCode}/config/status`).set('auction');
+    await db.ref(`rooms/${roomCode}/config`).update({
+      status: 'auction',
+      startedAt: Date.now(),
+      updatedAt: Date.now()
+    });
 
     const hostUid = String(roomConfig?.hostUid || localStorage.getItem('ipl_auth_uid') || '').trim();
     if (hostUid) {

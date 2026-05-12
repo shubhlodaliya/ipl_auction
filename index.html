@@ -727,7 +727,7 @@
     }
 
     function getRoomStartedAt(cfg) {
-      return Number(cfg?.createdAt || cfg?.startedAt || cfg?.updatedAt || 0);
+      return Number(cfg?.startedAt || cfg?.reAuctionStartedAt || cfg?.createdAt || cfg?.updatedAt || 0);
     }
 
     function toggleLiveExplore() {
@@ -741,18 +741,20 @@
 
       if (sub) {
         sub.textContent = liveExploreAll
-          ? 'All live auctions on MyAuction. Click "Join Auction" to watch in viewer mode.'
+          ? 'Showing all live auctions started today. Click "Join Auction" to watch in viewer mode.'
           : 'Showing auctions started today. Click "Join Auction" to watch in viewer mode.';
       }
 
       if (!exploreLink) return;
-      if (!allLiveCount) {
+
+      // Explore more should only expand today's list (no older live rooms).
+      if (todayLiveCount <= 6) {
         exploreLink.style.display = 'none';
         return;
       }
 
       exploreLink.style.display = 'inline-flex';
-      exploreLink.textContent = liveExploreAll ? 'Show Today →' : 'Explore More →';
+      exploreLink.textContent = liveExploreAll ? 'Show Less →' : 'Explore More →';
     }
 
     function renderLiveRooms(rooms) {
@@ -774,18 +776,18 @@
         Object.values(rooms || {}).forEach(r => { if (r && r.teams) totalOwners += Object.keys(r.teams).length; });
         ownerEl.textContent = totalOwners;
       }
-      if (roomEl) roomEl.textContent = allLive.length;
+      // Keep this section strictly "Today's Live Auctions".
+      if (roomEl) roomEl.textContent = todayLive.length;
 
-      if (!allLive.length) {
+      if (!todayLive.length) {
         grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions right now. <a href="#arena" style="color:#cc1f1f;">Start one above!</a></div>';
         return;
       }
 
-      const list = liveExploreAll ? allLive : todayLive;
-      const displayed = liveExploreAll ? list : list.slice(0, 6);
+      const displayed = liveExploreAll ? todayLive : todayLive.slice(0, 6);
 
       if (!displayed.length) {
-        grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions started today.<br><a href="#live-auctions" onclick="toggleLiveExplore();return false;" style="color:#cc1f1f;font-weight:600;">Explore all live auctions →</a></div>';
+        grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions started today. <a href="#arena" style="color:#cc1f1f;">Start one above!</a></div>';
         return;
       }
 

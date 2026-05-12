@@ -397,10 +397,10 @@
           <h3>IPL Auction</h3>
           <div style="margin-left:auto" class="ma-arena-trophy">🥇</div>
         </div>
-        <p>A specialized simulation engine mimicking the mega-auction experience. Includes Right-to-Match (RTM) cards,
+        <p>A specialized simulation engine mimicking the mega-auction experience. Includes
           accelerated bidding rounds, and marquee player set protocols.</p>
         <ul class="ma-arena-features">
-          <li>Official RTM Logic</li>
+          <li>Team Management</li>
           <li>Franchise Slot Management</li>
           <li>Marquee Player Protocols</li>
         </ul>
@@ -521,9 +521,12 @@
   <section class="ma-live" id="live-auctions">
     <div class="ma-live-header">
       <h2>Today's Live Auctions</h2>
-      <a href="#arena" class="ma-view-all">Join an Auction →</a>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <a href="#live-auctions" class="ma-view-all" id="liveExploreLink" onclick="toggleLiveExplore();return false;" style="display:none;">Explore More →</a>
+        <a href="#arena" class="ma-view-all">Join an Auction →</a>
+      </div>
     </div>
-    <p class="ma-live-sub">Real auctions currently live on MyAuction. Click "Join Auction" to watch in viewer mode.</p>
+    <p class="ma-live-sub" id="liveRoomsSub">Showing auctions started today. Click "Join Auction" to watch in viewer mode.</p>
     <div class="ma-live-rooms-grid" id="liveRoomsGrid">
       <div class="ma-loading-live">
         <div class="spinner" style="margin:0 auto 0.5rem;"></div>
@@ -725,6 +728,10 @@
     }
 
     // ---- LIVE ROOMS LOADER ----
+    let liveExploreAll = false;
+    let liveRoomsListenerAttached = false;
+    let liveRoomsCache = null;
+
     function formatTimeSince(ts) {
       if (!ts) return '';
       const diff = Math.floor((Date.now() - ts) / 1000);
@@ -733,48 +740,91 @@
       return Math.floor(diff / 3600) + 'h ago';
     }
 
-    function loadLiveRooms() {
+    function getTodayBoundsMs() {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      return { start, end: start + 24 * 60 * 60 * 1000 };
+    }
+
+    function isTimestampToday(ts) {
+      const t = Number(ts || 0);
+      if (!Number.isFinite(t) || t <= 0) return false;
+      const { start, end } = getTodayBoundsMs();
+      return t >= start && t < end;
+    }
+
+    function getRoomStartedAt(cfg) {
+      return Number(cfg?.createdAt || cfg?.startedAt || cfg?.updatedAt || 0);
+    }
+
+    function toggleLiveExplore() {
+      liveExploreAll = !liveExploreAll;
+      if (liveRoomsCache) renderLiveRooms(liveRoomsCache);
+    }
+
+    function updateLiveExploreUi({ allLiveCount = 0, todayLiveCount = 0 } = {}) {
+      const exploreLink = document.getElementById('liveExploreLink');
+      const sub = document.getElementById('liveRoomsSub');
+
+      if (sub) {
+        sub.textContent = liveExploreAll
+          ? 'All live auctions on MyAuction. Click "Join Auction" to watch in viewer mode.'
+          : 'Showing auctions started today. Click "Join Auction" to watch in viewer mode.';
+      }
+
+      if (!exploreLink) return;
+      if (!allLiveCount) {
+        exploreLink.style.display = 'none';
+        return;
+      }
+
+      exploreLink.style.display = 'inline-flex';
+      exploreLink.textContent = liveExploreAll ? 'Show Today →' : 'Explore More →';
+    }
+
+    function renderLiveRooms(rooms) {
       const grid = document.getElementById('liveRoomsGrid');
       if (!grid) return;
-      if (typeof db === 'undefined') { setTimeout(loadLiveRooms, 800); return; }
 
-      db.ref('rooms').on('value', function (snap) {
-        if (!snap.exists()) {
-          grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions right now. <a href="#arena" style="color:#cc1f1f;">Start one above!</a></div>';
-          return;
-        }
-        const rooms = snap.val() || {};
-        const liveRooms = Object.entries(rooms)
-          .filter(([code, room]) => room && room.config && room.config.status === 'auction')
-          .sort((a, b) => Number(b[1].config.createdAt || 0) - Number(a[1].config.createdAt || 0))
-          .slice(0, 6);
+      const allLive = Object.entries(rooms || {})
+        .filter(([code, room]) => room && room.config && room.config.status === 'auction')
+        .sort((a, b) => getRoomStartedAt(b[1].config) - getRoomStartedAt(a[1].config));
 
-        // Update ticker
-        const ownerEl = document.getElementById('tickerOwners');
-        const roomEl = document.getElementById('tickerRooms');
-        if (ownerEl) {
-          let totalOwners = 0;
-          Object.values(rooms).forEach(r => { if (r && r.teams) totalOwners += Object.keys(r.teams).length; });
-          ownerEl.textContent = totalOwners;
-        }
-        if (roomEl) roomEl.textContent = liveRooms.length;
+      const todayLive = allLive.filter(([code, room]) => isTimestampToday(getRoomStartedAt(room.config)));
+      updateLiveExploreUi({ allLiveCount: allLive.length, todayLiveCount: todayLive.length });
 
-        if (!liveRooms.length) {
-          grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions right now.<br><a href="#arena" style="color:#cc1f1f;font-weight:600;">Create one above to get started!</a></div>';
-          return;
-        }
+      // Update ticker (use ALL live rooms count)
+      const ownerEl = document.getElementById('tickerOwners');
+      const roomEl = document.getElementById('tickerRooms');
+      if (ownerEl) {
+        let totalOwners = 0;
+        Object.values(rooms || {}).forEach(r => { if (r && r.teams) totalOwners += Object.keys(r.teams).length; });
+        ownerEl.textContent = totalOwners;
+      }
+      if (roomEl) roomEl.textContent = allLive.length;
 
-        grid.innerHTML = liveRooms.map(([code, room]) => {
-          const cfg = room.config || {};
-          const teams = room.teams || {};
-          const teamCount = Object.keys(teams).length;
-          const title = cfg.auctionTitle || (cfg.auctionType === 'manual' ? 'Custom Auction' : 'IPL Auction');
-          const started = formatTimeSince(cfg.createdAt);
-          const currentPlayer = room.playerQueue && room.currentIndex != null
-            ? (room.playerQueue[room.currentIndex] || null) : null;
-          const currentBid = room.currentBid ? '&#8377;' + (room.currentBid >= 100 ? (room.currentBid / 100).toFixed(1) + 'Cr' : room.currentBid + 'L') : '&#8377;---';
+      if (!allLive.length) {
+        grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions right now. <a href="#arena" style="color:#cc1f1f;">Start one above!</a></div>';
+        return;
+      }
 
-          return `
+      const list = liveExploreAll ? allLive : todayLive;
+      const displayed = liveExploreAll ? list : list.slice(0, 6);
+
+      if (!displayed.length) {
+        grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions started today.<br><a href="#live-auctions" onclick="toggleLiveExplore();return false;" style="color:#cc1f1f;font-weight:600;">Explore all live auctions →</a></div>';
+        return;
+      }
+
+      grid.innerHTML = displayed.map(([code, room]) => {
+        const cfg = room.config || {};
+        const teams = room.teams || {};
+        const teamCount = Object.keys(teams).length;
+        const title = cfg.auctionTitle || (cfg.auctionType === 'manual' ? 'Custom Auction' : 'IPL Auction');
+        const started = formatTimeSince(getRoomStartedAt(cfg));
+        const currentBid = room.currentBid ? '&#8377;' + (room.currentBid >= 100 ? (room.currentBid / 100).toFixed(1) + 'Cr' : room.currentBid + 'L') : '&#8377;---';
+
+        return `
           <div class="ma-auction-card">
             <div class="ma-auction-card-head">
               <span class="ma-live-badge">&#9679; Live Now</span>
@@ -795,7 +845,23 @@
               <button class="ma-join-btn" onclick="watchRoom('${escHtml(code)}')">👀 Join Auction (Viewer)</button>
             </div>
           </div>`;
-        }).join('');
+      }).join('');
+    }
+
+    function loadLiveRooms() {
+      const grid = document.getElementById('liveRoomsGrid');
+      if (!grid) return;
+      if (typeof db === 'undefined') { setTimeout(loadLiveRooms, 800); return; }
+
+      if (liveRoomsListenerAttached) {
+        if (liveRoomsCache) renderLiveRooms(liveRoomsCache);
+        return;
+      }
+      liveRoomsListenerAttached = true;
+
+      db.ref('rooms').on('value', function (snap) {
+        liveRoomsCache = snap.exists() ? (snap.val() || {}) : {};
+        renderLiveRooms(liveRoomsCache);
       });
     }
 

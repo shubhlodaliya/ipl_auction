@@ -179,6 +179,22 @@ function parseNumber(value) {
   return Number.isFinite(num) ? num : null;
 }
 
+function parseDateTimeLocal(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return 0;
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!m) return 0;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const hour = Number(m[4]);
+  const minute = Number(m[5]);
+  const second = Number(m[6] || 0);
+  const dt = new Date(year, month - 1, day, hour, minute, second, 0);
+  const ms = dt.getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
 function parseHyperlinkFormulaUrl(formula) {
   const f = String(formula || '').trim();
   if (!/^HYPERLINK\(/i.test(f)) return '';
@@ -770,6 +786,7 @@ async function createManualRoom() {
   const hostRoleMode = getSelectedHostRoleMode();
   const hostManagerOnly = hostRoleMode !== 'playing';
   const hostBidsForAllTeams = hostRoleMode === 'paddle';
+  const scheduledStartAt = parseDateTimeLocal(document.getElementById('manualStartTime')?.value || '');
 
   const teams = collectTeams(true);
   const players = collectPlayers();
@@ -787,6 +804,7 @@ async function createManualRoom() {
   if (maxIconPlayers > maxSquadSize) return showError('Max icon players cannot exceed max players per team.');
   if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
+  if (scheduledStartAt && scheduledStartAt < Date.now() - 60 * 1000) return showError('Start time must be in the future.');
 
   // Paddle mode: keep bid UI simple by forcing a single bid button.
   const effectiveBidOptions = hostBidsForAllTeams ? [bidOptions[0]] : bidOptions;
@@ -891,7 +909,8 @@ async function createManualRoom() {
         auctionMode: 'manual',
         invitePasscode: passcode,
         status: 'lobby',
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        scheduledStartAt: scheduledStartAt || 0
       },
       manualTeams,
       manualPlayers: finalPlayers,
@@ -908,7 +927,8 @@ async function createManualRoom() {
         hostTeamId: hostTeam ? hostTeam.id : null,
         hostName: hostLabel,
         createdAt: Date.now(),
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        scheduledStartAt: scheduledStartAt || 0
       });
     }
 

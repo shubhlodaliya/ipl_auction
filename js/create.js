@@ -24,6 +24,32 @@ function formatHistoryDate(ts) {
   }
 }
 
+function parseDateTimeLocal(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return 0;
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!m) return 0;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const hour = Number(m[4]);
+  const minute = Number(m[5]);
+  const second = Number(m[6] || 0);
+  const dt = new Date(year, month - 1, day, hour, minute, second, 0);
+  const ms = dt.getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function formatScheduleLabel(ts) {
+  const time = Number(ts || 0);
+  if (!Number.isFinite(time) || time <= 0) return '';
+  try {
+    return new Date(time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  } catch (_) {
+    return new Date(time).toLocaleString();
+  }
+}
+
 function escapeHtml(text) {
   return String(text || '')
     .replace(/&/g, '&amp;')
@@ -51,6 +77,7 @@ function mapRoomToHistoryRow(roomCode, room) {
   const auctionType = config.auctionType || (room?.manualPlayers ? 'manual' : 'random');
   const fallbackTitle = auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
   const terminatedAt = Number(config.terminatedAt || 0) || 0;
+  const scheduledStartAt = Number(config.scheduledStartAt || 0) || 0;
   return {
     roomCode,
     title: String(config.auctionTitle || '').trim() || fallbackTitle,
@@ -62,6 +89,7 @@ function mapRoomToHistoryRow(roomCode, room) {
     finishedAt: Number(config.finishedAt || 0) || 0,
     createdAt,
     updatedAt,
+    scheduledStartAt,
     migratedFromRoom: true
   };
 }
@@ -90,11 +118,132 @@ function initCreatePage() {
   initAuctionModeToggle();
   initSquadRangeControls();
   renderPastAuctions();
+  renderScheduledAuctions();
   window.addEventListener('focus', renderPastAuctions);
+  window.addEventListener('focus', renderScheduledAuctions);
   window.addEventListener('storage', (event) => {
     if (!event || !String(event.key || '').startsWith('ipl_auth_')) return;
     renderPastAuctions();
+    renderScheduledAuctions();
   });
+}
+
+async function renderScheduledAuctions() {
+  const listEl = document.getElementById('scheduledAuctionsList');
+  if (!listEl) return;
+
+  const authUid = getAuthUid();
+  if (!authUid) {
+    listEl.innerHTML = `
+      <div class="ma-tournament-item" style="justify-content:space-between;">
+        <div style="color:var(--text-dim);font-size:0.9rem;">Login to see your scheduled auctions.</div>
+        <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = `
+    <div class="ma-tournament-item" style="justify-content:space-between;">
+      <div style="color:var(--text-dim);font-size:0.9rem;">Loading scheduled auctions...</div>
+      <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
+    </div>`;
+
+  try {
+    const [historySnap, hostedRows] = await Promise.all([
+      db.ref(getHistoryPath(authUid)).get(),
+      getHostOwnedRooms(authUid)
+    ]);
+
+    const historyMap = historySnap.exists() ? (historySnap.val() || {}) : {};
+    const merged = new Map();
+
+    Object.values(historyMap)
+      .filter((item) => item && item.roomCode)
+      .forEach((item) => {
+        const roomCode = String(item.roomCode || '').toUpperCase();
+        if (!roomCode) return;
+        merged.set(roomCode, {
+          ...item,
+          roomCode,
+          status: normalizeHistoryStatus(item.status),
+          scheduledStartAt: Number(item.scheduledStartAt || 0) || 0
+        });
+      });
+
+    hostedRows.forEach((row) => {
+      const roomCode = String(row.roomCode || '').toUpperCase();
+      if (!roomCode) return;
+      const existing = merged.get(roomCode);
+      if (!existing) {
+        merged.set(roomCode, row);
+        return;
+      }
+      if (!Number(existing.scheduledStartAt || 0) && Number(row.scheduledStartAt || 0)) {
+        merged.set(roomCode, { ...existing, scheduledStartAt: Number(row.scheduledStartAt || 0) || 0 });
+      }
+      const existingUpdatedAt = Number(existing.updatedAt || existing.createdAt || 0);
+      const rowUpdatedAt = Number(row.updatedAt || row.createdAt || 0);
+      if (rowUpdatedAt > existingUpdatedAt) {
+        merged.set(roomCode, { ...existing, ...row, roomCode });
+      }
+    });
+
+    const now = Date.now();
+    const rows = Array.from(merged.values())
+      .filter((row) => String(row.status || '').toLowerCase() === 'lobby')
+      .filter((row) => Number(row.scheduledStartAt || 0) > 0)
+      .sort((a, b) => Number(a.scheduledStartAt || 0) - Number(b.scheduledStartAt || 0));
+
+    if (!rows.length) {
+      listEl.innerHTML = `
+        <div class="ma-tournament-item" style="justify-content:space-between;">
+          <div>
+            <div style="font-weight:700;color:var(--text);">No scheduled auctions</div>
+            <div style="font-size:0.85rem;color:var(--text-dim);">Create an auction and set a start time.</div>
+          </div>
+          <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = rows.slice(0, 12).map((row) => {
+      const roomCode = escapeHtml(String(row.roomCode || '').toUpperCase());
+      const title = escapeHtml(row.title || 'Auction');
+      const startAt = Number(row.scheduledStartAt || 0) || 0;
+      const startLabel = escapeHtml(formatScheduleLabel(startAt));
+      const date = new Date(startAt);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = date.toLocaleString([], { month: 'short' }).toUpperCase();
+      const metaLine = startAt < now
+        ? '<span style="color:var(--red);font-weight:700;">Scheduled time passed</span>'
+        : `<span style="color:var(--text-dim);font-weight:700;">Starts at ${startLabel}</span>`;
+
+      return `
+        <div class="ma-tournament-item">
+          <div class="ma-tournament-date">
+            <div class="day">${escapeHtml(day)}</div>
+            <div class="month">${escapeHtml(month)}</div>
+          </div>
+          <div class="ma-tournament-info">
+            <h4>${title} <span style="font-size:0.75rem;color:var(--text-dim);font-weight:500;">#${roomCode}</span></h4>
+            <p>${metaLine}</p>
+          </div>
+          <div class="ma-tournament-time">STATUS<br>LOBBY</div>
+          <button class="ma-remind-btn" onclick="openPastLobbyAuction('${roomCode}')">Open</button>
+        </div>`;
+    }).join('') + `
+      <div class="ma-tournament-item" style="justify-content:space-between;">
+        <div style="color:var(--text-dim);font-size:0.85rem;">Open later and press Start Auction in lobby.</div>
+        <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
+      </div>`;
+  } catch (err) {
+    console.error('Failed to load scheduled auctions:', err);
+    listEl.innerHTML = `
+      <div class="ma-tournament-item" style="justify-content:space-between;">
+        <div style="color:var(--text-dim);font-size:0.9rem;">Could not load scheduled auctions.</div>
+        <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
+      </div>`;
+  }
 }
 
 async function renderPastAuctions() {
@@ -504,6 +653,7 @@ async function restartPastAuction(sourceCode) {
 }
 
 window.renderPastAuctions = renderPastAuctions;
+window.renderScheduledAuctions = renderScheduledAuctions;
 window.reopenPastAuction = reopenPastAuction;
 window.restartPastAuction = restartPastAuction;
 window.openPastLobbyAuction = openPastLobbyAuction;
@@ -649,6 +799,7 @@ async function createRoom() {
   const minSquad = parseInt(document.getElementById('minSquadRange').value || '1');
   const timerSec = parseInt(document.getElementById('timerRange').value);
   const auctionMode = document.querySelector('input[name="auctionMode"]:checked')?.value || 'random';
+  const scheduledStartAt = parseDateTimeLocal(document.getElementById('createStartTime')?.value || '');
   const authUid = getAuthUid();
 
   const errEl = document.getElementById('createError');
@@ -659,6 +810,7 @@ async function createRoom() {
   if (!passcode) { showError(errEl, 'Please set a room passcode.'); return; }
   if (!Number.isFinite(minSquad) || minSquad < 1) { showError(errEl, 'Minimum squad size must be at least 1.'); return; }
   if (minSquad > maxSquad) { showError(errEl, 'Minimum squad size cannot be greater than maximum squad size.'); return; }
+  if (scheduledStartAt && scheduledStartAt < Date.now() - 60 * 1000) { showError(errEl, 'Start time must be in the future.'); return; }
 
   const btn = document.getElementById('createBtn');
   btn.disabled = true;
@@ -680,7 +832,8 @@ async function createRoom() {
         auctionMode,
         invitePasscode: passcode,
         status: 'lobby',
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        scheduledStartAt: scheduledStartAt || 0
       },
       teams: {
         [teamId]: {
@@ -705,7 +858,8 @@ async function createRoom() {
       auctionType: 'random',
       hostTeamId: teamId,
       hostName: name,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      scheduledStartAt: scheduledStartAt || 0
     });
 
     saveSession({ roomCode: code, teamId, playerName: name, isHost: true });

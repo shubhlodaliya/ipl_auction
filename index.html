@@ -268,6 +268,7 @@
     <div class="ma-nav-links">
       <a href="index.html" class="active">Home</a>
       <a href="#live-auctions">Today's Auctions</a>
+      <a href="#scheduled-auctions">Scheduled Auctions</a>
       <a href="#arena">IPL Auction</a>
       <a href="guide.html">Guide</a>
     </div>
@@ -462,6 +463,11 @@
                 maxlength="20" />
             </div>
             <div class="form-group">
+              <label class="form-label">Auction Start Time (optional)</label>
+              <input class="form-input" id="createStartTime" type="datetime-local" />
+              <div style="font-size:0.78rem;color:#777;line-height:1.35;">Set your start time now, open later and press Start Auction in lobby.</div>
+            </div>
+            <div class="form-group">
               <label class="form-label">Player Order</label>
               <div class="mode-toggle" id="auctionModeToggle">
                 <label class="mode-option active" for="modeRandom">
@@ -530,6 +536,18 @@
       <div class="ma-loading-live">
         <div class="spinner" style="margin:0 auto 0.5rem;"></div>
         <p>Loading live auctions...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHEDULED AUCTIONS (Saved rooms with start time) -->
+  <section class="ma-tournaments" id="scheduled-auctions">
+    <h2 class="ma-section-title">Scheduled Auctions</h2>
+    <div class="ma-section-divider"></div>
+    <div class="ma-tournament-list" id="scheduledAuctionsList">
+      <div class="ma-tournament-item" style="justify-content:space-between;">
+        <div style="color:#888;font-size:0.9rem;">Login to see your scheduled auctions.</div>
+        <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
       </div>
     </div>
   </section>

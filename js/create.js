@@ -177,6 +177,7 @@ async function renderPastAuctions() {
       const statusClass = status === 'auction' ? 'auction' : status === 'finished' ? 'finished' : 'lobby';
       const isTerminated = Number(row.terminatedAt || 0) > 0;
       const canReopen = status === 'auction';
+      const canOpenLobby = status === 'lobby';
       const canRestart = isTerminated;
       const updatedAtLabel = formatHistoryDate(row.updatedAt || row.createdAt);
       return `
@@ -190,6 +191,7 @@ async function renderPastAuctions() {
           </div>
           <div class="past-auction-meta">Updated: ${escapeHtml(updatedAtLabel)}</div>
           <div class="past-auction-actions">
+            ${canOpenLobby ? `<button class="btn btn-secondary" type="button" onclick="openPastLobbyAuction('${roomCode}')">Open</button>` : ''}
             ${canReopen ? `<button class="btn btn-secondary" type="button" onclick="reopenPastAuction('${roomCode}')">Reopen</button>` : ''}
             ${canRestart ? `<button class="btn btn-ghost" type="button" onclick="restartPastAuction('${roomCode}')">Restart</button>` : ''}
           </div>
@@ -199,6 +201,67 @@ async function renderPastAuctions() {
   } catch (err) {
     console.error('Failed to load past auctions:', err);
     listEl.innerHTML = '<div class="state-empty" style="padding:0.85rem 0;"><p style="font-size:0.82rem;">Could not load past auctions.</p></div>';
+  }
+}
+
+async function openPastLobbyAuction(roomCode) {
+  const authUid = getAuthUid();
+  if (!authUid) {
+    showToast('Please login first.', 'error');
+    return;
+  }
+
+  try {
+    const snap = await db.ref(`rooms/${roomCode}`).get();
+    if (!snap.exists()) {
+      showToast('Auction room no longer exists.', 'error');
+      return;
+    }
+
+    const room = snap.val() || {};
+    const config = room.config || {};
+    const statusText = String(config.status || 'lobby').toLowerCase();
+    if (statusText === 'finished') {
+      showToast('This auction has ended.', 'error');
+      window.location.href = `results.html?room=${encodeURIComponent(roomCode)}`;
+      return;
+    }
+    const terminatedAt = Number(config.terminatedAt || 0) || 0;
+    if (terminatedAt) {
+      showToast('This auction was terminated. Use Restart for a fresh room.', 'error');
+      return;
+    }
+
+    // Host-only reopen for lobby setup
+    const hostUid = String(config.hostUid || config.currentHostUid || '').trim();
+    const hostTeamId = config.hostTeamId
+      || Object.keys(room.teams || {}).find((id) => room.teams?.[id]?.isHost)
+      || Object.keys(room.teams || {})[0]
+      || null;
+    const hostTeamOwnerUid = String(room.teams?.[hostTeamId]?.ownerUid || '').trim();
+
+    const isHost = (!!hostUid && hostUid === authUid) || (!!hostTeamOwnerUid && hostTeamOwnerUid === authUid);
+    if (!isHost) {
+      showToast('Only the original host can open this lobby.', 'error');
+      return;
+    }
+
+    const hostName = room.teams?.[hostTeamId]?.ownerName
+      || String(localStorage.getItem('ipl_auth_name') || '').trim()
+      || 'Host';
+
+    await upsertAuctionHistory(authUid, roomCode, {
+      title: String(config.auctionTitle || '').trim() || (config.auctionType === 'manual' ? 'My Auction' : 'IPL Auction'),
+      status: 'lobby',
+      auctionType: config.auctionType || 'random',
+      hostTeamId: hostTeamId || null
+    });
+
+    saveSession({ roomCode, teamId: hostTeamId, playerName: hostName, isHost: true });
+    window.location.href = 'lobby.html';
+  } catch (err) {
+    console.error('Open lobby failed:', err);
+    showToast('Failed to open auction lobby.', 'error');
   }
 }
 
@@ -443,6 +506,7 @@ async function restartPastAuction(sourceCode) {
 window.renderPastAuctions = renderPastAuctions;
 window.reopenPastAuction = reopenPastAuction;
 window.restartPastAuction = restartPastAuction;
+window.openPastLobbyAuction = openPastLobbyAuction;
 
 function initSquadRangeControls() {
   const maxEl = document.getElementById('squadRange');

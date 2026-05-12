@@ -1,167 +1,319 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Free IPL Auction Online - Create Real-Time Cricket Auctions with Friends</title>
-  <meta name="description" content="Create or join free IPL player auctions with friends. Real-time multiplayer bidding on authentic IPL cricketers. Customize budgets, squad size, and bidding timers. No registration required!" />
-  <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="/index.html" />
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Free IPL Auction Online - Create Real-Time Cricket Auctions with Friends" />
-  <meta property="og:description" content="Host a mock IPL auction online, invite friends, bid live, and build your fantasy auction room in minutes." />
-  <meta property="og:url" content="/index.html" />
-  <meta property="og:image" content="/assets/team-logos/csk.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Free IPL Auction Online - Real-Time Mock Auction with Friends" />
-  <meta name="twitter:description" content="Create your IPL auction room, run live bidding, and play with friends across devices." />
-  <meta name="twitter:image" content="/assets/team-logos/csk.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+  <meta name="description" content="Create or join free IPL player auctions with friends. Real-time multiplayer bidding on authentic IPL cricketers. No registration required!"/>
+  <meta name="robots" content="index,follow"/>
+  <link rel="canonical" href="/index.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="Free IPL Auction Online"/>
+  <meta property="og:url" content="/index.html"/>
+  <meta property="og:image" content="/assets/team-logos/csk.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin/>
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="home-redesign.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>"/>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944" crossorigin="anonymous"></script>
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebSite",
-        "name": "IPL Auction",
-        "url": "/index.html",
-        "description": "Free IPL auction online platform for real-time multiplayer bidding with friends.",
-        "inLanguage": "en"
-      },
-      {
-        "@type": "Organization",
-        "name": "IPL Auction",
-        "url": "/index.html",
-        "logo": "/assets/team-logos/csk.png"
-      },
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Home",
-            "item": "/index.html"
-          }
-        ]
-      }
-    ]
-  }
+  {"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"IPL Auction","url":"/index.html"},{"@type":"Organization","name":"IPL Auction","url":"/index.html","logo":"/assets/team-logos/csk.png"}]}
   </script>
 </head>
-<body>
+<body class="ma-page">
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="logo">🏏 IPL Auction</div>
-    <div style="display:flex;align-items:center;gap:0.6rem;">
-      <span id="authUserLabel" class="header-badge" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Not logged in</span>
-      <button class="btn btn-ghost" id="authLoginBtn" onclick="openAuthModal('login')">Login</button>
-      <button class="btn btn-secondary" id="authSignupBtn" onclick="openAuthModal('signup')">Sign Up</button>
-      <button class="btn btn-ghost" id="authLogoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
+<!-- ANNOUNCEMENT BAR -->
+<div class="ma-announce">
+  <span>📞</span>
+  <span>Welcome to the Stadium &bull; Free IPL Auction Platform &bull; Play with Friends &bull; Real-Time Bidding</span>
+</div>
+
+<!-- NAV -->
+<nav class="ma-nav">
+  <a class="ma-logo" href="index.html">My<span>Auction</span></a>
+  <div class="ma-nav-links">
+    <a href="index.html" class="active">Home</a>
+    <a href="#live-auctions">Today's Auctions</a>
+    <a href="#tournaments">Upcoming Auctions</a>
+    <a href="#arena">IPL Auction</a>
+    <a href="guide.html">Guide</a>
+  </div>
+  <div class="ma-nav-actions">
+    <span id="authUserLabel" style="font-size:0.8rem;color:#666;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none;"></span>
+    <button class="ma-btn-outline" id="authLoginBtn" onclick="openAuthModal('login')">Login</button>
+    <button class="ma-btn-solid" id="authSignupBtn" onclick="openAuthModal('signup')">Register</button>
+    <button class="ma-btn-outline" id="authLogoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="ma-hero">
+  <div class="ma-hero-left">
+    <div class="ma-hero-badge">Live Auction System</div>
+    <h1>MyAuction</h1>
+    <div class="ma-hero-sub">The Ultimate Arena for<br>Cricket Auctions.</div>
+    <p>Precision bidding meets high-stakes cricket management. Whether it's an elite IPL-style draft or a custom club auction, dominate the market with real-time data and professional-grade tools.</p>
+    <div class="ma-hero-btns">
+      <a href="#auction-form" class="ma-btn-hero-primary">Explore Auctions ↗</a>
+      <a href="guide.html" class="ma-btn-hero-outline">View Guide</a>
     </div>
-  </header>
+  </div>
+  <div class="ma-hero-img-wrap">
+    <img src="assets/stadium-hero.jpg" alt="Cricket Stadium" onerror="this.style.background='linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)';this.style.display='block';this.style.width='100%';this.style.height='100%';this.removeAttribute('src')"/>
+    <div class="ma-bid-card">
+      <div class="ma-bid-card-label">Current Record Bid</div>
+      <div class="ma-bid-card-amount">&#8377;24.75Cr</div>
+      <div class="ma-bid-card-name">Rishabh Pant &bull; Marquee Category</div>
+    </div>
+  </div>
+</section>
 
-  <!-- HERO -->
-  <main class="page-center">
-    <div class="hero fade-in">
-      <div class="hero-icon">🏆</div>
-      <h1 class="hero-title">IPL Player Auction</h1>
-      <p class="hero-sub">Create a room · Invite friends · Bid live · Win glory</p>
+<!-- FEATURES -->
+<section class="ma-features">
+  <div class="ma-feat-card">
+    <div class="ma-feat-icon red">⚡</div>
+    <h4>Live Draft System</h4>
+    <p>Sub-second latency bidding with visual hammer-drop feedback.</p>
+  </div>
+  <div class="ma-feat-card">
+    <div class="ma-feat-icon green">📊</div>
+    <h4>Real-Time Analytics</h4>
+    <p>Dynamic budget tracking and squad balance projections for all franchises.</p>
+  </div>
+  <div class="ma-feat-card">
+    <div class="ma-feat-icon blue">🔒</div>
+    <h4>Secure Bidding</h4>
+    <p>Encrypted bid submission with multi-factor owner verification.</p>
+  </div>
+  <div class="ma-feat-card">
+    <div class="ma-feat-icon gold">⚙️</div>
+    <h4>Custom Rules</h4>
+    <p>Configure RTMs, base price tiers, and auction parameters per tournament.</p>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ma-ticker">
+  <div class="ma-ticker-inner" id="tickerInner">
+    <span class="ma-ticker-item"><span class="tag live">LIVE</span> <strong>M. SIRAJ</strong> &bull; ₹1.2M</span>
+    <span class="ma-ticker-item">|</span>
+    <span class="ma-ticker-item"><span class="tag upcoming">UPCOMING</span> <strong>MEGA DRAFT</strong> &bull; 14:00 GMT</span>
+    <span class="ma-ticker-item">|</span>
+    <span class="ma-ticker-item"><span class="tag record">RECORD</span> <strong>STADIUM REVENUE</strong> &bull; $40M</span>
+    <span class="ma-ticker-item">|</span>
+    <span class="ma-ticker-item"><span class="tag active">ACTIVE</span> <strong>1,246 OWNERS</strong> ONLINE</span>
+    <span class="ma-ticker-item">|</span>
+    <span class="ma-ticker-item"><span class="tag live">LIVE</span> <strong>R. PANT</strong> &bull; ₹24.75Cr</span>
+    <span class="ma-ticker-item">|</span>
+    <span class="ma-ticker-item"><span class="tag upcoming">UPCOMING</span> <strong>CHAMPIONS TROPHY MOCK</strong> &bull; 14:30 GMT</span>
+    <span class="ma-ticker-item">|</span>
+    <span class="ma-ticker-item"><span class="tag record">RECORD</span> <strong>STADIUM REVENUE</strong> &bull; $40M</span>
+    <span class="ma-ticker-item">|</span>
+    <span class="ma-ticker-item"><span class="tag active">ACTIVE</span> <strong>1,246 OWNERS</strong> ONLINE</span>
+  </div>
+</div>
+
+<!-- CHOOSE YOUR ARENA -->
+<section class="ma-arena" id="arena">
+  <h2 class="ma-section-title">Choose Your Arena</h2>
+  <div class="ma-section-divider"></div>
+  <div class="ma-arena-grid">
+    <div class="ma-arena-card">
+      <div class="ma-arena-card-header">
+        <div class="ma-arena-icon red">🎯</div>
+        <div><h3>Manual Auctions</h3></div>
+        <div style="margin-left:auto" class="ma-arena-trophy">🏆</div>
+      </div>
+      <p>The core of MyAuction. Host professional player drafts with customizable rules, base prices, and bidding increments. Perfect for local leagues and private tournaments.</p>
+      <ul class="ma-arena-features">
+        <li>Custom Player Pools</li>
+        <li>Real-Time Budget Tracking</li>
+        <li>Instant Leaderboards</li>
+      </ul>
+      <a href="#auction-form" class="ma-arena-btn">Start Manual Auction</a>
+    </div>
+    <div class="ma-arena-card">
+      <div class="ma-arena-card-header">
+        <div class="ma-arena-icon green">🏏</div>
+        <div><h3>IPL Auction</h3></div>
+        <div style="margin-left:auto" class="ma-arena-trophy">🥇</div>
+      </div>
+      <p>A specialized simulation engine mimicking the mega-auction experience. Includes Right-to-Match (RTM) cards, accelerated bidding rounds, and marquee player set protocols.</p>
+      <ul class="ma-arena-features">
+        <li>Official RTM Logic</li>
+        <li>Franchise Slot Management</li>
+        <li>Marquee Player Protocols</li>
+      </ul>
+      <a href="manual-setup.html" class="ma-arena-btn green-btn">Launch IPL Engine</a>
+    </div>
+  </div>
+</section>
+
+<!-- TODAY'S LIVE AUCTIONS -->
+<section class="ma-live" id="live-auctions">
+  <div class="ma-live-header">
+    <h2>Today's Live Auctions</h2>
+    <a href="#auction-form" class="ma-view-all">View All Live →</a>
+  </div>
+  <p class="ma-live-sub">Join the high-stakes bidding action happening right now.</p>
+  <div class="ma-auction-grid">
+    <div class="ma-auction-card">
+      <div class="ma-auction-card-head">
+        <span class="ma-live-badge">● Live Now</span>
+        <span class="ends">Ends 2h 30m</span>
+      </div>
+      <div class="ma-auction-card-body">
+        <h4>Mega Premier Draft 2024</h4>
+        <div class="ma-auction-meta">
+          <div class="ma-auction-meta-item"><label>Current Bid</label><span class="red">₹4.1M</span></div>
+          <div class="ma-auction-meta-item"><label>Active Bidders</label><span>12 Owners</span></div>
+        </div>
+        <a href="#auction-form" class="ma-join-btn">Join Auction</a>
+      </div>
+    </div>
+    <div class="ma-auction-card">
+      <div class="ma-auction-card-head">
+        <span class="ma-live-badge">● Live Now</span>
+        <span class="ends">Ends 1h 15m</span>
+      </div>
+      <div class="ma-auction-card-body">
+        <h4>State Club Invitationals</h4>
+        <div class="ma-auction-meta">
+          <div class="ma-auction-meta-item"><label>Current Bid</label><span class="red">₹120K</span></div>
+          <div class="ma-auction-meta-item"><label>Active Bidders</label><span>8 Owners</span></div>
+        </div>
+        <a href="#auction-form" class="ma-join-btn">Join Auction</a>
+      </div>
+    </div>
+    <div class="ma-auction-card">
+      <div class="ma-auction-card-head">
+        <span class="ma-live-badge">● Live Now</span>
+        <span class="ends">Ends 3h 00m</span>
+      </div>
+      <div class="ma-auction-card-body">
+        <h4>Legends League Draft</h4>
+        <div class="ma-auction-meta">
+          <div class="ma-auction-meta-item"><label>Current Bid</label><span class="red">₹1.5M</span></div>
+          <div class="ma-auction-meta-item"><label>Active Bidders</label><span>24 Owners</span></div>
+        </div>
+        <a href="#auction-form" class="ma-join-btn">Join Auction</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEDULED TOURNAMENTS -->
+<section class="ma-tournaments" id="tournaments">
+  <h2 class="ma-section-title">Scheduled Tournaments</h2>
+  <div class="ma-section-divider"></div>
+  <div class="ma-tournament-list">
+    <div class="ma-tournament-item">
+      <div class="ma-tournament-date"><div class="day">24</div><div class="month">May</div></div>
+      <div class="ma-tournament-info">
+        <h4>Champions Trophy Mock Auction</h4>
+        <p>Highlights: Full Int'l Squads, RTM Enabled, Accelerated Round</p>
+      </div>
+      <div class="ma-tournament-time">FORMAT<br>14:30 GMT</div>
+      <button class="ma-remind-btn">🔔 Set Reminder</button>
+    </div>
+    <div class="ma-tournament-item">
+      <div class="ma-tournament-date"><div class="day">26</div><div class="month">May</div></div>
+      <div class="ma-tournament-info">
+        <h4>Under-19 Talent Scout Draft</h4>
+        <p>Highlights: Emerging Players Pool, 10-Player Shortlist</p>
+      </div>
+      <div class="ma-tournament-time">FORMAT<br>10:00 GMT</div>
+      <button class="ma-remind-btn">🔔 Set Reminder</button>
+    </div>
+    <div class="ma-tournament-item">
+      <div class="ma-tournament-date"><div class="day">30</div><div class="month">May</div></div>
+      <div class="ma-tournament-info">
+        <h4>IPL Mega Auction Simulation</h4>
+        <p>Highlights: All 10 Teams, Full Player Database, Live Commentary</p>
+      </div>
+      <div class="ma-tournament-time">FORMAT<br>16:00 GMT</div>
+      <button class="ma-remind-btn">🔔 Set Reminder</button>
+    </div>
+  </div>
+</section>
+
+<!-- AUCTION FORM SECTION -->
+<section id="auction-form" style="background:#fff;padding:3rem 2rem;">
+  <div style="max-width:680px;margin:0 auto;">
+    <h2 class="ma-section-title">Start Your Auction</h2>
+    <div class="ma-section-divider"></div>
+
+    <div class="tabs" style="margin-bottom:1rem;">
+      <button class="tab-btn active" id="tabCreate" onclick="switchTab('create')">🎉 Create Auction</button>
+      <button class="tab-btn" id="tabJoin" onclick="switchTab('join')">🔗 Join Auction</button>
     </div>
 
-    <!-- MAIN CARD -->
-    <div class="glass landing-card fade-in" style="animation-delay:0.1s">
+    <div style="display:flex;justify-content:center;margin-bottom:1rem;">
+      <button class="btn btn-secondary" onclick="window.location.href='manual-setup.html'">🛠️ Manual Auction Setup</button>
+    </div>
 
-      <!-- TABS -->
-      <div class="tabs">
-        <button class="tab-btn active" id="tabCreate" onclick="switchTab('create')">🎉 Create Auction</button>
-        <button class="tab-btn" id="tabJoin" onclick="switchTab('join')">🔗 Join Auction</button>
-      </div>
-
-      <div style="display:flex;justify-content:center;margin-top:0.75rem;">
-        <button class="btn btn-secondary" onclick="window.location.href='manual-setup.html'">🛠️ Manual Auction Setup</button>
-      </div>
-
-      <!-- CREATE PANEL -->
-      <div class="tab-panel active" id="panelCreate">
+    <!-- CREATE PANEL -->
+    <div class="tab-panel active" id="panelCreate">
+      <div class="glass landing-card">
         <div class="form-group">
           <label class="form-label">Your Name</label>
-          <input class="form-input" id="createName" type="text" placeholder="Enter your name" maxlength="24" />
+          <input class="form-input" id="createName" type="text" placeholder="Enter your name" maxlength="24"/>
         </div>
-
         <div class="form-group">
           <label class="form-label">Select Your IPL Team</label>
           <div class="team-grid" id="createTeamGrid"></div>
-          <input type="hidden" id="createTeamId" />
+          <input type="hidden" id="createTeamId"/>
         </div>
-
         <div class="form-group">
           <label class="form-label">Budget per Team</label>
           <div class="range-wrapper">
-            <input type="range" id="budgetRange" min="500" max="10000" step="100" value="2000"
-                   oninput="document.getElementById('budgetVal').textContent=formatPrice(+this.value)" />
+            <input type="range" id="budgetRange" min="500" max="10000" step="100" value="2000" oninput="document.getElementById('budgetVal').textContent=formatPrice(+this.value)"/>
             <span class="range-val" id="budgetVal">₹2000L</span>
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label">Max Squad Size</label>
           <div class="range-wrapper">
-            <input type="range" id="squadRange" min="5" max="25" step="1" value="25"
-                   oninput="document.getElementById('squadVal').textContent=this.value+' players'" />
+            <input type="range" id="squadRange" min="5" max="25" step="1" value="25" oninput="document.getElementById('squadVal').textContent=this.value+' players'"/>
             <span class="range-val" id="squadVal">25 players</span>
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label">Minimum Squad Size</label>
           <div class="range-wrapper">
-            <input type="range" id="minSquadRange" min="1" max="25" step="1" value="11"
-                   oninput="document.getElementById('minSquadVal').textContent=this.value+' players'" />
+            <input type="range" id="minSquadRange" min="1" max="25" step="1" value="11" oninput="document.getElementById('minSquadVal').textContent=this.value+' players'"/>
             <span class="range-val" id="minSquadVal">11 players</span>
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label">Bid Timer (seconds)</label>
           <div class="range-wrapper">
-            <input type="range" id="timerRange" min="10" max="60" step="5" value="30"
-                   oninput="document.getElementById('timerVal').textContent=this.value+'s'" />
+            <input type="range" id="timerRange" min="10" max="60" step="5" value="30" oninput="document.getElementById('timerVal').textContent=this.value+'s'"/>
             <span class="range-val" id="timerVal">30s</span>
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label">Invite Passcode (required)</label>
-          <input class="form-input" id="createPasscode" type="text" placeholder="Set room passcode" maxlength="20" />
+          <input class="form-input" id="createPasscode" type="text" placeholder="Set room passcode" maxlength="20"/>
         </div>
-
         <div class="form-group">
           <label class="form-label">Player Order</label>
           <div class="mode-toggle" id="auctionModeToggle">
             <label class="mode-option active" for="modeRandom">
-              <input type="radio" id="modeRandom" name="auctionMode" value="random" checked />
+              <input type="radio" id="modeRandom" name="auctionMode" value="random" checked/>
               <span>Random</span>
             </label>
             <label class="mode-option" for="modeCategory">
-              <input type="radio" id="modeCategory" name="auctionMode" value="category" />
+              <input type="radio" id="modeCategory" name="auctionMode" value="category"/>
               <span>By Category</span>
             </label>
           </div>
         </div>
-
-        <button class="btn btn-primary btn-lg btn-full" id="createBtn" onclick="createRoom()">
-          🚀 Create Auction Room
-        </button>
+        <button class="btn btn-primary btn-lg btn-full" id="createBtn" onclick="createRoom()">🚀 Create Auction Room</button>
         <p id="createError" style="color:var(--red);font-size:0.85rem;display:none;"></p>
-
         <div class="past-auctions-wrap" id="pastAuctionsWrap">
           <div class="past-auctions-head">
             <h3>My Past Auctions</h3>
@@ -175,26 +327,23 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- JOIN PANEL -->
-      <div class="tab-panel" id="panelJoin">
+    <!-- JOIN PANEL -->
+    <div class="tab-panel" id="panelJoin">
+      <div class="glass landing-card">
         <div class="form-group">
           <label class="form-label">Room Code</label>
-          <input class="form-input" id="joinCode" type="text" placeholder="Enter 6-character code"
-                 maxlength="6" style="text-transform:uppercase;font-size:1.3rem;letter-spacing:6px;font-family:'Rajdhani',sans-serif;font-weight:700;"
-                 oninput="this.value=this.value.toUpperCase(); checkRoomCode(this.value)" />
+          <input class="form-input" id="joinCode" type="text" placeholder="Enter 6-character code" maxlength="6" style="text-transform:uppercase;font-size:1.3rem;letter-spacing:6px;font-family:'Rajdhani',sans-serif;font-weight:700;" oninput="this.value=this.value.toUpperCase();checkRoomCode(this.value)"/>
         </div>
-
         <div class="form-group">
           <label class="form-label">Your Name</label>
-          <input class="form-input" id="joinName" type="text" placeholder="Enter your name" maxlength="24" />
+          <input class="form-input" id="joinName" type="text" placeholder="Enter your name" maxlength="24"/>
         </div>
-
         <div class="form-group">
           <label class="form-label">Passcode</label>
-          <input class="form-input" id="joinPasscode" type="text" placeholder="Enter room passcode" maxlength="20" />
+          <input class="form-input" id="joinPasscode" type="text" placeholder="Enter room passcode" maxlength="20"/>
         </div>
-
         <div class="form-group">
           <label class="form-label">Pick Your IPL Team</label>
           <div class="team-grid" id="joinTeamGrid">
@@ -202,270 +351,132 @@
               <p style="color:var(--text-dim);font-size:0.85rem;">Enter room code to see available teams</p>
             </div>
           </div>
-          <input type="hidden" id="joinTeamId" />
+          <input type="hidden" id="joinTeamId"/>
         </div>
-
-        <button class="btn btn-primary btn-lg btn-full" id="joinBtn" onclick="joinRoom()">
-          🚀 Join Auction
-        </button>
-        <button class="btn btn-secondary btn-lg btn-full" id="watchLiveBtn" onclick="watchLiveAuction()" style="margin-top:0.75rem;">
-          👀 Watch Live Auction
-        </button>
+        <button class="btn btn-primary btn-lg btn-full" id="joinBtn" onclick="joinRoom()">🚀 Join Auction</button>
+        <button class="btn btn-secondary btn-lg btn-full" id="watchLiveBtn" onclick="watchLiveAuction()" style="margin-top:0.75rem;">👀 Watch Live Auction</button>
         <p id="joinError" style="color:var(--red);font-size:0.85rem;display:none;"></p>
       </div>
-
-    </div>
-  </main>
-
-  <!-- INFORMATION SECTION -->
-  <section style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); padding: 3rem 1.5rem; max-width: 100%; margin-bottom: 2rem;">
-    <div style="max-width: 1000px; margin: 0 auto;">
-      <h2 style="font-size: 2rem; color: var(--primary); text-align: center; margin-bottom: 2rem;">Experience the Thrill of IPL Auctions</h2>
-      
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">⚡ Real-Time Bidding</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Experience live auction action with instant bidding synchronization across all participants. Watch as prices climb and teams compete for their favorite IPL players.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">🎮 Easy to Use</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">No registration required. Start hosting auctions in seconds. Our intuitive interface makes it easy for anyone to create rooms, invite friends, and manage bids.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">🏏 Real IPL Players</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Bid on authentic IPL players from all franchises. Build your dream team by bidding on star batsmen, world-class bowlers, and emerging talents just like the real IPL auction.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">👥 Multiplayer Experience</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Play with up to 8 teams in one auction. Create private rooms with passcodes. Invite friends and cricket enthusiasts from anywhere in the world.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">⚙️ Customizable Settings</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Control every aspect: budget limits, squad size, bid timer, player ordering. Create auctions tailored exactly to your preferences and playing style.</p>
-        </div>
-
-        <div style="background: var(--glass); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary);">
-          <h3 style="color: var(--primary); margin-bottom: 0.8rem;">📱 Cross-Device Compatible</h3>
-          <p style="color: var(--text-sec); line-height: 1.6;">Play on desktop, tablet, or smartphone. Fully responsive design works seamlessly on all devices. No apps to download—just open your browser.</p>
-        </div>
-      </div>
-
-      <div style="background: var(--glass); padding: 2rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid rgba(59, 130, 246, 0.3);">
-        <h3 style="font-size: 1.4rem; color: var(--primary); margin-bottom: 1rem;">What is an IPL Auction?</h3>
-        <p style="color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          The Indian Premier League (IPL) auction is where cricket teams bid for player contracts in real-time competitive format. Our platform replicates this thrilling experience, allowing friends and cricket enthusiasts to host their own virtual auctions with real IPL players.
-        </p>
-        <p style="color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          In IPL auctions, teams have limited budgets and must strategically allocate funds across players. It's a game of skill, strategy, and cricket knowledge. Will you overspend on star players or build balanced squads? The decisions are yours!
-        </p>
-        <p style="color: var(--text-main); line-height: 1.8;">
-          Whether you're a hardcore cricket fan, fantasy cricket enthusiast, or someone looking for a fun team activity, IPL auctions offer excitement, strategy, and endless entertainment. Test your cricket knowledge, challenge friends, and experience the adrenaline of competitive bidding.
-        </p>
-      </div>
-
-      <div style="text-align: center;">
-        <h3 style="font-size: 1.3rem; color: var(--primary); margin-bottom: 1rem;">Why Choose Our Platform?</h3>
-        <ul style="list-style: none; padding: 0; display: inline-block; text-align: left; color: var(--text-main);">
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ 100% Free:</strong> No subscriptions, no hidden charges</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ No Registration:</strong> Start immediately without email verification</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Fast & Reliable:</strong> Real-time synchronization with 99.9% uptime</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Fully Customizable:</strong> Control budget, squad size, timer, player order</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Mobile Friendly:</strong> Works perfectly on all devices and browsers</li>
-          <li style="padding: 0.5rem 0;"><strong style="color: var(--primary);">✓ Secure & Private:</strong> Passcode protection for exclusive auctions</li>
-        </ul>
-      </div>
-
-      <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-        <h3 style="font-size: 1.3rem; color: var(--primary); margin-bottom: 1.5rem; text-align: center;">Perfect For</h3>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">👥 Friends & Family</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Organize exciting auctions for cricket-loving friends and family gatherings.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🎓 Learning & Training</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Teach cricket strategy, player analysis, and auction mechanics to enthusiasts.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🏆 Fantasy Cricket</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Run league-based competitions and tournaments with league standings.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🎮 Gaming Communities</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Host auctions for cricket gaming groups and e-sports communities.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🤝 Team Building</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Remote team activities that engage everyone in strategic competition.</p>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary);">
-            <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🌍 Global Cricket Fans</h4>
-            <p style="color: var(--text-sec); font-size: 0.9rem;">Connect with cricket enthusiasts worldwide through competitive auctions.</p>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top: 3rem; padding: 2rem; background: var(--glass); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3); text-align: center;">
-        <h3 style="font-size: 1.2rem; color: var(--primary); margin-bottom: 1rem;">Want to Learn More?</h3>
-        <p style="color: var(--text-sec); margin-bottom: 1.5rem;">Check out our comprehensive guides to master IPL auction strategies, player analysis, and winning tactics.</p>
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-          <a href="guide.html" class="btn btn-secondary" style="text-decoration: none;">📚 Auction Rules & Bidding Strategies Guide</a>
-          <a href="howto.html" class="btn btn-secondary" style="text-decoration: none;">🎯 Step-by-Step Room Setup Guide</a>
-          <a href="manual-setup.html" class="btn btn-secondary" style="text-decoration: none;">🛠️ Manual Auction Room Setup</a>
-          <a href="faq.html" class="btn btn-secondary" style="text-decoration: none;">❓ IPL Auction FAQ</a>
-          <a href="learning-center.html" class="btn btn-secondary" style="text-decoration: none;">🧠 Learning Center Articles</a>
-        </div>
-      </div>
-
-      <section style="margin-top:2rem;padding:1.4rem;background:var(--glass);border-radius:8px;border:1px solid rgba(59,130,246,0.25);">
-        <h3 style="font-size:1.25rem;color:var(--primary);margin-bottom:0.8rem;">Popular IPL Auction Topics</h3>
-        <p style="color:var(--text-main);line-height:1.7;margin-bottom:0.7rem;">
-          Looking for <strong>auction rules</strong>, practical <strong>bidding strategies</strong>, or a full <strong>room setup guide</strong>?
-          Use these curated resources to improve your mock IPL auction results.
-        </p>
-        <ul style="margin:0;padding-left:1.1rem;color:var(--text-sec);line-height:1.8;">
-          <li><a href="guide.html" style="color:var(--primary);text-decoration:none;">IPL auction rules and bidding strategy guide</a></li>
-          <li><a href="howto.html" style="color:var(--primary);text-decoration:none;">Step-by-step room setup guide for friends</a></li>
-          <li><a href="manual-setup.html" style="color:var(--primary);text-decoration:none;">Manual fantasy auction room configuration</a></li>
-          <li><a href="faq.html" style="color:var(--primary);text-decoration:none;">Frequently asked questions on budgets, squads, and timer settings</a></li>
-          <li><a href="learning-center.html" style="color:var(--primary);text-decoration:none;">Original long-form strategy articles and host checklists</a></li>
-        </ul>
-      </section>
-
-      <section style="margin-top:1rem;padding:1.4rem;background:var(--glass);border-radius:8px;border:1px solid rgba(255,203,48,0.28);">
-        <h3 style="font-size:1.25rem;color:var(--gold);margin-bottom:0.8rem;">Transparency and Content Standards</h3>
-        <p style="color:var(--text-main);line-height:1.75;margin-bottom:0.7rem;">
-          We publish practical guides for auction simulation and keep our instructional content updated when features change.
-          Read our policies to understand how content is reviewed, how privacy is handled, and how platform terms apply.
-        </p>
-        <ul style="margin:0;padding-left:1.1rem;color:var(--text-sec);line-height:1.8;">
-          <li><a href="editorial-policy.html" style="color:var(--gold);text-decoration:none;">Editorial policy and correction standards</a></li>
-          <li><a href="privacy-policy.html" style="color:var(--gold);text-decoration:none;">Privacy policy and advertising information</a></li>
-          <li><a href="terms.html" style="color:var(--gold);text-decoration:none;">Terms of use for auction rooms and platform access</a></li>
-        </ul>
-      </section>
-    </div>
-  </section>
-
-  <!-- CONTENT FOOTER PLACEHOLDER -->
-  <div style="display:none;">
-    <!-- SEO Content Keywords: IPL auction online, free fantasy cricket, virtual player auction, cricket bidding game, IPL team builder, multiplayer cricket games, online auction platform, real-time bidding game, fantasy sports platform, cricket fan engagement -->
-  </div>
-
-    </div>
-  </main>
-
-  <!-- TOAST -->
-  <div class="toast" id="toast"></div>
-
-  <div class="team-modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
-    <div class="team-modal auth-modal" onclick="event.stopPropagation()">
-      <div class="team-modal-header auth-modal-header">
-        <h3 id="authModalTitle">Login</h3>
-        <button class="btn btn-ghost" onclick="closeAuthModal()">Close</button>
-      </div>
-      <p class="auth-subtitle">Securely access your rooms and keep your auction activity linked to your account.</p>
-      <div class="tabs auth-tabs">
-        <button class="tab-btn active" id="authTabLogin" onclick="switchAuthMode('login')">Login</button>
-        <button class="tab-btn" id="authTabSignup" onclick="switchAuthMode('signup')">Sign Up</button>
-      </div>
-      <div class="form-group auth-group" id="authNameWrap" style="display:none;">
-        <label class="form-label">Full Name</label>
-        <input class="form-input" id="authName" type="text" maxlength="40" placeholder="Enter full name" />
-      </div>
-      <div class="form-group auth-group">
-        <label class="form-label">Email</label>
-        <input class="form-input" id="authEmail" type="email" placeholder="Enter email" />
-      </div>
-      <div class="form-group auth-group">
-        <label class="form-label">Password</label>
-        <input class="form-input" id="authPassword" type="password" placeholder="Enter password" minlength="6" />
-      </div>
-      <button class="btn btn-primary btn-lg btn-full auth-submit-btn" id="authSubmitBtn" onclick="submitAuthForm()">Login</button>
-      <div class="auth-divider"><span>or</span></div>
-      <button class="btn btn-secondary btn-lg btn-full auth-google-btn" id="authGoogleBtn" onclick="signInWithGoogle()">
-        <span class="auth-google-mark" aria-hidden="true">G</span>
-        Continue with Google
-      </button>
-      <p id="authError" class="auth-error" style="display:none;"></p>
     </div>
   </div>
+</section>
 
-  <footer class="site-footer">
-    <div class="site-footer-inner">
-      <span>© 2026 IPL Auction</span>
-      <nav class="site-footer-links" aria-label="Legal and contact links">
-        <a href="about.html">About</a>
-        <a href="guide.html">Guide</a>
-        <a href="howto.html">How-To</a>
-        <a href="manual-setup.html">Manual Setup</a>
-        <a href="faq.html">FAQ</a>
-        <a href="learning-center.html">Learning Center</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy-policy.html">Privacy Policy</a>
-        <a href="terms.html">Terms</a>
-        <a href="editorial-policy.html">Editorial Policy</a>
-      </nav>
+<!-- FOOTER -->
+<footer class="ma-footer">
+  <div class="ma-footer-grid">
+    <div class="ma-footer-brand">
+      <a class="ma-logo" href="index.html">My<span style="color:#fff">Auction</span></a>
+      <p>Professional Cricket Auction Platform. Elevating the game through data-driven bidding systems.</p>
     </div>
-  </footer>
+    <div class="ma-footer-col">
+      <h5>Platform</h5>
+      <a href="about.html">About Us</a>
+      <a href="guide.html">Auction Rules</a>
+      <a href="howto.html">How To Play</a>
+      <a href="manual-setup.html">Manual Setup</a>
+    </div>
+    <div class="ma-footer-col">
+      <h5>Legal</h5>
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="editorial-policy.html">Editorial Policy</a>
+    </div>
+    <div class="ma-footer-col">
+      <h5>Help</h5>
+      <a href="contact.html">Contact Support</a>
+      <a href="faq.html">FAQ</a>
+      <a href="learning-center.html">Learning Center</a>
+    </div>
+  </div>
+  <div class="ma-footer-bottom">
+    <span>© 2026 MyAuction. Professional Cricket Auction Platform.</span>
+    <div class="ma-footer-socials">
+      <a href="#">f</a>
+      <a href="#">t</a>
+      <a href="#">in</a>
+    </div>
+    <span>v1.4 STABLE &bull; GLOBAL SERVER STATUS: OPTIMAL</span>
+  </div>
+</footer>
 
-  <!-- FIREBASE -->
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script defer src="js/firebase-config.js"></script>
-  <script defer src="js/utils.js"></script>
-  <script defer src="js/auth.js"></script>
-  <script defer src="js/create.js"></script>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Render team grids after deferred scripts are ready.
-      if (typeof renderCreateTeamGrid === 'function') {
-        renderCreateTeamGrid();
-      }
+<!-- AUTH MODAL -->
+<div class="team-modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
+  <div class="team-modal auth-modal" onclick="event.stopPropagation()">
+    <div class="team-modal-header auth-modal-header">
+      <h3 id="authModalTitle">Login</h3>
+      <button class="btn btn-ghost" onclick="closeAuthModal()">Close</button>
+    </div>
+    <p class="auth-subtitle">Securely access your rooms and keep your auction activity linked to your account.</p>
+    <div class="tabs auth-tabs">
+      <button class="tab-btn active" id="authTabLogin" onclick="switchAuthMode('login')">Login</button>
+      <button class="tab-btn" id="authTabSignup" onclick="switchAuthMode('signup')">Sign Up</button>
+    </div>
+    <div class="form-group auth-group" id="authNameWrap" style="display:none;">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" id="authName" type="text" maxlength="40" placeholder="Enter full name"/>
+    </div>
+    <div class="form-group auth-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="authEmail" type="email" placeholder="Enter email"/>
+    </div>
+    <div class="form-group auth-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" id="authPassword" type="password" placeholder="Enter password" minlength="6"/>
+    </div>
+    <button class="btn btn-primary btn-lg btn-full auth-submit-btn" id="authSubmitBtn" onclick="submitAuthForm()">Login</button>
+    <div class="auth-divider"><span>or</span></div>
+    <button class="btn btn-secondary btn-lg btn-full auth-google-btn" id="authGoogleBtn" onclick="signInWithGoogle()">
+      <span class="auth-google-mark" aria-hidden="true">G</span>
+      Continue with Google
+    </button>
+    <p id="authError" class="auth-error" style="display:none;"></p>
+  </div>
+</div>
 
-      const params = new URLSearchParams(window.location.search);
-      const inviteRoom = (params.get('room') || '').trim().toUpperCase();
-      const invitePasscode = (params.get('passcode') || '').trim();
-      if (!inviteRoom) return;
+<!-- FIREBASE -->
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script defer src="js/firebase-config.js"></script>
+<script defer src="js/utils.js"></script>
+<script defer src="js/auth.js"></script>
+<script defer src="js/create.js"></script>
 
-      switchTab('join');
-      const codeInput = document.getElementById('joinCode');
-      if (codeInput) {
-        codeInput.value = inviteRoom.slice(0, 6);
-        if (typeof checkRoomCode === 'function') checkRoomCode(codeInput.value);
-      }
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof renderCreateTeamGrid === 'function') renderCreateTeamGrid();
+    const params = new URLSearchParams(window.location.search);
+    const inviteRoom = (params.get('room') || '').trim().toUpperCase();
+    const invitePasscode = (params.get('passcode') || '').trim();
+    if (!inviteRoom) return;
+    switchTab('join');
+    const codeInput = document.getElementById('joinCode');
+    if (codeInput) { codeInput.value = inviteRoom.slice(0, 6); if (typeof checkRoomCode === 'function') checkRoomCode(codeInput.value); }
+    if (invitePasscode) { const p = document.getElementById('joinPasscode'); if (p) p.value = invitePasscode; }
+  });
 
-      if (invitePasscode) {
-        const passInput = document.getElementById('joinPasscode');
-        if (passInput) passInput.value = invitePasscode;
-      }
-    });
+  function switchTab(tab) {
+    document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+    document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+    document.getElementById('panelCreate').classList.toggle('active', tab === 'create');
+    document.getElementById('panelJoin').classList.toggle('active', tab === 'join');
+  }
 
-    function switchTab(tab) {
-      document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
-      document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
-      document.getElementById('panelCreate').classList.toggle('active', tab === 'create');
-      document.getElementById('panelJoin').classList.toggle('active', tab === 'join');
-    }
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.className = 'toast', 2500);
+  }
 
-    function showToast(msg, type = '') {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.className = 'toast show ' + type;
-      setTimeout(() => t.className = 'toast', 2500);
-    }
-  </script>
+  // Duplicate ticker for seamless loop
+  document.addEventListener('DOMContentLoaded', function() {
+    const ticker = document.getElementById('tickerInner');
+    if (ticker) ticker.innerHTML += ticker.innerHTML;
+  });
+</script>
 </body>
 </html>

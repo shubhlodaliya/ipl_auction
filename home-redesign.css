@@ -102,6 +102,37 @@
 }
 .ma-btn-solid:hover { background: var(--ma-red-dark); }
 
+/* ============================================================
+   HOMEPAGE FORM VISIBILITY OVERRIDES
+   (style.css is dark-themed; home uses light background)
+   ============================================================ */
+.ma-page .form-input {
+  background: #ffffff;
+  color: #111111;
+  border-color: #d6d6d6;
+}
+.ma-page .form-input::placeholder { color: #6b6b6b; }
+
+.ma-page input[type=range] {
+  background: #111111;
+}
+.ma-page input[type=range]::-webkit-slider-thumb {
+  background: #111111;
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+}
+.ma-page input[type=range]::-moz-range-track {
+  height: 4px;
+  border-radius: 4px;
+  background: #111111;
+}
+.ma-page input[type=range]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #111111;
+  border: none;
+}
+
 /* HERO */
 .ma-hero {
   background: #fff;

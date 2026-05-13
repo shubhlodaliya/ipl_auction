@@ -132,16 +132,6 @@ async function renderScheduledAuctions() {
   const listEl = document.getElementById('scheduledAuctionsList');
   if (!listEl) return;
 
-  const authUid = getAuthUid();
-  if (!authUid) {
-    listEl.innerHTML = `
-      <div class="ma-tournament-item" style="justify-content:space-between;">
-        <div style="color:var(--text-dim);font-size:0.9rem;">Login to see your scheduled auctions.</div>
-        <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
-      </div>`;
-    return;
-  }
-
   listEl.innerHTML = `
     <div class="ma-tournament-item" style="justify-content:space-between;">
       <div style="color:var(--text-dim);font-size:0.9rem;">Loading scheduled auctions...</div>
@@ -149,57 +139,28 @@ async function renderScheduledAuctions() {
     </div>`;
 
   try {
-    const [historySnap, hostedRows] = await Promise.all([
-      db.ref(getHistoryPath(authUid)).get(),
-      getHostOwnedRooms(authUid)
-    ]);
-
-    const historyMap = historySnap.exists() ? (historySnap.val() || {}) : {};
-    const merged = new Map();
-
-    Object.values(historyMap)
-      .filter((item) => item && item.roomCode)
-      .forEach((item) => {
-        const roomCode = String(item.roomCode || '').toUpperCase();
-        if (!roomCode) return;
-        merged.set(roomCode, {
-          ...item,
-          roomCode,
-          status: normalizeHistoryStatus(item.status),
-          scheduledStartAt: Number(item.scheduledStartAt || 0) || 0
-        });
-      });
-
-    hostedRows.forEach((row) => {
-      const roomCode = String(row.roomCode || '').toUpperCase();
-      if (!roomCode) return;
-      const existing = merged.get(roomCode);
-      if (!existing) {
-        merged.set(roomCode, row);
-        return;
-      }
-      if (!Number(existing.scheduledStartAt || 0) && Number(row.scheduledStartAt || 0)) {
-        merged.set(roomCode, { ...existing, scheduledStartAt: Number(row.scheduledStartAt || 0) || 0 });
-      }
-      const existingUpdatedAt = Number(existing.updatedAt || existing.createdAt || 0);
-      const rowUpdatedAt = Number(row.updatedAt || row.createdAt || 0);
-      if (rowUpdatedAt > existingUpdatedAt) {
-        merged.set(roomCode, { ...existing, ...row, roomCode });
-      }
-    });
+    // Fetch all rooms globally (not just current user's auctions)
+    const roomsSnap = await db.ref('rooms').get();
+    const rooms = roomsSnap.exists() ? (roomsSnap.val() || {}) : {};
 
     const now = Date.now();
-    const rows = Array.from(merged.values())
-      .filter((row) => String(row.status || '').toLowerCase() === 'lobby')
-      .filter((row) => Number(row.scheduledStartAt || 0) > 0)
+    const rows = Object.entries(rooms)
+      .filter(([roomCode, room]) => {
+        if (!roomCode || !room?.config) return false;
+        const status = String(room.config.status || '').toLowerCase();
+        const scheduledStartAt = Number(room.config.scheduledStartAt || 0) || 0;
+        // Show only rooms in lobby status with a scheduled start time set
+        return status === 'lobby' && scheduledStartAt > 0;
+      })
+      .map(([roomCode, room]) => mapRoomToHistoryRow(roomCode, room))
       .sort((a, b) => Number(a.scheduledStartAt || 0) - Number(b.scheduledStartAt || 0));
 
     if (!rows.length) {
       listEl.innerHTML = `
         <div class="ma-tournament-item" style="justify-content:space-between;">
           <div>
-            <div style="font-weight:700;color:var(--text);">No scheduled auctions</div>
-            <div style="font-size:0.85rem;color:var(--text-dim);">Create an auction and set a start time.</div>
+            <div style="font-weight:700;color:var(--text);">No scheduled auctions yet</div>
+            <div style="font-size:0.85rem;color:var(--text-dim);">Create an auction and set a scheduled start time.</div>
           </div>
           <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
         </div>`;
@@ -233,7 +194,7 @@ async function renderScheduledAuctions() {
         </div>`;
     }).join('') + `
       <div class="ma-tournament-item" style="justify-content:space-between;">
-        <div style="color:var(--text-dim);font-size:0.85rem;">Open later and press Start Auction in lobby.</div>
+        <div style="color:var(--text-dim);font-size:0.85rem;">Open and press Start Auction in lobby to begin.</div>
         <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
       </div>`;
   } catch (err) {

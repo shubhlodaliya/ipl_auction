@@ -112,14 +112,22 @@ function switchAuthMode(mode) {
   const title = document.getElementById('authModalTitle');
   const submit = document.getElementById('authSubmitBtn');
   const nameWrap = document.getElementById('authNameWrap');
-  const loginTab = document.getElementById('authTabLogin');
-  const signupTab = document.getElementById('authTabSignup');
+  const toggleText = document.getElementById('authToggleText');
+  const toggleLink = document.getElementById('authToggleLink');
 
   if (title) title.textContent = authMode === 'signup' ? 'Create Account' : 'Login';
   if (submit) submit.textContent = authMode === 'signup' ? 'Create Account' : 'Login';
   if (nameWrap) nameWrap.style.display = authMode === 'signup' ? 'block' : 'none';
-  if (loginTab) loginTab.classList.toggle('active', authMode === 'login');
-  if (signupTab) signupTab.classList.toggle('active', authMode === 'signup');
+  
+  if (toggleText && toggleLink) {
+    if (authMode === 'signup') {
+      toggleText.textContent = 'Already have an account?';
+      toggleLink.textContent = 'Login here';
+    } else {
+      toggleText.textContent = 'New to MyAuction?';
+      toggleLink.textContent = 'Register here';
+    }
+  }
   setAuthError('');
 }
 
@@ -310,3 +318,4 @@ window.enforceAuthPage = enforceAuthPage;
 window.waitForAuthReady = waitForAuthReady;
 window.getCurrentAuthUser = () => currentAuthUser;
 window.signInWithGoogle = signInWithGoogle;
+window.togglePassword = function() { const pwdInput = document.getElementById('authPassword'); if (pwdInput.type === 'password') { pwdInput.type = 'text'; } else { pwdInput.type = 'password'; } };

@@ -589,36 +589,62 @@
 
   <!-- AUTH MODAL -->
   <div class="team-modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
-    <div class="team-modal auth-modal" onclick="event.stopPropagation()">
-      <div class="team-modal-header auth-modal-header">
+    <div class="new-auth-card" onclick="event.stopPropagation()">
+      <div class="new-auth-header">
         <h3 id="authModalTitle">Login</h3>
-        <button class="btn btn-ghost" onclick="closeAuthModal()">Close</button>
       </div>
-      <p class="auth-subtitle">Securely access your rooms and keep your auction activity linked to your account.</p>
-      <div class="tabs auth-tabs">
-        <button class="tab-btn active" id="authTabLogin" onclick="switchAuthMode('login')">Login</button>
-        <button class="tab-btn" id="authTabSignup" onclick="switchAuthMode('signup')">Sign Up</button>
-      </div>
-      <div class="form-group auth-group" id="authNameWrap" style="display:none;">
-        <label class="form-label">Full Name</label>
-        <input class="form-input" id="authName" type="text" maxlength="40" placeholder="Enter full name" />
-      </div>
-      <div class="form-group auth-group">
-        <label class="form-label">Email</label>
-        <input class="form-input" id="authEmail" type="email" placeholder="Enter email" />
-      </div>
-      <div class="form-group auth-group">
-        <label class="form-label">Password</label>
-        <input class="form-input" id="authPassword" type="password" placeholder="Enter password" minlength="6" />
-      </div>
-      <button class="btn btn-primary btn-lg btn-full auth-submit-btn" id="authSubmitBtn"
-        onclick="submitAuthForm()">Login</button>
-      <div class="auth-divider"><span>or</span></div>
-      <button class="btn btn-secondary btn-lg btn-full auth-google-btn" id="authGoogleBtn" onclick="signInWithGoogle()">
-        <span class="auth-google-mark" aria-hidden="true">G</span>
-        Continue with Google
-      </button>
-      <p id="authError" class="auth-error" style="display:none;"></p>
+      <form class="new-auth-form" onsubmit="event.preventDefault(); submitAuthForm();">
+        <div class="new-auth-group" id="authNameWrap" style="display:none;">
+          <label class="new-auth-label">Full Name</label>
+          <div class="new-auth-input-wrap">
+            <svg class="new-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <input class="new-auth-input" id="authName" type="text" maxlength="40" placeholder=" " />
+          </div>
+        </div>
+
+        <div class="new-auth-group">
+          <label class="new-auth-label" id="authEmailLabel">Username or Email Address</label>
+          <div class="new-auth-input-wrap">
+            <svg class="new-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <input class="new-auth-input" id="authEmail" type="email" placeholder=" " />
+          </div>
+        </div>
+
+        <div class="new-auth-group">
+          <label class="new-auth-label">Password</label>
+          <div class="new-auth-input-wrap">
+            <svg class="new-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <input class="new-auth-input" id="authPassword" type="password" minlength="6" placeholder=" " />
+            <button type="button" class="new-auth-eye" onclick="document.getElementById('authPassword').type = document.getElementById('authPassword').type === 'password' ? 'text' : 'password'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="new-auth-options" id="authOptionsWrap">
+          <label class="new-auth-checkbox">
+            <input type="checkbox" id="authRemember" />
+            <span>Remember Me</span>
+          </label>
+          <a href="#" class="new-auth-forgot" onclick="event.preventDefault()">Forgot Password?</a>
+        </div>
+
+        <button class="new-auth-submit" id="authSubmitBtn" type="submit">Login</button>
+        
+        <div class="new-auth-toggle">
+          <span id="authToggleText">New to MyAuction?</span> 
+          <a href="#" id="authToggleLink" onclick="event.preventDefault(); switchAuthMode(typeof authMode!=='undefined' && authMode === 'login' ? 'signup' : 'login')">Register here</a>
+        </div>
+
+        <div class="new-auth-divider"><span>or continue with</span></div>
+        
+        <button class="new-auth-google" id="authGoogleBtn" type="button" onclick="signInWithGoogle()">
+          <span class="auth-google-mark" aria-hidden="true">G</span>
+          Google
+        </button>
+
+        <p id="authError" class="new-auth-error" style="display:none;"></p>
+      </form>
     </div>
   </div>
 

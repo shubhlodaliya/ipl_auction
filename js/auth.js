@@ -318,5 +318,4 @@ window.enforceAuthPage = enforceAuthPage;
 window.waitForAuthReady = waitForAuthReady;
 window.getCurrentAuthUser = () => currentAuthUser;
 window.signInWithGoogle = signInWithGoogle;
-w i n d o w . t o g g l e P a s s w o r d   =   f u n c t i o n ( )   {   c o n s t   p w d I n p u t   =   d o c u m e n t . g e t E l e m e n t B y I d ( ' a u t h P a s s w o r d ' ) ;   i f   ( p w d I n p u t . t y p e   = = =   ' p a s s w o r d ' )   {   p w d I n p u t . t y p e   =   ' t e x t ' ;   }   e l s e   {   p w d I n p u t . t y p e   =   ' p a s s w o r d ' ;   }   } ;  
- 
+window.togglePassword = function() { const pwdInput = document.getElementById('authPassword'); if (pwdInput.type === 'password') { pwdInput.type = 'text'; } else { pwdInput.type = 'password'; } };

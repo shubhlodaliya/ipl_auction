@@ -192,6 +192,16 @@
   padding-right: 0.2rem;
 }
 
+.profile-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.9rem;
+}
+
+.profile-more-btn {
+  min-width: 140px;
+}
+
 .profile-empty {
   background: #f9f9f9;
   border: 1px dashed #d7d7d7;

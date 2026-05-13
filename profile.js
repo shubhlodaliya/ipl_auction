@@ -80,6 +80,10 @@ function setStatusChip(verified, totalCount) {
   if (auctionCountChip) auctionCountChip.textContent = `${totalCount} auction${totalCount === 1 ? '' : 's'}`;
 }
 
+const PAST_AUCTIONS_PAGE_SIZE = 12;
+let pastAuctionRowsCache = [];
+let pastAuctionsExpanded = false;
+
 function renderAuctionCard(row, type) {
   const roomCode = escapeHtml(String(row.roomCode || '').toUpperCase());
   const title = escapeHtml(row.title || 'Auction');
@@ -119,13 +123,33 @@ function renderAuctionCard(row, type) {
     </div>`;
 }
 
-function renderAuctionList(listEl, rows, emptyMessage, type) {
+function renderAuctionList(listEl, rows, emptyMessage, type, limit = null) {
   if (!listEl) return;
   if (!rows.length) {
     listEl.innerHTML = `<div class="profile-empty">${escapeHtml(emptyMessage)}</div>`;
     return;
   }
-  listEl.innerHTML = rows.slice(0, 12).map((row) => renderAuctionCard(row, type)).join('');
+  const limitedRows = Number.isFinite(limit) && limit > 0 ? rows.slice(0, limit) : rows;
+  listEl.innerHTML = limitedRows.map((row) => renderAuctionCard(row, type)).join('');
+}
+
+function renderPastAuctionsSection() {
+  const listEl = document.getElementById('pastAuctionsList');
+  const viewMoreBtn = document.getElementById('viewMorePastBtn');
+  const rows = Array.isArray(pastAuctionRowsCache) ? pastAuctionRowsCache : [];
+
+  renderAuctionList(
+    listEl,
+    rows,
+    'No auctions yet. Reopened and restarted auctions will appear here with live status.',
+    'past',
+    pastAuctionsExpanded ? null : PAST_AUCTIONS_PAGE_SIZE
+  );
+
+  if (!viewMoreBtn) return;
+
+  const hasMoreRows = rows.length > PAST_AUCTIONS_PAGE_SIZE;
+  viewMoreBtn.style.display = hasMoreRows && !pastAuctionsExpanded ? 'inline-flex' : 'none';
 }
 
 function openProfileRoom(roomCode) {
@@ -377,17 +401,15 @@ async function loadProfilePage() {
   const pastRows = rows.filter((row) => !(row.status === 'lobby' && Number(row.scheduledStartAt || 0) > 0))
     .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
 
-  renderAuctionList(
-    document.getElementById('pastAuctionsList'),
-    pastRows,
-    'No auctions yet. Reopened and restarted auctions will appear here with live status.',
-    'past'
-  );
+  pastAuctionRowsCache = pastRows;
+  renderPastAuctionsSection();
+
   renderAuctionList(
     document.getElementById('scheduledAuctionsList'),
     scheduledRows,
     'No scheduled auctions yet. Create one from the home page to see it here.',
-    'scheduled'
+    'scheduled',
+    12
   );
 }
 
@@ -402,14 +424,22 @@ function showToast(msg, type = '') {
 function wireButtons() {
   const refreshPastBtn = document.getElementById('refreshPastBtn');
   const refreshScheduledBtn = document.getElementById('refreshScheduledBtn');
+  const viewMorePastBtn = document.getElementById('viewMorePastBtn');
+
   if (refreshPastBtn) refreshPastBtn.addEventListener('click', () => loadProfilePage().catch((err) => {
     console.error('Failed to refresh profile:', err);
     showToast('Could not refresh profile data.', 'error');
   }));
+
   if (refreshScheduledBtn) refreshScheduledBtn.addEventListener('click', () => loadProfilePage().catch((err) => {
     console.error('Failed to refresh profile:', err);
     showToast('Could not refresh profile data.', 'error');
   }));
+
+  if (viewMorePastBtn) viewMorePastBtn.addEventListener('click', () => {
+    pastAuctionsExpanded = true;
+    renderPastAuctionsSection();
+  });
 }
 
 window.addEventListener('DOMContentLoaded', async () => {

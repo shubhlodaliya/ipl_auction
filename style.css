@@ -5489,6 +5489,153 @@ body.spectator-mode .spectator-side-bid {
 /* ============================================================
    STATIC INFO PAGES + FOOTER
    ============================================================ */
+body.ma-info {
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --card-hover: #f5f5f5;
+  --border: rgba(0,0,0,0.1);
+  --border-hover: rgba(0,0,0,0.18);
+  --gold: #cc1f1f;
+  --gold-dim: rgba(204,31,31,0.12);
+  --gold-glow: rgba(204,31,31,0.22);
+  --text: #111111;
+  --text-sec: #555555;
+  --text-dim: #777777;
+  --primary: #cc1f1f;
+  --text-main: #111111;
+  --glass: #ffffff;
+  background: #f5f5f5;
+  color: #111111;
+  background-image: none;
+}
+
+body.ma-info .header {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+body.ma-info .logo { color: #cc1f1f; }
+body.ma-info .header-badge {
+  background: rgba(204,31,31,0.12);
+  color: #cc1f1f;
+  border-color: rgba(204,31,31,0.3);
+}
+
+body.ma-info .btn-ghost {
+  color: #444444;
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+}
+body.ma-info .btn-ghost:hover {
+  color: #cc1f1f;
+  border-color: #cc1f1f;
+}
+body.ma-info .btn-secondary {
+  background: #ffffff;
+  color: #444444;
+  border: 1px solid #e5e5e5;
+}
+body.ma-info .btn-secondary:hover {
+  color: #cc1f1f;
+  border-color: #cc1f1f;
+  background: #fff5f5;
+}
+body.ma-info .btn-primary {
+  background: #cc1f1f;
+  color: #ffffff;
+}
+body.ma-info .btn-primary:hover {
+  background: #a01515;
+  box-shadow: 0 8px 18px rgba(204,31,31,0.25);
+}
+
+body.ma-info .info-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+body.ma-info .info-title { color: #111111; }
+body.ma-info .info-subtitle { color: #cc1f1f; }
+body.ma-info .info-text { color: #555555; }
+body.ma-info .info-note { color: #777777; }
+
+body.ma-info .contact-list a {
+  color: #111111;
+  background: #ffffff;
+  border-color: #e5e5e5;
+}
+body.ma-info .contact-list a:hover { border-color: #cc1f1f; color: #cc1f1f; }
+
+body.ma-info .site-footer {
+  background: #111111;
+  border-top: 1px solid #222222;
+}
+body.ma-info .site-footer-inner { color: #777777; }
+body.ma-info .site-footer-links a { color: #999999; }
+body.ma-info .site-footer-links a:hover { color: #ffffff; }
+
+body.ma-info .faq-title { color: #111111; }
+body.ma-info .faq-subtitle { color: #666666; }
+body.ma-info .faq-section-title {
+  color: #111111;
+  border-bottom-color: #cc1f1f;
+}
+body.ma-info .faq-item {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-left: 4px solid #cc1f1f;
+}
+body.ma-info .faq-item:hover {
+  background: #fff5f5;
+  transform: translateX(4px);
+}
+body.ma-info .faq-question { color: #cc1f1f; }
+body.ma-info .faq-answer { color: #555555; }
+
+body.ma-info .guide-tip {
+  background: #fff5f5;
+  border-left-color: #cc1f1f;
+}
+body.ma-info .strategy-card {
+  background: #ffffff;
+  border-color: #e5e5e5;
+}
+body.ma-info .guide-table {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+}
+body.ma-info .guide-table th {
+  background: #fff0f0;
+  border-bottom-color: #cc1f1f;
+  color: #111111;
+}
+body.ma-info .guide-table td {
+  border-bottom-color: #eeeeee;
+  color: #555555;
+}
+body.ma-info .table-alt tr:nth-child(even) { background: #fafafa; }
+
+body.ma-info .step-box { background: #ffffff; border-left-color: #cc1f1f; }
+body.ma-info .highlight {
+  background: #fff5f5;
+  border-left-color: #cc1f1f;
+}
+body.ma-info .warning {
+  background: #fff8e6;
+  border-left-color: #f59e0b;
+}
+body.ma-info .video-placeholder {
+  background: #f5f5f5;
+  color: #666666;
+}
+
+body.ma-info .learn-card {
+  background: #ffffff;
+  border-color: #e5e5e5;
+}
+body.ma-info .learn-card:hover { border-color: #cc1f1f; }
+body.ma-info .learn-meta { color: #777777; }
 .info-page-wrap {
   max-width: 900px;
   margin: 0 auto;

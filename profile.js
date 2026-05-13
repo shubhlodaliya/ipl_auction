@@ -136,14 +136,22 @@ function openProfileRoom(roomCode) {
 }
 
 async function loadProfilePage() {
+  // Ensure Firebase is fully initialized
+  if (typeof firebase === 'undefined' || !firebase.database) {
+    console.error('Firebase not initialized');
+    showToast('Firebase not initialized', 'error');
+    return;
+  }
+
   const user = getCurrentUser();
   if (!user) {
     window.location.href = 'index.html';
     return;
   }
 
-  const profileSnap = await db.ref(`users/${user.uid}`).get();
-  const historySnap = await db.ref(getHistoryPath(user.uid)).get();
+  try {
+    const profileSnap = await firebase.database().ref(`users/${user.uid}`).get();
+    const historySnap = await firebase.database().ref(getHistoryPath(user.uid)).get();
 
   const profile = profileSnap.exists() ? (profileSnap.val() || {}) : {};
   const historyMap = historySnap.exists() ? (historySnap.val() || {}) : {};
@@ -194,6 +202,10 @@ async function loadProfilePage() {
     'No scheduled auctions yet. Create one from the home page to see it here.',
     'scheduled'
   );
+  } catch (err) {
+    console.error('Error loading profile data:', err);
+    showToast('Failed to load profile data: ' + err.message, 'error');
+  }
 }
 
 function showToast(msg, type = '') {
@@ -219,9 +231,20 @@ function wireButtons() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   wireButtons();
+  
+  // Wait for Firebase to be initialized
+  let maxWait = 50;
+  while (maxWait-- > 0) {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      break;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
   if (typeof waitForAuthReady === 'function') {
     await waitForAuthReady();
   }
+  
   try {
     await loadProfilePage();
   } catch (err) {

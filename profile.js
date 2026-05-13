@@ -200,6 +200,18 @@ async function loadProfilePage() {
     const verified = typeof isUserVerified === 'function' ? isUserVerified(user) : !!user.emailVerified;
 
     console.log('Profile data loaded:', { name, email, verified, auctionCount: Object.keys(historyMap).length });
+    
+  // Update all profile fields
+  setText('profileName', name);
+  setText('profileIntro', `Welcome back, ${name}. Your auction history and upcoming rooms are listed below.`);
+  setText('profileFullName', name);
+  setText('profileEmail', email);
+  setText('profileCreatedAt', formatDateTime(createdAt));
+  setText('profileLastLoginAt', formatDateTime(lastLoginAt));
+  setText('profileAvatar', getInitials(name, email));
+  setText('profileAvatarName', name);
+  setText('profileAvatarSub', email);
+  setStatusChip(verified, Object.keys(historyMap || {}).length);
 
   setText('profileName', name);
   setText('profileIntro', `Welcome back, ${name}. Your auction history and upcoming rooms are listed below.`);
@@ -227,6 +239,19 @@ async function loadProfilePage() {
   const scheduledRows = rows.filter((row) => row.status === 'lobby' && Number(row.scheduledStartAt || 0) > 0)
     .sort((a, b) => Number(a.scheduledStartAt || 0) - Number(b.scheduledStartAt || 0));
   const pastRows = rows.filter((row) => row.status === 'finished' || Number(row.finishedAt || 0) > 0 || Number(row.terminatedAt || 0) > 0)
+         // Render auction lists
+         renderAuctionList(
+           document.getElementById('pastAuctionsList'),
+           pastRows,
+           'No past auctions yet. Finished auctions will appear here.',
+           'past'
+         );
+         renderAuctionList(
+           document.getElementById('scheduledAuctionsList'),
+           scheduledRows,
+           'No scheduled auctions yet. Create one from the home page to see it here.',
+           'scheduled'
+         );
     .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
 
   renderAuctionList(

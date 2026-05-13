@@ -16,7 +16,13 @@
 
 /* RESET */
 .ma-page * { box-sizing: border-box; margin: 0; padding: 0; }
-.ma-page { font-family: 'Inter', sans-serif; background: #f5f5f5; color: #111; }
+.ma-page {
+  font-family: 'Inter', sans-serif;
+  background: #f5f5f5;
+  color: #111;
+  font-size: 16px;
+  line-height: 1.5;
+}
 
 /* ANNOUNCEMENT BAR */
 .ma-announce {
@@ -63,7 +69,7 @@
 .ma-nav-links a {
   color: #444;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 500;
   padding: 0.4rem 0.75rem;
   border-radius: 4px;
@@ -79,9 +85,9 @@
   border: 1.5px solid var(--ma-red);
   color: var(--ma-red);
   background: transparent;
-  padding: 0.4rem 1rem;
+  padding: 0.45rem 1rem;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -92,9 +98,9 @@
   background: var(--ma-red);
   color: #fff;
   border: none;
-  padding: 0.4rem 1rem;
+  padding: 0.45rem 1rem;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -136,12 +142,12 @@
 /* HERO */
 .ma-hero {
   background: #fff;
-  padding: 4rem 4rem 0;
+  padding: clamp(3rem, 4vw, 5rem) clamp(2rem, 4vw, 4rem) 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(2rem, 4vw, 3.5rem);
   align-items: center;
-  min-height: 520px;
+  min-height: 560px;
   overflow: hidden;
 }
 .ma-hero-badge {
@@ -169,14 +175,14 @@
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .ma-hero h1 {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 3rem;
+  font-size: clamp(2.7rem, 4vw, 4.2rem);
   font-weight: 700;
   color: #111;
   line-height: 1.1;
   margin-bottom: 0.5rem;
 }
 .ma-hero-sub {
-  font-size: 1.5rem;
+  font-size: clamp(1.45rem, 2vw, 2.1rem);
   font-weight: 700;
   color: var(--ma-red);
   line-height: 1.3;
@@ -185,17 +191,17 @@
 .ma-hero p {
   color: #555;
   line-height: 1.7;
-  font-size: 0.95rem;
+  font-size: clamp(1rem, 1.1vw, 1.08rem);
   margin-bottom: 2rem;
-  max-width: 460px;
+  max-width: 520px;
 }
 .ma-hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
 .ma-btn-hero-primary {
   background: var(--ma-red);
   color: #fff;
   border: none;
-  padding: 0.75rem 1.75rem;
-  font-size: 0.85rem;
+  padding: 0.85rem 1.9rem;
+  font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -212,8 +218,8 @@
   background: transparent;
   color: #333;
   border: 1.5px solid #333;
-  padding: 0.75rem 1.75rem;
-  font-size: 0.85rem;
+  padding: 0.85rem 1.9rem;
+  font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -256,10 +262,10 @@
 /* FEATURES */
 .ma-features {
   background: #111;
-  padding: 3.5rem 4rem;
+  padding: clamp(3rem, 4vw, 4rem) clamp(2rem, 4vw, 4rem);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
+  gap: clamp(1.25rem, 2vw, 2rem);
 }
 .ma-feat-card { text-align: center; }
 .ma-feat-icon {
@@ -276,8 +282,8 @@
 .ma-feat-icon.green { background: rgba(34,197,94,0.15); color: var(--ma-green); }
 .ma-feat-icon.blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
 .ma-feat-icon.gold { background: rgba(245,158,11,0.15); color: var(--ma-gold); }
-.ma-feat-card h4 { color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
-.ma-feat-card p { color: #888; font-size: 0.8rem; line-height: 1.6; }
+.ma-feat-card h4 { color: #fff; font-size: clamp(0.85rem, 0.95vw, 1rem); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.ma-feat-card p { color: #888; font-size: clamp(0.9rem, 0.95vw, 1rem); line-height: 1.6; }
 
 /* TICKER */
 .ma-ticker {
@@ -298,7 +304,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
+  font-size: clamp(0.78rem, 0.9vw, 0.92rem);
   font-weight: 600;
   letter-spacing: 0.06em;
   color: #888;
@@ -322,7 +328,7 @@
 .ma-section-title {
   text-align: center;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 2rem;
+  font-size: clamp(1.85rem, 2.5vw, 2.5rem);
   font-weight: 700;
   color: #111;
   letter-spacing: 0.05em;
@@ -397,12 +403,12 @@
 
 /* LIVE AUCTIONS */
 .ma-live { background: #fff; padding: 4rem; }
-.ma-live-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
-.ma-live-header h2 { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; color: #111; text-transform: uppercase; }
+.ma-live-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem; }
+.ma-live-header h2 { font-family: 'Rajdhani', sans-serif; font-size: clamp(1.85rem, 2.5vw, 2.5rem); font-weight: 700; color: #111; text-transform: uppercase; }
 .ma-live-header p { color: #888; font-size: 0.85rem; margin-bottom: 2rem; }
-.ma-view-all { color: var(--ma-red); font-size: 0.85rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.25rem; }
+.ma-view-all { color: var(--ma-red); font-size: 0.9rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 0.25rem; }
 .ma-view-all:hover { text-decoration: underline; }
-.ma-live-sub { color: #888; font-size: 0.85rem; margin-bottom: 2rem; margin-top: 0.3rem; }
+.ma-live-sub { color: #888; font-size: 0.92rem; margin-bottom: 2rem; margin-top: 0.3rem; }
 .ma-auction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 .ma-auction-card {
   border: 1px solid #e5e5e5;
@@ -475,15 +481,15 @@
 .ma-tournament-date .month { font-size: 0.65rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
 .ma-tournament-info { flex: 1; }
 .ma-tournament-info h4 { font-size: 0.95rem; font-weight: 700; color: #111; margin-bottom: 0.2rem; }
-.ma-tournament-info p { font-size: 0.8rem; color: #888; }
-.ma-tournament-time { font-size: 0.8rem; color: #555; font-weight: 600; text-align: right; }
+.ma-tournament-info p { font-size: 0.9rem; color: #888; }
+.ma-tournament-time { font-size: 0.85rem; color: #555; font-weight: 600; text-align: right; }
 .ma-remind-btn {
   background: transparent;
   border: 1.5px solid #ccc;
   color: #555;
   padding: 0.4rem 0.9rem;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -534,7 +540,7 @@
 
 /* RESPONSIVE */
 @media (max-width: 900px) {
-  .ma-hero { grid-template-columns: 1fr; padding: 2rem; }
+  .ma-hero { grid-template-columns: 1fr; padding: 2rem; min-height: auto; }
   .ma-hero-img-wrap { height: 240px; }
   .ma-features { grid-template-columns: repeat(2, 1fr); padding: 2rem; }
   .ma-arena { padding: 2rem; }
@@ -546,4 +552,20 @@
   .ma-footer-grid { grid-template-columns: 1fr 1fr; }
   .ma-nav { padding: 0 1rem; gap: 1rem; }
   .ma-nav-links { display: none; }
+  .ma-live-header { flex-direction: column; align-items: flex-start; }
+  .ma-hero p { max-width: none; }
+  .ma-hero-btns a { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  .ma-page { font-size: 15px; }
+  .ma-hero { padding: 1.5rem; }
+  .ma-hero h1 { font-size: 2.25rem; }
+  .ma-hero-sub { font-size: 1.25rem; }
+  .ma-hero p { font-size: 0.98rem; line-height: 1.65; }
+  .ma-features { grid-template-columns: 1fr; }
+  .ma-section-title { font-size: 1.55rem; }
+  .ma-tournament-item { flex-wrap: wrap; }
+  .ma-tournament-date { min-width: 42px; padding-right: 1rem; }
+  .ma-tournament-time { text-align: left; }
 }

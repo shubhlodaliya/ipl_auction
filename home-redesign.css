@@ -569,3 +569,231 @@
   .ma-tournament-date { min-width: 42px; padding-right: 1rem; }
   .ma-tournament-time { text-align: left; }
 }
+
+/* ===== NEW AUTH MODAL ===== */
+.new-auth-card {
+  width: min(440px, 94vw);
+  background: #ffffff;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  font-family: 'Inter', sans-serif;
+  color: #111;
+}
+
+.new-auth-header {
+  padding: 1.5rem 2rem 0.5rem;
+}
+
+.new-auth-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0;
+}
+
+.new-auth-form {
+  padding: 1rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.new-auth-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.new-auth-label {
+  font-size: 0.85rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.new-auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.new-auth-icon {
+  position: absolute;
+  left: 0.8rem;
+  width: 18px;
+  height: 18px;
+  color: #263238; /* dark navy/grey */
+  pointer-events: none;
+}
+
+.new-auth-input {
+  width: 100%;
+  height: 44px;
+  background: #fff;
+  border: 1px solid #78909c; /* grey-blue border */
+  border-radius: 4px;
+  padding: 0.5rem 0.8rem 0.5rem 2.5rem; /* left padding leaves room for icon */
+  font-size: 0.95rem;
+  color: #111;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.new-auth-input:focus {
+  outline: none;
+  border-color: #000;
+}
+
+.new-auth-eye {
+  position: absolute;
+  right: 0.8rem;
+  background: none;
+  border: none;
+  color: #263238;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-auth-eye svg {
+  width: 18px;
+  height: 18px;
+}
+
+.new-auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.new-auth-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.new-auth-checkbox input {
+  accent-color: #990000;
+  width: 15px;
+  height: 15px;
+}
+
+.new-auth-forgot {
+  color: #800000;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.new-auth-forgot:hover {
+  text-decoration: underline;
+}
+
+.new-auth-submit {
+  width: 100%;
+  height: 48px;
+  background: #990000; /* Dark red */
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+}
+
+.new-auth-submit:hover {
+  background: #7a0000;
+}
+
+.new-auth-toggle {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #000;
+  margin-top: 0.5rem;
+}
+
+.new-auth-toggle a {
+  color: #800000;
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 0.2rem;
+}
+
+.new-auth-toggle a:hover {
+  text-decoration: underline;
+}
+
+.new-auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #888;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0.5rem 0;
+}
+
+.new-auth-divider::before, .new-auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.new-auth-divider span {
+  padding: 0 0.8rem;
+}
+
+.new-auth-google {
+  width: 100%;
+  height: 44px;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.new-auth-google:hover {
+  background: #eaeaea;
+}
+
+.auth-google-mark {
+  background: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #db4437; /* Google red */
+  font-weight: bold;
+  font-size: 0.85rem;
+  border: 1px solid #db4437;
+}
+
+.new-auth-error {
+  color: #c62828;
+  font-size: 0.85rem;
+  background: #ffebee;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border-left: 3px solid #c62828;
+  font-weight: 500;
+  margin: 0;
+}

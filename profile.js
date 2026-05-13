@@ -87,8 +87,10 @@ function renderAuctionCard(row, type) {
   const startAt = Number(row.scheduledStartAt || 0) || 0;
   const updatedAt = Number(row.updatedAt || row.createdAt || 0) || 0;
   const { day, month } = formatDay(startAt || updatedAt);
-  const statusClass = type === 'scheduled' ? 'scheduled' : (status === 'finished' ? 'finished' : 'live');
   const isTerminated = Number(row.terminatedAt || 0) > 0;
+  const statusClass = type === 'scheduled'
+    ? 'scheduled'
+    : (isTerminated || status === 'finished' ? 'finished' : 'live');
   const statusLabel = type === 'scheduled'
     ? 'Scheduled'
     : (isTerminated ? 'Terminated' : status === 'finished' ? 'Finished' : status === 'auction' ? 'Live' : 'Lobby');
@@ -372,13 +374,13 @@ async function loadProfilePage() {
 
   const scheduledRows = rows.filter((row) => row.status === 'lobby' && Number(row.scheduledStartAt || 0) > 0)
     .sort((a, b) => Number(a.scheduledStartAt || 0) - Number(b.scheduledStartAt || 0));
-  const pastRows = rows.filter((row) => row.status === 'finished' || Number(row.finishedAt || 0) > 0 || Number(row.terminatedAt || 0) > 0)
+  const pastRows = rows.filter((row) => !(row.status === 'lobby' && Number(row.scheduledStartAt || 0) > 0))
     .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
 
   renderAuctionList(
     document.getElementById('pastAuctionsList'),
     pastRows,
-    'No past auctions yet. Finished auctions will appear here.',
+    'No auctions yet. Reopened and restarted auctions will appear here with live status.',
     'past'
   );
   renderAuctionList(

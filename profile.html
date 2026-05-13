@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — MyAuction</title>
+  <meta name="description" content="View your MyAuction account details, past auctions, and scheduled auctions." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="canonical" href="/profile.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="home-redesign.css" />
+  <link rel="stylesheet" href="profile.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944" crossorigin="anonymous"></script>
+</head>
+<body class="ma-page profile-page">
+  <div class="ma-announce">
+    <span>📞</span>
+    <span>MyAuction Profile • Account details • Auction history • Scheduled rooms</span>
+  </div>
+
+  <nav class="ma-nav">
+    <a class="ma-logo" href="index.html">My<span>Auction</span></a>
+    <div class="ma-nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#live-auctions">Today's Auctions</a>
+      <a href="index.html#scheduled-auctions">Scheduled Auctions</a>
+      <a href="index.html#arena">IPL Auction</a>
+      <a href="guide.html">Guide</a>
+    </div>
+    <div class="ma-nav-actions">
+      <span id="authUserLabel" style="font-size:0.8rem;color:#666;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none;"></span>
+      <a class="ma-btn-outline" href="index.html">Home</a>
+      <button class="ma-btn-solid" id="authLogoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
+    </div>
+  </nav>
+
+  <main class="profile-main">
+    <section class="profile-hero">
+      <div class="profile-hero-copy">
+        <div class="profile-kicker">Account Profile</div>
+        <h1 id="profileName">Loading profile...</h1>
+        <p id="profileIntro">Your account details, activity summary, and auction history live here.</p>
+        <div class="profile-meta-row">
+          <span class="profile-chip" id="profileStatusChip">Verified account</span>
+          <span class="profile-chip subtle" id="profileAuctionCountChip">0 auctions</span>
+        </div>
+      </div>
+      <div class="profile-avatar-card">
+        <div class="profile-avatar" id="profileAvatar">MA</div>
+        <div class="profile-avatar-name" id="profileAvatarName">MyAuction User</div>
+        <div class="profile-avatar-sub" id="profileAvatarSub">Welcome back</div>
+      </div>
+    </section>
+
+    <section class="profile-stats-grid" aria-label="Profile details">
+      <div class="profile-stat-card">
+        <div class="profile-stat-label">Full Name</div>
+        <div class="profile-stat-value" id="profileFullName">—</div>
+      </div>
+      <div class="profile-stat-card">
+        <div class="profile-stat-label">Email</div>
+        <div class="profile-stat-value break" id="profileEmail">—</div>
+      </div>
+      <div class="profile-stat-card">
+        <div class="profile-stat-label">Member Since</div>
+        <div class="profile-stat-value" id="profileCreatedAt">—</div>
+      </div>
+      <div class="profile-stat-card">
+        <div class="profile-stat-label">Last Login</div>
+        <div class="profile-stat-value" id="profileLastLoginAt">—</div>
+      </div>
+    </section>
+
+    <section class="profile-panels">
+      <div class="profile-panel">
+        <div class="profile-panel-head">
+          <div>
+            <h2>Past Auctions</h2>
+            <p>Finished and archived auctions for this account.</p>
+          </div>
+          <button class="ma-remind-btn" id="refreshPastBtn">Refresh</button>
+        </div>
+        <div class="profile-list" id="pastAuctionsList">
+          <div class="profile-empty">Loading past auctions...</div>
+        </div>
+      </div>
+
+      <div class="profile-panel">
+        <div class="profile-panel-head">
+          <div>
+            <h2>Scheduled Auctions</h2>
+            <p>Upcoming rooms with a start time set.</p>
+          </div>
+          <button class="ma-remind-btn" id="refreshScheduledBtn">Refresh</button>
+        </div>
+        <div class="profile-list" id="scheduledAuctionsList">
+          <div class="profile-empty">Loading scheduled auctions...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="profile-footer">
+    <span>© 2026 MyAuction</span>
+    <span>Professional Cricket Auction Platform</span>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script defer src="js/firebase-config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/profile.js"></script>
+</body>
+</html>

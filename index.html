@@ -684,14 +684,10 @@
     }
 
     function openProfileModal() {
-      const overlay = document.getElementById('profileModalOverlay');
-      if (overlay) overlay.classList.add('visible');
-      if (typeof renderPastAuctions === 'function') renderPastAuctions();
+      window.location.href = 'profile.html';
     }
 
     function closeProfileModal() {
-      const overlay = document.getElementById('profileModalOverlay');
-      if (overlay) overlay.classList.remove('visible');
     }
 
     // ---- LIVE ROOMS LOADER ----

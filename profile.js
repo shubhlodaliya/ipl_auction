@@ -88,12 +88,16 @@ function renderAuctionCard(row, type) {
   const updatedAt = Number(row.updatedAt || row.createdAt || 0) || 0;
   const { day, month } = formatDay(startAt || updatedAt);
   const statusClass = type === 'scheduled' ? 'scheduled' : (status === 'finished' ? 'finished' : 'live');
+  const isTerminated = Number(row.terminatedAt || 0) > 0;
   const statusLabel = type === 'scheduled'
     ? 'Scheduled'
-    : (status === 'finished' ? 'Finished' : status === 'auction' ? 'Live' : 'Lobby');
+    : (isTerminated ? 'Terminated' : status === 'finished' ? 'Finished' : status === 'auction' ? 'Live' : 'Lobby');
   const metaLine = type === 'scheduled'
     ? `Starts at ${formatDateTime(startAt)}`
     : `Updated ${formatDateTime(updatedAt)}`;
+  const actionLabel = type === 'scheduled'
+    ? 'Open Lobby'
+    : (isTerminated ? 'Restart Auction' : status === 'auction' ? 'Resume Auction' : status === 'finished' ? 'View Results' : 'Open Lobby');
 
   return `
     <div class="profile-auction-card">
@@ -108,7 +112,7 @@ function renderAuctionCard(row, type) {
       </div>
       <div class="profile-auction-actions">
         <span class="profile-status-chip ${statusClass}">${escapeHtml(statusLabel)}</span>
-        <button class="ma-remind-btn" onclick="openProfileRoom('${roomCode}')">Open Room</button>
+        <button class="ma-remind-btn" onclick="openProfileRoom('${roomCode}')">${escapeHtml(actionLabel)}</button>
       </div>
     </div>`;
 }
@@ -125,13 +129,202 @@ function renderAuctionList(listEl, rows, emptyMessage, type) {
 function openProfileRoom(roomCode) {
   const code = String(roomCode || '').trim().toUpperCase();
   if (!code) return;
+  routeOwnedAuction(code).catch((err) => {
+    console.error('Failed to open owned auction:', err);
+    showToast('Could not open this auction right now.', 'error');
+  });
+}
 
+function getOwnedHostTeamId(room) {
+  const config = room?.config || {};
+  const teams = room?.teams || {};
+  const hostTeamId = String(config.hostTeamId || '').trim() || Object.keys(teams).find((id) => teams?.[id]?.isHost) || Object.keys(teams)[0] || '';
+  return hostTeamId || null;
+}
+
+function getOwnedHostUid(room) {
+  const config = room?.config || {};
+  const teams = room?.teams || {};
+  const hostTeamId = getOwnedHostTeamId(room);
+  return String(config.hostUid || config.currentHostUid || teams?.[hostTeamId]?.ownerUid || '').trim();
+}
+
+function applyOwnerSession(roomCode, room, user, isHostSession = true) {
+  const hostTeamId = getOwnedHostTeamId(room);
+  const hostTeam = hostTeamId ? (room?.teams?.[hostTeamId] || {}) : {};
+  const displayName = String(hostTeam.ownerName || user?.displayName || user?.email || 'Host').trim();
+
+  if (typeof saveSession === 'function') {
+    saveSession({
+      roomCode,
+      teamId: hostTeamId,
+      playerName: displayName,
+      isHost: !!isHostSession,
+      isSpectator: false
+    });
+  }
+}
+
+async function syncOwnerHistory(roomCode, room, status, extra = {}) {
   const user = getCurrentUser();
-  if (typeof saveSession === 'function' && user) {
-    const displayName = String(user.displayName || user.email || 'Viewer').trim();
-    saveSession({ roomCode: code, teamId: null, playerName: displayName, isHost: false, isSpectator: false });
+  if (!user) return;
+  const hostUid = getOwnedHostUid(room) || String(user.uid || '').trim();
+  if (!hostUid) return;
+
+  await db.ref(`${getHistoryPath(hostUid)}/${roomCode}`).update({
+    roomCode,
+    title: String(room?.config?.auctionTitle || '').trim() || (room?.config?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction'),
+    status,
+    auctionType: room?.config?.auctionType || 'random',
+    hostTeamId: getOwnedHostTeamId(room),
+    updatedAt: Date.now(),
+    ...extra
+  }).catch(() => {});
+}
+
+async function reserveAvailableRoomCode(maxAttempts = 30) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const code = generateRoomCode();
+    const snap = await db.ref(`rooms/${code}`).get();
+    if (!snap.exists()) return code;
+  }
+  throw new Error('Could not generate unique room code');
+}
+
+async function restartAuctionFromSource(sourceCode, sourceRoom, user) {
+  const sourceConfig = sourceRoom?.config || {};
+  const authUid = String(user?.uid || '').trim();
+  const hostUid = getOwnedHostUid(sourceRoom) || authUid;
+  if (!authUid || !hostUid || hostUid !== authUid) {
+    showToast('Only the original host can restart this auction.', 'error');
+    return;
   }
 
+  const hostTeamId = getOwnedHostTeamId(sourceRoom);
+  if (!hostTeamId) {
+    showToast('Host team is missing for this auction.', 'error');
+    return;
+  }
+
+  const code = await reserveAvailableRoomCode();
+  const isManual = sourceConfig.auctionType === 'manual';
+  const hostTeam = sourceRoom?.teams?.[hostTeamId] || {};
+  const hostName = String(hostTeam.ownerName || user?.displayName || user?.email || 'Host').trim();
+  const budget = Number(sourceConfig.budget || hostTeam.purse || 2000);
+  const now = Date.now();
+  const clonedConfig = JSON.parse(JSON.stringify(sourceConfig || {}));
+  delete clonedConfig.terminatedAt;
+  delete clonedConfig.terminatedBy;
+  delete clonedConfig.finishedAt;
+  delete clonedConfig.reopenedAt;
+  delete clonedConfig.reopenedBy;
+  delete clonedConfig.updatedAt;
+
+  const clonedTeams = {};
+  Object.entries(sourceRoom?.teams || {}).forEach(([teamId, team]) => {
+    clonedTeams[teamId] = {
+      name: team?.name || teamId,
+      short: team?.short || teamId,
+      primary: team?.primary || '#1DA0FF',
+      logo: team?.logo || '',
+      ownerName: team?.ownerName || hostName,
+      ownerUid: team?.ownerUid || authUid,
+      purse: budget,
+      squad: [],
+      isHost: teamId === hostTeamId,
+      joinedAt: now
+    };
+  });
+
+  const roomPayload = {
+    config: {
+      ...clonedConfig,
+      hostTeamId,
+      hostUid: authUid,
+      currentHostUid: authUid,
+      budget,
+      status: 'lobby',
+      createdAt: now,
+      auctionType: sourceConfig.auctionType || 'random',
+      auctionTitle: String(sourceConfig.auctionTitle || '').trim() || (isManual ? 'My Auction' : 'IPL Auction'),
+      bidOptions: Array.isArray(sourceConfig.bidOptions) && sourceConfig.bidOptions.length ? sourceConfig.bidOptions : [25, 50, 100],
+      bidOptionsAll: Array.isArray(sourceConfig.bidOptionsAll) ? sourceConfig.bidOptionsAll : undefined,
+      unlimitedTimer: !!sourceConfig.unlimitedTimer,
+      hostBidsForAllTeams: !!sourceConfig.hostBidsForAllTeams
+    },
+    teams: clonedTeams
+  };
+
+  if (isManual) {
+    roomPayload.manualTeams = sourceRoom.manualTeams && Object.keys(sourceRoom.manualTeams).length
+      ? JSON.parse(JSON.stringify(sourceRoom.manualTeams))
+      : IPL_TEAMS.reduce((acc, team) => {
+          acc[team.id] = { ...team };
+          return acc;
+        }, {});
+    roomPayload.manualPlayers = Array.isArray(sourceRoom.manualPlayers) ? JSON.parse(JSON.stringify(sourceRoom.manualPlayers)) : [];
+  }
+
+  await db.ref(`rooms/${code}`).set(roomPayload);
+  await db.ref(`${getHistoryPath(authUid)}/${code}`).update({
+    roomCode: code,
+    title: roomPayload.config.auctionTitle,
+    status: 'lobby',
+    auctionType: roomPayload.config.auctionType,
+    hostTeamId,
+    createdAt: now,
+    updatedAt: now,
+    sourceRoomCode: sourceCode
+  });
+
+  applyOwnerSession(code, roomPayload, user, true);
+  window.location.href = 'lobby.html';
+}
+
+async function routeOwnedAuction(roomCode) {
+  const user = getCurrentUser();
+  if (!user) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const snap = await db.ref(`rooms/${roomCode}`).get();
+  if (!snap.exists()) {
+    showToast('Auction room no longer exists.', 'error');
+    return;
+  }
+
+  const room = snap.val() || {};
+  const config = room.config || {};
+  const hostUid = getOwnedHostUid(room);
+  if (hostUid && hostUid !== user.uid) {
+    showToast('Only the original host can open this auction.', 'error');
+    return;
+  }
+
+  const status = normalizeHistoryStatus(config.status);
+  const terminatedAt = Number(config.terminatedAt || 0) || 0;
+
+  if (terminatedAt) {
+    await restartAuctionFromSource(roomCode, room, user);
+    return;
+  }
+
+  applyOwnerSession(roomCode, room, user, true);
+
+  if (status === 'auction') {
+    await syncOwnerHistory(roomCode, room, 'auction');
+    window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}`;
+    return;
+  }
+
+  if (status === 'finished') {
+    await syncOwnerHistory(roomCode, room, 'finished');
+    window.location.href = `results.html?room=${encodeURIComponent(roomCode)}`;
+    return;
+  }
+
+  await syncOwnerHistory(roomCode, room, 'lobby');
   window.location.href = 'lobby.html';
 }
 

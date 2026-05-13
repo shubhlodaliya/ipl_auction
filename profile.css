@@ -192,6 +192,32 @@
   padding-right: 0.2rem;
 }
 
+.profile-search-wrap {
+  margin-top: 0.9rem;
+}
+
+.profile-search-input {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid #dfdfdf;
+  background: #fff;
+  color: #222;
+  padding: 0.62rem 0.8rem;
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-search-input::placeholder {
+  color: #9a9a9a;
+}
+
+.profile-search-input:focus {
+  outline: none;
+  border-color: #cc1f1f;
+  box-shadow: 0 0 0 3px rgba(204, 31, 31, 0.08);
+}
+
 .profile-more-wrap {
   display: flex;
   justify-content: center;

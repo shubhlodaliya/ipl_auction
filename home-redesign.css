@@ -602,10 +602,10 @@
   margin-bottom: 0.5rem;
 }
 .ma-contact .ma-section-title {
-  text-align: left;
+  text-align: center;
 }
 .ma-contact .ma-section-divider {
-  margin: 0 0 1.5rem;
+  margin: 0 auto 1.5rem;
 }
 .ma-contact-text {
   color: #666;
@@ -900,7 +900,7 @@
   .ma-section-title { font-size: 1.55rem; }
   .ma-tournament-item { flex-wrap: wrap; }
   .ma-tournament-date { min-width: 42px; padding-right: 1rem; }
-  .ma-tournament-time { text-align: left; }
+  .ma-tournament-time { text-align: center; }
 }
 
 /* ===== NEW AUTH MODAL ===== */

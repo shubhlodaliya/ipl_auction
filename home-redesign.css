@@ -581,6 +581,116 @@
   border-bottom-color: var(--ma-red-dark);
 }
 
+/* CONTACT SECTION */
+.ma-contact {
+  background: linear-gradient(180deg, #fff 0%, #f8f8f8 100%);
+  padding: 4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 2rem;
+  align-items: center;
+}
+.ma-contact-copy {
+  max-width: 560px;
+}
+.ma-contact-kicker {
+  color: var(--ma-red);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.ma-contact .ma-section-title {
+  text-align: left;
+}
+.ma-contact .ma-section-divider {
+  margin: 0 0 1.5rem;
+}
+.ma-contact-text {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+.ma-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+.ma-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.7rem 1.1rem;
+  border: 1.5px solid var(--ma-red);
+  border-radius: 6px;
+  color: var(--ma-red);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  background: transparent;
+}
+.ma-contact-btn:hover {
+  background: var(--ma-red);
+  color: #fff;
+}
+.ma-contact-btn.primary {
+  background: var(--ma-red);
+  color: #fff;
+}
+.ma-contact-btn.primary:hover {
+  background: var(--ma-red-dark);
+  border-color: var(--ma-red-dark);
+}
+.ma-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.ma-contact-card {
+  display: block;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 1.35rem 1.25rem;
+  text-decoration: none;
+  color: #111;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.ma-contact-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(204, 31, 31, 0.25);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+}
+.ma-contact-label {
+  display: inline-block;
+  color: var(--ma-red);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.55rem;
+}
+.ma-contact-card strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #111;
+  margin-bottom: 0.35rem;
+}
+.ma-contact-card small {
+  display: block;
+  color: #666;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 /* PRICING FULL PAGE */
 .ma-pricing-full { 
   background: #f9f9f9; 
@@ -761,6 +871,8 @@
   .ma-auction-grid { grid-template-columns: 1fr; }
   .ma-pricing { padding: 2rem; }
   .ma-pricing-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+  .ma-contact { grid-template-columns: 1fr; padding: 2rem; }
+  .ma-contact-grid { grid-template-columns: 1fr 1fr; }
   .ma-pricing-full { padding: 3rem 2rem; }
   .ma-pricing-grid-full { grid-template-columns: repeat(2, 1fr); }
   .ma-faq-items { grid-template-columns: 1fr; }
@@ -783,6 +895,7 @@
   .ma-features { grid-template-columns: 1fr; }
   .ma-pricing-grid { grid-template-columns: 1fr; }
   .ma-pricing-grid-full { grid-template-columns: 1fr; }
+  .ma-contact-grid { grid-template-columns: 1fr; }
   .ma-pricing-premium { transform: scale(1); }
   .ma-section-title { font-size: 1.55rem; }
   .ma-tournament-item { flex-wrap: wrap; }

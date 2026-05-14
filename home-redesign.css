@@ -309,31 +309,6 @@
   letter-spacing: 0.06em;
   color: #888;
   text-transform: uppercase;
-  flex-shrink: 0;
-}
-.ma-ticker-item .tag {
-  font-size: 0.6rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 2px;
-  font-weight: 700;
-}
-.ma-ticker-item .tag.live { background: var(--ma-red); color: #fff; }
-.ma-ticker-item .tag.upcoming { background: #22c55e; color: #fff; }
-.ma-ticker-item .tag.record { background: #f59e0b; color: #000; }
-.ma-ticker-item .tag.active { background: #3b82f6; color: #fff; }
-.ma-ticker-item strong { color: #fff; }
-
-/* ARENA */
-.ma-arena { background: #f9f9f9; padding: 4rem; }
-.ma-section-title {
-  text-align: center;
-  font-family: 'Rajdhani', sans-serif;
-  font-size: clamp(1.85rem, 2.5vw, 2.5rem);
-  font-weight: 700;
-  color: #111;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
 }
 .ma-section-divider {
   width: 60px;

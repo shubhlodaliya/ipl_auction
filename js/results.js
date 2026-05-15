@@ -2944,6 +2944,7 @@ async function exportTeamPdfById(selectedTeamId) {
   const [teamId, team] = selectedEntry;
   const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
   const doc = createPdfDocument();
+  const generatedAt = new Date();
   const meta = roomTeamCatalog[teamId] || getTeam(teamId) || {};
 
   await renderPdfTeamRoster(doc, {

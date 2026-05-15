@@ -1060,9 +1060,9 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .team-min-note.required {
-  color: #ffd58a;
-  border-color: rgba(255, 179, 71, 0.45);
-  background: rgba(255, 179, 71, 0.16);
+  color: #cc1f1f;
+  border-color: rgba(204, 31, 31, 0.45);
+  background: rgba(204, 31, 31, 0.12);
 }
 
 .team-min-note.satisfied {
@@ -1077,7 +1077,7 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.2px;
-  color: #ffe29b;
+  color: #cc1f1f;
 }
 .sidebar-squad-preview {
   margin-top: 0.4rem;
@@ -1212,13 +1212,13 @@ input[type=range]::-webkit-slider-thumb {
 .progress-bar-wrap {
   width: 140px;
   height: 4px;
-  background: rgba(255,255,255,0.1);
+  background: #e2e2e2;
   border-radius: 4px;
   overflow: hidden;
 }
 .progress-bar-fill {
   height: 100%;
-  background: var(--gold);
+  background: #cc1f1f;
   border-radius: 4px;
   transition: width 0.5s ease;
 }
@@ -1251,7 +1251,7 @@ input[type=range]::-webkit-slider-thumb {
   padding: 0.3rem 0.75rem;
   border-radius: 100px;
   background: rgba(204, 31, 31, 0.18);
-  color: #ffd6d6;
+  color: #cc1f1f;
   border: 1px solid rgba(204, 31, 31, 0.45);
   font-weight: 700;
   letter-spacing: 0.4px;

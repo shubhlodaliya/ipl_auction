@@ -34,6 +34,7 @@ const playing11State = {
 
 const resultsExportState = {
   roomCode: null,
+  roomTitle: '',
   teams: {},
   sortedTeams: [],
   teamSquads: {},
@@ -1250,6 +1251,7 @@ async function loadResults() {
     const teamScoreMap = new Map((teamPowerData?.rankings || []).map((entry) => [entry.teamId, entry.score]));
 
     resultsExportState.roomCode = roomCode;
+    resultsExportState.roomTitle = getResultsBrandTitle(room);
     resultsExportState.isManualAuction = isManualAuction;
     resultsExportState.teams = teams;
     resultsExportState.sortedTeams = sortedTeams;
@@ -2295,6 +2297,243 @@ const PDF_THEME = {
   white: [255, 255, 255]
 };
 
+const pdfImageCache = new Map();
+
+function getExtraFieldValue(player, keys) {
+  if (!player || !keys || !keys.length) return '';
+  const extra = player.extraFields && typeof player.extraFields === 'object' ? player.extraFields : {};
+  for (const key of keys) {
+    const direct = player[key];
+    if (direct != null && String(direct).trim()) return String(direct).trim();
+    const extraVal = extra[key];
+    if (extraVal != null && String(extraVal).trim()) return String(extraVal).trim();
+  }
+  return '';
+}
+
+async function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function blobToPngDataUrl(blob) {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    try {
+      return await blobToDataUrl(blob);
+    } catch (fallbackErr) {
+      return null;
+    }
+  }
+}
+
+async function loadImageDataUrl(url) {
+  const safeUrl = String(url || '').trim();
+  if (!safeUrl) return null;
+  if (pdfImageCache.has(safeUrl)) return pdfImageCache.get(safeUrl);
+  try {
+    const response = await fetch(safeUrl, { mode: 'cors' });
+    if (!response.ok) throw new Error('Image fetch failed');
+    const blob = await response.blob();
+    const dataUrl = await blobToPngDataUrl(blob);
+    if (!dataUrl) throw new Error('Image conversion failed');
+    pdfImageCache.set(safeUrl, dataUrl);
+    return dataUrl;
+  } catch (err) {
+    pdfImageCache.set(safeUrl, null);
+    return null;
+  }
+}
+
+function drawPdfCircleBadge(doc, x, y, radius, label) {
+  doc.setFillColor(247, 250, 255);
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.setLineWidth(0.8);
+  doc.circle(x, y, radius, 'FD');
+
+  doc.setTextColor(...PDF_THEME.navy);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(label, x, y + 4, { align: 'center' });
+}
+
+async function drawImageInBox(doc, url, x, y, w, h, fallbackLabel) {
+  const dataUrl = await loadImageDataUrl(url);
+  if (dataUrl) {
+    doc.addImage(dataUrl, 'PNG', x, y, w, h);
+    return;
+  }
+
+  doc.setFillColor(242, 245, 250);
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.roundedRect(x, y, w, h, 6, 6, 'FD');
+  if (fallbackLabel) {
+    doc.setTextColor(...PDF_THEME.slate700);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(fallbackLabel, x + (w / 2), y + (h / 2) + 4, { align: 'center' });
+  }
+}
+
+async function drawPdfHeader(doc, title, teamName, roomCode, leftBadgeText, teamLogoUrl) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.setLineWidth(1);
+  doc.line(36, 40, pageWidth - 36, 40);
+
+  drawPdfCircleBadge(doc, 58, 22, 18, leftBadgeText || 'IPL');
+
+  doc.setTextColor(...PDF_THEME.blue);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(String(title || 'IPL Auction'), pageWidth / 2, 26, { align: 'center' });
+
+  doc.setTextColor(...PDF_THEME.slate900);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text(String(teamName || 'Team Squad'), pageWidth / 2, 54, { align: 'center' });
+
+  doc.setTextColor(...PDF_THEME.slate500);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.text(`Room: ${roomCode}`, pageWidth / 2, 70, { align: 'center' });
+
+  if (teamLogoUrl) {
+    const logoSize = 36;
+    const logoX = pageWidth - 36 - logoSize;
+    const logoY = 6;
+    await drawImageInBox(doc, teamLogoUrl, logoX, logoY, logoSize, logoSize, 'LOGO');
+  }
+}
+
+function drawPdfPriceTag(doc, x, y, text) {
+  const padX = 6;
+  const padY = 4;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  const width = doc.getTextWidth(text) + (padX * 2);
+  const height = 16;
+  doc.setFillColor(228, 246, 235);
+  doc.setDrawColor(200, 236, 212);
+  doc.roundedRect(x, y, width, height, 6, 6, 'FD');
+  doc.setTextColor(22, 132, 74);
+  doc.text(text, x + padX, y + padY + 7);
+}
+
+async function renderPdfTeamRoster(doc, payload) {
+  const {
+    roomCode,
+    roomTitle,
+    team,
+    teamId,
+    teamLogo,
+    squad
+  } = payload;
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const leftMargin = 36;
+  const rightMargin = 36;
+  const topStart = 92;
+  const bottomMargin = 36;
+  const gutter = 12;
+
+  await drawPdfHeader(
+    doc,
+    roomTitle || 'IPL Auction Tournament',
+    team?.name || teamId || 'Team',
+    roomCode || '-',
+    'IPL',
+    teamLogo
+  );
+
+  const totalCards = squad.length || 0;
+  const rowsNeeded = Math.max(1, Math.ceil(totalCards / 2));
+  const availableHeight = pageHeight - bottomMargin - topStart;
+  const baseCardHeight = 78;
+  const cardHeight = Math.max(54, Math.min(baseCardHeight, Math.floor((availableHeight - (rowsNeeded - 1) * gutter) / rowsNeeded)));
+  const cardWidth = (pageWidth - leftMargin - rightMargin - gutter) / 2;
+  const scale = cardHeight / baseCardHeight;
+
+  const nameSize = Math.max(9.5, 12 * scale);
+  const metaSize = Math.max(7.2, 9 * scale);
+  const lineGap = Math.max(11, 14 * scale);
+  const imageSize = Math.max(40, 52 * scale);
+
+  let x = leftMargin;
+  let y = topStart;
+
+  if (!squad.length) {
+    doc.setTextColor(...PDF_THEME.slate700);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('No players purchased', leftMargin, topStart + 16);
+    return;
+  }
+
+  for (let i = 0; i < squad.length; i += 1) {
+    const { player, price } = squad[i];
+    const isRight = i % 2 === 1;
+    x = leftMargin + (isRight ? cardWidth + gutter : 0);
+
+    if (i > 0 && i % 2 === 0) {
+      y += cardHeight + gutter;
+    }
+
+    doc.setDrawColor(...PDF_THEME.slate300);
+    doc.setLineWidth(0.7);
+    doc.roundedRect(x, y, cardWidth, cardHeight, 8, 8, 'S');
+
+    const innerPad = 10;
+    const imageBox = {
+      x: x + cardWidth - imageSize - innerPad,
+      y: y + innerPad,
+      w: imageSize,
+      h: imageSize
+    };
+
+    const nameText = String(player?.name || 'Player').trim();
+    const roleText = getExtraFieldValue(player, ['role', 'skill']) || '-';
+    const mobileText = getExtraFieldValue(player, ['mobile', 'phone', 'contact', 'contactNumber', 'whatsapp']) || '-';
+    const specText = getExtraFieldValue(player, ['spec', 'hand', 'batting_style', 'bowling_style', 'style']) || '-';
+
+    doc.setTextColor(...PDF_THEME.slate900);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(nameSize);
+    doc.text(nameText, x + innerPad, y + innerPad + 12);
+
+    doc.setTextColor(...PDF_THEME.slate700);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(metaSize);
+    doc.text(`Mobile: ${mobileText}`, x + innerPad, y + innerPad + 12 + lineGap);
+    doc.text(`Skill: ${roleText}`, x + innerPad, y + innerPad + 12 + (lineGap * 2));
+    doc.text(`Spec: ${specText}`, x + innerPad, y + innerPad + 12 + (lineGap * 3));
+
+    const priceLabel = formatPricePdf(price || 0);
+    drawPdfPriceTag(doc, x + innerPad, y + cardHeight - 22, priceLabel);
+
+    doc.setTextColor(...PDF_THEME.blue);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(metaSize);
+    doc.text(String(team?.name || teamId || '').toUpperCase(), x + cardWidth - innerPad, y + cardHeight - 8, { align: 'right' });
+
+    const fallbackInitials = getPlayerInitials(nameText || 'P');
+    await drawImageInBox(doc, player?.photo_url || '', imageBox.x, imageBox.y, imageBox.w, imageBox.h, fallbackInitials);
+  }
+}
+
 function drawSectionTitle(doc, label, y, accent = PDF_THEME.blue) {
   doc.setDrawColor(...PDF_THEME.slate300);
   doc.setLineWidth(0.8);
@@ -2622,12 +2861,9 @@ function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, play
 async function exportResultsPdf() {
   const {
     roomCode,
-    teams,
+    roomTitle,
     sortedTeams,
     teamSquads,
-    soldCount,
-    unsoldCount,
-    totalSales,
     roomTeamCatalog
   } = resultsExportState;
 
@@ -2642,30 +2878,23 @@ async function exportResultsPdf() {
   }
 
   const doc = createPdfDocument();
-  const generatedAt = new Date();
-
-  renderPdfHeader(doc, 'IPL Auction Report', roomCode, generatedAt);
-  renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSales);
 
   for (let i = 0; i < sortedTeams.length; i++) {
     const [teamId, team] = sortedTeams[i];
     const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
-    
-    // Load Playing 11 data for this team
-    let playing11Data = null;
-    try {
-      const snap = await db.ref(`rooms/${roomCode}/playing11/${teamId}`).get();
-      if (snap.exists()) {
-        playing11Data = snap.val();
-      }
-    } catch (err) {
-      console.error(`Failed to load Playing 11 for team ${teamId}:`, err);
-    }
-    
-    renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, i + 1, playing11Data);
-  }
+    const meta = roomTeamCatalog[teamId] || getTeam(teamId) || {};
 
-  appendPdfFooter(doc);
+    if (i > 0) doc.addPage();
+
+    await renderPdfTeamRoster(doc, {
+      roomCode,
+      roomTitle,
+      team,
+      teamId,
+      teamLogo: meta.logo || '',
+      squad
+    });
+  }
 
   const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
   const datePart = generatedAt.toISOString().slice(0, 10);
@@ -2675,6 +2904,7 @@ async function exportResultsPdf() {
 async function exportTeamPdfById(selectedTeamId) {
   const {
     roomCode,
+    roomTitle,
     sortedTeams,
     teamSquads,
     roomTeamCatalog,
@@ -2703,22 +2933,16 @@ async function exportTeamPdfById(selectedTeamId) {
   const [teamId, team] = selectedEntry;
   const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
   const doc = createPdfDocument();
-  const generatedAt = new Date();
+  const meta = roomTeamCatalog[teamId] || getTeam(teamId) || {};
 
-  // Load Playing 11 data for this team
-  let playing11Data = null;
-  try {
-    const snap = await db.ref(`rooms/${roomCode}/playing11/${teamId}`).get();
-    if (snap.exists()) {
-      playing11Data = snap.val();
-    }
-  } catch (err) {
-    console.error(`Failed to load Playing 11 for team ${teamId}:`, err);
-  }
-
-  renderPdfHeader(doc, `${team.name} - Team Report`, roomCode, generatedAt);
-  renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, null, playing11Data);
-  appendPdfFooter(doc);
+  await renderPdfTeamRoster(doc, {
+    roomCode,
+    roomTitle,
+    team,
+    teamId,
+    teamLogo: meta.logo || '',
+    squad
+  });
 
   const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
   const safeTeam = String(isManualAuction ? team.name : (team.short || teamId)).replace(/[^a-zA-Z0-9-_]/g, '_');

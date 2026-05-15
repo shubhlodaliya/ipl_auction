@@ -467,9 +467,11 @@ input[type=range]::-webkit-slider-thumb {
   text-align: center;
   padding: 2rem;
   background: var(--gold-dim);
-  border: 2px solid var(--gold-glow);
+  border: 2px solid rgba(255, 77, 77, 0.6);
   border-radius: var(--radius);
   min-width: 300px;
+  box-shadow: 0 10px 28px rgba(6, 11, 24, 0.12);
+  animation: lobbyPop 0.45s ease;
 }
 .room-code-label {
   font-size: 0.8rem;
@@ -497,6 +499,24 @@ input[type=range]::-webkit-slider-thumb {
   gap: 0.6rem;
   flex-wrap: wrap;
   justify-content: center;
+}
+ .lobby-share-actions .btn {
+  border-color: rgba(255, 77, 77, 0.6);
+}
+ .lobby-share-actions .btn:hover {
+  border-color: var(--red);
+}
+
+#configInfo .glass {
+  border: 2px solid rgba(255, 77, 77, 0.5);
+  box-shadow: 0 8px 18px rgba(6, 11, 24, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  animation: lobbyPop 0.45s ease;
+}
+#configInfo .glass:hover {
+  transform: translateY(-2px);
+  border-color: var(--red);
+  box-shadow: 0 10px 22px rgba(6, 11, 24, 0.16);
 }
 
 .watchlist-help {
@@ -830,7 +850,7 @@ input[type=range]::-webkit-slider-thumb {
 .lobby-team-slot {
   padding: 1.25rem 0.75rem;
   border-radius: var(--radius);
-  border: 2px solid var(--border);
+  border: 2px solid rgba(255, 77, 77, 0.45);
   background: var(--card);
   text-align: center;
   transition: var(--transition);
@@ -838,18 +858,23 @@ input[type=range]::-webkit-slider-thumb {
   position: relative;
 }
 .lobby-team-slot.joined {
-  border-color: var(--green);
+  border-color: var(--red);
   background: var(--green-dim);
 }
 .lobby-team-slot.mine {
-  border-color: var(--gold);
+  border-color: var(--red);
   background: var(--gold-dim);
 }
 .lobby-team-slot.available:hover {
-  border-color: var(--border-hover);
+  border-color: var(--red);
   transform: translateY(-2px);
 }
 .lobby-team-slot.taken { opacity: 0.5; cursor: default; }
+
+@keyframes lobbyPop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .slot-logo {
   width: 64px;
@@ -5714,11 +5739,11 @@ body.ma-info .learn-meta { color: #777777; }
   align-items: center;
 }
 .site-footer-links a {
-  color: var(--text-sec);
+  color: #cfcfcf;
   transition: var(--transition);
 }
 .site-footer-links a:hover {
-  color: var(--gold);
+  color: #ffffff;
 }
 
 /* ============================================================

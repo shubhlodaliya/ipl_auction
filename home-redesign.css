@@ -486,7 +486,8 @@
 .ma-remind-btn:hover { border-color: var(--ma-green); color: var(--ma-green); }
 
 /* PRICING SECTION */
-.ma-pricing { background: #f9f9f9; padding: 4rem; }
+.ma-pricing { background: #f9f9f9; padding: 2.5rem 4rem 3rem; }
+.ma-pricing .ma-section-divider { margin-bottom: 1.6rem; }
 .ma-pricing-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

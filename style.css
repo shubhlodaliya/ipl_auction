@@ -927,6 +927,11 @@ input[type=range]::-webkit-slider-thumb {
    AUCTION PAGE
    ============================================================ */
 .auction-layout {
+  background:
+    radial-gradient(100% 80% at 100% 0%, rgba(204, 31, 31, 0.08), transparent 55%),
+    radial-gradient(90% 90% at 0% 100%, rgba(29, 160, 255, 0.08), transparent 60%);
+}
+.auction-layout {
   display: grid;
   grid-template-columns: 214px 1fr;
   grid-template-rows: 1fr;
@@ -937,9 +942,9 @@ input[type=range]::-webkit-slider-thumb {
 /* Teams Sidebar */
 .teams-sidebar {
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)),
+    linear-gradient(180deg, rgba(204, 31, 31, 0.08), rgba(255,255,255,0) 55%),
     var(--surface);
-  border-right: 1px solid var(--border);
+  border-right: 1px solid rgba(255,255,255,0.12);
   padding: 0.8rem 0.65rem;
   overflow-y: auto;
   display: flex;
@@ -957,9 +962,9 @@ input[type=range]::-webkit-slider-thumb {
 .sidebar-team {
   padding: 0.62rem 0.64rem;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
-  transition: var(--transition);
+  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -972,11 +977,16 @@ input[type=range]::-webkit-slider-thumb {
   background: var(--team-color, var(--text-dim));
   border-radius: 2px 0 0 2px;
 }
-.sidebar-team.leading {
-  border-color: rgba(255, 203, 48, 0.3);
-  background: var(--gold-dim);
+.sidebar-team:hover {
+  border-color: rgba(204, 31, 31, 0.45);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+  transform: translateY(-2px);
 }
-.sidebar-team.mine { border-color: rgba(255,203,48,0.2); }
+.sidebar-team.leading {
+  border-color: rgba(204, 31, 31, 0.45);
+  background: rgba(204, 31, 31, 0.12);
+}
+.sidebar-team.mine { border-color: rgba(204, 31, 31, 0.5); }
 .team-row-top {
   display: flex;
   align-items: center;
@@ -1119,19 +1129,20 @@ input[type=range]::-webkit-slider-thumb {
   overflow: hidden;
   background:
     radial-gradient(120% 120% at 0% 100%, rgba(29,160,255,0.08), transparent 52%),
-    radial-gradient(90% 80% at 100% 0%, rgba(255,203,48,0.05), transparent 60%),
-    #050d1f;
+    radial-gradient(90% 80% at 100% 0%, rgba(204,31,31,0.1), transparent 60%),
+    #0a1223;
 }
 .auction-topbar {
   padding: 0.85rem 1.35rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(11,18,32,0.72);
+  background: linear-gradient(90deg, rgba(16,26,44,0.92), rgba(10,18,34,0.9));
   backdrop-filter: blur(10px);
   flex-wrap: wrap;
   gap: 0.75rem;
+  animation: auctionFadeIn 0.5s ease;
 }
 .auction-controls-stack {
   display: flex;
@@ -1155,9 +1166,9 @@ input[type=range]::-webkit-slider-thumb {
   flex-wrap: wrap;
   justify-content: flex-end;
   padding: 0.32rem 0.42rem;
-  border: 1px solid rgba(255,255,255,0.09);
+  border: 1px solid rgba(204, 31, 31, 0.25);
   border-radius: 10px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.04);
 }
 .auction-progress { display: flex; align-items: center; gap: 1rem; }
 .pool-banner-btn {
@@ -1239,17 +1250,17 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 0.8rem;
   padding: 0.3rem 0.75rem;
   border-radius: 100px;
-  background: rgba(255,203,48,0.14);
-  color: #ffe7a6;
-  border: 1px solid rgba(255,203,48,0.35);
+  background: rgba(204, 31, 31, 0.18);
+  color: #ffd6d6;
+  border: 1px solid rgba(204, 31, 31, 0.45);
   font-weight: 700;
   letter-spacing: 0.4px;
   transition: var(--transition);
 }
 
 .auction-room-code-chip:hover {
-  background: rgba(255,203,48,0.22);
-  border-color: rgba(255,203,48,0.55);
+  background: rgba(204, 31, 31, 0.28);
+  border-color: rgba(204, 31, 31, 0.7);
 }
 .chip-team-logo {
   width: 20px;
@@ -1282,12 +1293,14 @@ input[type=range]::-webkit-slider-thumb {
   padding: 1.8rem;
   gap: 2rem;
   background:
-    linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0) 38%),
+    linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0) 38%),
     radial-gradient(120% 90% at 0% 100%, rgba(29,160,255,0.12), transparent 56%),
+    radial-gradient(90% 70% at 90% 0%, rgba(204,31,31,0.18), transparent 55%),
     rgba(8,16,30,0.95);
-  border-right: 1px solid var(--border);
+  border-right: 1px solid rgba(255,255,255,0.12);
   box-shadow: inset -14px 0 30px rgba(0,0,0,0.14);
   overflow: hidden;
+  animation: auctionFloatIn 0.6s ease;
 }
 
 .player-spotlight::before {
@@ -1472,11 +1485,12 @@ input[type=range]::-webkit-slider-thumb {
   align-self: start;
   padding: 1rem 1.1rem;
   border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.11);
-  background: linear-gradient(180deg, rgba(12,24,44,0.7), rgba(9,18,34,0.56));
+  border: 1px solid rgba(204, 31, 31, 0.28);
+  background: linear-gradient(180deg, rgba(20,34,56,0.78), rgba(10,20,38,0.65));
   backdrop-filter: blur(8px);
   box-shadow: 0 14px 34px rgba(0,0,0,0.24);
   max-width: 520px;
+  animation: auctionCardGlow 3.2s ease-in-out infinite;
 }
 .player-name {
   font-family: 'Rajdhani', sans-serif;
@@ -1607,7 +1621,7 @@ input[type=range]::-webkit-slider-thumb {
 /* Bid Panel */
 .bid-panel {
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01)),
     rgba(8,16,30,0.95);
   position: relative;
   display: flex;
@@ -1616,9 +1630,10 @@ input[type=range]::-webkit-slider-thumb {
   justify-content: flex-start;
   padding: 1.15rem 1rem;
   gap: 1.05rem;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid rgba(255,255,255,0.12);
   overflow-y: auto;
   box-shadow: inset 12px 0 30px rgba(0,0,0,0.16);
+  animation: auctionFloatIn 0.6s ease;
 }
 
 .bid-panel::before {
@@ -1628,16 +1643,16 @@ input[type=range]::-webkit-slider-thumb {
   left: 10%;
   right: 10%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,203,48,0.65), transparent);
+  background: linear-gradient(90deg, transparent, rgba(204,31,31,0.65), transparent);
   pointer-events: none;
 }
 
 .bid-panel > div:first-child {
   width: 100%;
   text-align: center;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(204,31,31,0.35);
   border-radius: 14px;
-  background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015));
+  background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
   padding: 0.85rem 0.75rem 0.75rem;
   box-shadow: 0 10px 26px rgba(0,0,0,0.22);
 }
@@ -1647,7 +1662,7 @@ input[type=range]::-webkit-slider-thumb {
   grid-row: 1;
   background:
     linear-gradient(180deg, rgba(10,22,40,0.98), rgba(6,14,27,0.99));
-  border-left: 1px solid rgba(126, 173, 218, 0.24);
+  border-left: 1px solid rgba(204, 31, 31, 0.3);
   display: flex;
   flex-direction: column;
   gap: 0.72rem;
@@ -1660,9 +1675,9 @@ input[type=range]::-webkit-slider-thumb {
 
 .spectator-hero {
   border-radius: 16px;
-  border: 1px solid rgba(98, 155, 212, 0.34);
+  border: 1px solid rgba(204, 31, 31, 0.3);
   background:
-    radial-gradient(circle at 100% 0%, rgba(56,141,219,0.28), transparent 50%),
+    radial-gradient(circle at 100% 0%, rgba(204,31,31,0.22), transparent 50%),
     linear-gradient(165deg, rgba(20,48,82,0.86), rgba(11,28,49,0.86));
   padding: 0.95rem 0.8rem 0.82rem;
   box-shadow: 0 16px 28px rgba(0,0,0,0.24);
@@ -1705,9 +1720,9 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: 12px;
   margin-top: 0.58rem;
   padding: 0.58rem 0.72rem;
-  border: 1px solid rgba(255,203,48,0.4);
-  background: rgba(255,203,48,0.11);
-  color: #ffebb2;
+  border: 1px solid rgba(204, 31, 31, 0.45);
+  background: rgba(204, 31, 31, 0.12);
+  color: #ffd6d6;
   font-family: 'Rajdhani', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
@@ -1716,8 +1731,84 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 .spectator-room-code:hover {
-  background: linear-gradient(160deg, rgba(255,203,48,0.26), rgba(255,203,48,0.11));
-  border-color: rgba(255,203,48,0.62);
+  background: linear-gradient(160deg, rgba(204,31,31,0.26), rgba(204,31,31,0.11));
+  border-color: rgba(204,31,31,0.68);
+}
+
+.auction-layout .btn-ghost,
+.auction-layout .btn-secondary,
+.auction-layout .btn-danger {
+  border-color: rgba(204, 31, 31, 0.35);
+}
+.auction-layout .btn-ghost:hover,
+.auction-layout .btn-secondary:hover {
+  border-color: rgba(204, 31, 31, 0.65);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
+}
+.auction-layout .btn-danger {
+  background: rgba(204, 31, 31, 0.18);
+  color: #ffd6d6;
+}
+.auction-layout .btn-danger:hover {
+  background: rgba(204, 31, 31, 0.3);
+}
+
+.auction-layout .quick-bid-btn,
+.auction-layout .base-bid-btn,
+.auction-layout .pass-btn,
+.auction-layout .sell-now-btn,
+.auction-layout .undo-action-btn,
+.auction-layout .withdraw-btn,
+.auction-layout .skip-pool-btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.auction-layout .quick-bid-btn:hover,
+.auction-layout .base-bid-btn:hover,
+.auction-layout .pass-btn:hover,
+.auction-layout .sell-now-btn:hover,
+.auction-layout .undo-action-btn:hover,
+.auction-layout .withdraw-btn:hover,
+.auction-layout .skip-pool-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.24);
+}
+
+@keyframes auctionFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes auctionFloatIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes auctionCardGlow {
+  0%, 100% { box-shadow: 0 14px 34px rgba(0,0,0,0.24); }
+  50% { box-shadow: 0 16px 38px rgba(204, 31, 31, 0.18); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auction-topbar,
+  .player-spotlight,
+  .bid-panel,
+  .player-info-card,
+  #configInfo .glass {
+    animation: none !important;
+  }
+  .auction-layout .btn-ghost:hover,
+  .auction-layout .btn-secondary:hover,
+  .auction-layout .quick-bid-btn:hover,
+  .auction-layout .base-bid-btn:hover,
+  .auction-layout .pass-btn:hover,
+  .auction-layout .sell-now-btn:hover,
+  .auction-layout .undo-action-btn:hover,
+  .auction-layout .withdraw-btn:hover,
+  .auction-layout .skip-pool-btn:hover,
+  .sidebar-team:hover {
+    transform: none !important;
+  }
 }
 
 .spectator-card {

@@ -942,7 +942,8 @@
         const teamCount = Object.keys(teams).length;
         const title = cfg.auctionTitle || (cfg.auctionType === 'manual' ? 'Custom Auction' : 'IPL Auction');
         const started = formatTimeSince(getRoomStartedAt(cfg));
-        const currentBid = room.currentBid ? '&#8377;' + (room.currentBid >= 100 ? (room.currentBid / 100).toFixed(1) + 'Cr' : room.currentBid + 'L') : '&#8377;---';
+        const auctionTypeLabel = cfg.auctionType === 'manual' ? 'Manual Auction' : 'IPL Auction';
+        const auctionTypeClass = cfg.auctionType === 'manual' ? 'manual' : 'ipl';
 
         return `
           <div class="ma-auction-card">
@@ -954,8 +955,8 @@
               <h4>${escHtml(title)} <span style="font-size:0.7rem;color:#888;font-weight:400;">#${escHtml(code)}</span></h4>
               <div class="ma-auction-meta">
                 <div class="ma-auction-meta-item">
-                  <label>Current Bid</label>
-                  <span class="red">${currentBid}</span>
+                  <label>Auction Type</label>
+                  <span class="ma-auction-type ${auctionTypeClass}">${auctionTypeLabel}</span>
                 </div>
                 <div class="ma-auction-meta-item">
                   <label>Active Teams</label>

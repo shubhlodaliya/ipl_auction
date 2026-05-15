@@ -93,6 +93,7 @@ function renderAuctionCard(row, type) {
   const updatedAt = Number(row.updatedAt || row.createdAt || 0) || 0;
   const { day, month } = formatDay(startAt || updatedAt);
   const isTerminated = Number(row.terminatedAt || 0) > 0;
+  const canDownloadPdf = type !== 'scheduled' && (isTerminated || status === 'finished');
   const statusClass = type === 'scheduled'
     ? 'scheduled'
     : (isTerminated || status === 'finished' ? 'finished' : 'live');
@@ -120,8 +121,19 @@ function renderAuctionCard(row, type) {
       <div class="profile-auction-actions">
         <span class="profile-status-chip ${statusClass}">${escapeHtml(statusLabel)}</span>
         <button class="ma-remind-btn" onclick="openProfileRoom('${roomCode}')">${escapeHtml(actionLabel)}</button>
+        ${canDownloadPdf ? `<button class="ma-remind-btn" onclick="downloadAuctionPdf('${roomCode}')">Download PDF</button>` : ''}
       </div>
     </div>`;
+}
+
+function downloadAuctionPdf(roomCode) {
+  const code = String(roomCode || '').trim().toUpperCase();
+  if (!code) return;
+  const target = `results.html?room=${encodeURIComponent(code)}&pdf=1`;
+  const win = window.open(target, '_blank');
+  if (!win) {
+    window.location.href = target;
+  }
 }
 
 function renderAuctionList(listEl, rows, emptyMessage, type, limit = null) {

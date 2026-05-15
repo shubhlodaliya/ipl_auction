@@ -1080,6 +1080,7 @@ async function loadResults() {
   const session = getSession();
   const params = new URLSearchParams(window.location.search);
   const roomCode = (session && session.roomCode) || params.get('room');
+  const shouldAutoPdf = params.get('pdf') === '1' || params.get('download') === 'pdf';
 
   const isViewer = !!(session?.isSpectator || params.get('view') === 'spectator' || params.get('view') === 'viewer');
   if (isViewer) {
@@ -1344,6 +1345,16 @@ async function loadResults() {
 
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('resultsContent').style.display = 'block';
+
+    if (shouldAutoPdf) {
+      showToast('Preparing PDF download...', 'success');
+      setTimeout(() => {
+        exportResultsPdf().catch((err) => {
+          console.error('Auto PDF export failed:', err);
+          showToast('Failed to export PDF. Try again.', 'error');
+        });
+      }, 350);
+    }
 
   } catch (err) {
     console.error(err);

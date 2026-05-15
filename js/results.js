@@ -2889,6 +2889,7 @@ async function exportResultsPdf() {
   }
 
   const doc = createPdfDocument();
+  const generatedAt = new Date();
 
   for (let i = 0; i < sortedTeams.length; i++) {
     const [teamId, team] = sortedTeams[i];

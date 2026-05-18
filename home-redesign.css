@@ -34,6 +34,32 @@
   50% { box-shadow: 0 18px 40px rgba(204,31,31,0.18); }
 }
 
+@keyframes ma-slide-left {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ma-slide-right {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ma-zoom {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ma-pop {
+  0% { opacity: 0; transform: scale(0.9); }
+  70% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ma-sheen {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+
 /* RESET */
 .ma-page * { box-sizing: border-box; margin: 0; padding: 0; }
 .ma-page {
@@ -304,6 +330,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: clamp(1.25rem, 2vw, 2rem);
+  animation: ma-slide-left 0.75s ease both;
 }
 .ma-feat-card { text-align: center; }
 .ma-feat-card {
@@ -336,6 +363,7 @@
   border-bottom: none;
   overflow: hidden;
   padding: 0.6rem 0;
+  animation: ma-fade 0.8s ease both;
 }
 .ma-ticker-inner {
   display: flex;
@@ -378,6 +406,7 @@
   border: 2px dashed #d0e0ff;
   padding: 1.5rem;
   border-radius: 8px;
+  animation: ma-zoom 0.7s ease both;
 }
 .ma-arena-card {
   background: #fff;
@@ -385,7 +414,7 @@
   border-radius: 6px;
   padding: 1.75rem;
   transition: box-shadow 0.2s;
-  animation: ma-rise 0.7s ease both;
+  animation: ma-pop 0.75s ease both;
 }
 .ma-arena-card:nth-child(2) { animation-delay: 0.08s; }
 .ma-arena-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
@@ -433,6 +462,7 @@
 
 /* LIVE AUCTIONS */
 .ma-live { background: #fff; padding: 4rem; }
+.ma-live { animation: ma-slide-right 0.75s ease both; }
 .ma-live-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem; }
 .ma-live-header h2 { font-family: 'Rajdhani', sans-serif; font-size: clamp(1.85rem, 2.5vw, 2.5rem); font-weight: 700; color: #111; text-transform: uppercase; }
 .ma-live-header p { color: #888; font-size: 0.85rem; margin-bottom: 2rem; }
@@ -444,7 +474,7 @@
   border: 1px solid #e5e5e5;
   border-radius: 6px;
   overflow: hidden;
-  animation: ma-rise 0.7s ease both;
+  animation: ma-zoom 0.7s ease both;
 }
 .ma-auction-card:nth-child(2) { animation-delay: 0.05s; }
 .ma-auction-card:nth-child(3) { animation-delay: 0.1s; }
@@ -516,6 +546,7 @@
 
 /* TOURNAMENTS */
 .ma-tournaments { background: #f9f9f9; padding: 4rem; }
+.ma-tournaments { animation: ma-slide-left 0.75s ease both; }
 .ma-tournament-list { display: flex; flex-direction: column; gap: 1rem; max-width: 860px; margin: 0 auto; }
 .ma-tournament-item {
   background: #fff;
@@ -525,7 +556,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  animation: ma-rise 0.7s ease both;
+  animation: ma-slide-right 0.7s ease both;
 }
 .ma-tournament-item:nth-child(2) { animation-delay: 0.05s; }
 .ma-tournament-item:nth-child(3) { animation-delay: 0.1s; }
@@ -562,6 +593,7 @@
 
 /* PRICING SECTION */
 .ma-pricing { background: #f9f9f9; padding: 2.5rem 4rem 3rem; }
+.ma-pricing { animation: ma-slide-right 0.75s ease both; }
 .ma-pricing .ma-section-divider { margin-bottom: 1.6rem; }
 .ma-pricing-grid {
   display: grid;
@@ -579,7 +611,7 @@
   transition: box-shadow 0.3s, transform 0.3s;
   display: flex;
   flex-direction: column;
-  animation: ma-rise 0.75s ease both;
+  animation: ma-pop 0.75s ease both;
 }
 .ma-pricing-card:nth-child(2) { animation-delay: 0.06s; }
 .ma-pricing-card:nth-child(3) { animation-delay: 0.12s; }
@@ -614,6 +646,9 @@
   justify-content: space-between;
   position: relative;
   overflow: hidden;
+  background-size: 200% 200%;
+  background-image: linear-gradient(120deg, #b61b1b 0%, #cc1f1f 50%, #e13a3a 100%);
+  animation: ma-sheen 6s ease-in-out infinite;
 }
 .ma-pricing-banner::before {
   content: '';
@@ -677,6 +712,7 @@
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 2rem;
   align-items: center;
+  animation: ma-slide-left 0.75s ease both;
 }
 .ma-contact-copy {
   max-width: 560px;
@@ -750,7 +786,7 @@
   color: #111;
   box-shadow: 0 8px 24px rgba(0,0,0,0.04);
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-  animation: ma-rise 0.7s ease both;
+  animation: ma-zoom 0.7s ease both;
 }
 .ma-contact-card:nth-child(2) { animation-delay: 0.05s; }
 .ma-contact-card:nth-child(3) { animation-delay: 0.1s; }
@@ -927,6 +963,7 @@
   background: #111;
   padding: 3rem 4rem 1.5rem;
   color: #888;
+  animation: ma-fade 0.8s ease both;
 }
 .ma-footer-grid {
   display: grid;

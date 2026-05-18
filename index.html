@@ -300,6 +300,45 @@
     </div>
   </section>
 
+  <!-- TRUST + METRICS -->
+  <section class="ma-trust" id="trust">
+    <div class="ma-trust-inner">
+      <div class="ma-trust-copy">
+        <p class="ma-trust-kicker">Trusted Auction Arena</p>
+        <h2>Built for speed, clarity, and real-time control.</h2>
+        <p>Run auctions that feel premium: instant updates, visible budgets, and clean bidding flows for every team.</p>
+        <div class="ma-trust-chips">
+          <span class="ma-trust-chip">Secure Passcode Rooms</span>
+          <span class="ma-trust-chip">Auto Budget Tracking</span>
+          <span class="ma-trust-chip">Viewer Mode Support</span>
+          <span class="ma-trust-chip">Manual + IPL Modes</span>
+        </div>
+      </div>
+      <div class="ma-metrics">
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Live Rooms</div>
+          <div class="ma-metric-value" data-count="128">0</div>
+          <div class="ma-metric-sub">Auctions running now</div>
+        </div>
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Avg Bid Latency</div>
+          <div class="ma-metric-value" data-count="420" data-suffix="ms">0</div>
+          <div class="ma-metric-sub">Fast real-time bids</div>
+        </div>
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Success Rate</div>
+          <div class="ma-metric-value" data-count="99.4" data-suffix="%">0</div>
+          <div class="ma-metric-sub">Stable auction flow</div>
+        </div>
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Auctions Hosted</div>
+          <div class="ma-metric-value" data-count="5600" data-suffix="+">0</div>
+          <div class="ma-metric-sub">Across leagues & clubs</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CHOOSE YOUR ARENA (with embedded create/join forms) -->
   <section class="ma-arena" id="arena">
     <h2 class="ma-section-title">Choose Your Arena</h2>
@@ -631,6 +670,29 @@
     </div>
   </section>
 
+  <!-- FAQ TEASER -->
+  <section class="ma-faq-teaser">
+    <h2 class="ma-section-title">Quick Answers</h2>
+    <div class="ma-section-divider"></div>
+    <div class="ma-faq-grid">
+      <div class="ma-faq-card">
+        <h4>Can I host a private auction?</h4>
+        <p>Yes. Set a room passcode and share it only with your team owners.</p>
+      </div>
+      <div class="ma-faq-card">
+        <h4>Do viewers need a team?</h4>
+        <p>No. Use Viewer mode to watch auctions live without joining a squad.</p>
+      </div>
+      <div class="ma-faq-card">
+        <h4>Can I customize players and teams?</h4>
+        <p>Manual auctions support custom teams, logos, and player pools.</p>
+      </div>
+    </div>
+    <div class="ma-faq-cta">
+      <a class="ma-btn-hero-outline" href="faq.html">View Full FAQ</a>
+    </div>
+  </section>
+
   <!-- FEATURES -->
   <section class="ma-features">
     <div class="ma-feat-card">
@@ -712,6 +774,13 @@
       <span>v1.4 STABLE &bull; GLOBAL SERVER STATUS: OPTIMAL</span>
     </div>
   </footer>
+
+  <!-- FLOATING QUICK ACTIONS -->
+  <div class="ma-float-actions" aria-label="Quick actions">
+    <a href="#arena" class="ma-float-btn primary">Create Auction</a>
+    <a href="#arena" class="ma-float-btn">Join Auction</a>
+  </div>
+  <button class="ma-backtop" id="backToTop" aria-label="Back to top">↑</button>
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
@@ -816,12 +885,48 @@
       if (ticker) ticker.innerHTML += ticker.innerHTML;
     });
 
+    // ---- METRIC COUNTERS ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const counters = document.querySelectorAll('.ma-metric-value[data-count]');
+      if (!counters.length) return;
+
+      const animateCount = (el) => {
+        const target = Number(el.dataset.count || 0);
+        const suffix = el.dataset.suffix || '';
+        const isFloat = String(target).includes('.');
+        const duration = 1200;
+        const start = performance.now();
+
+        const tick = (now) => {
+          const progress = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = target * eased;
+          el.textContent = isFloat ? value.toFixed(1) + suffix : Math.round(value).toString() + suffix;
+          if (progress < 1) requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
+      };
+
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          animateCount(entry.target);
+          obs.unobserve(entry.target);
+        });
+      }, { threshold: 0.4 });
+
+      counters.forEach((el) => observer.observe(el));
+    });
+
     // ---- SCROLL REVEAL ----
     document.addEventListener('DOMContentLoaded', function () {
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const revealGroups = [
         { selector: '.ma-hero-left', variant: 'ma-reveal--left' },
         { selector: '.ma-hero-img-wrap', variant: 'ma-reveal--right' },
+        { selector: '.ma-trust-copy', variant: 'ma-reveal--left' },
+        { selector: '.ma-metric-card', variant: 'ma-reveal--zoom', stagger: 80 },
         { selector: '.ma-section-title, .ma-section-divider', variant: 'ma-reveal--clip' },
         { selector: '.ma-feat-card', variant: 'ma-reveal--zoom', stagger: 80 },
         { selector: '.ma-arena-card', variant: 'ma-reveal--pop', stagger: 90 },
@@ -830,7 +935,8 @@
         { selector: '.ma-tournament-item', variant: 'ma-reveal--right', stagger: 70 },
         { selector: '.ma-pricing-card', variant: 'ma-reveal--pop', stagger: 70 },
         { selector: '.ma-contact-copy', variant: 'ma-reveal--left' },
-        { selector: '.ma-contact-card', variant: 'ma-reveal--zoom', stagger: 70 }
+        { selector: '.ma-contact-card', variant: 'ma-reveal--zoom', stagger: 70 },
+        { selector: '.ma-faq-card', variant: 'ma-reveal--right', stagger: 70 }
       ];
 
       const elements = [];
@@ -863,6 +969,22 @@
       );
 
       elements.forEach((el) => observer.observe(el));
+    });
+
+    // ---- BACK TO TOP ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const backToTop = document.getElementById('backToTop');
+      if (!backToTop) return;
+
+      const toggle = () => {
+        backToTop.classList.toggle('is-visible', window.scrollY > 500);
+      };
+
+      toggle();
+      window.addEventListener('scroll', toggle, { passive: true });
+      backToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     });
 
     // ---- TAB SWITCHING (arena) ----

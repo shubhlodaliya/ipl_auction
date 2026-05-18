@@ -348,6 +348,89 @@
 .ma-bid-card-amount { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; color: var(--ma-red); line-height: 1; }
 .ma-bid-card-name { font-size: 0.7rem; font-weight: 700; color: #333; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 0.2rem; }
 
+/* TRUST + METRICS */
+.ma-trust {
+  background: linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%);
+  padding: 3.5rem clamp(2rem, 4vw, 4rem);
+}
+.ma-trust-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+}
+.ma-trust-kicker {
+  color: var(--ma-red);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.65rem;
+}
+.ma-trust-copy h2 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(1.9rem, 2.6vw, 2.6rem);
+  line-height: 1.1;
+  margin-bottom: 0.8rem;
+  color: #111;
+}
+.ma-trust-copy p {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+  max-width: 520px;
+}
+.ma-trust-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.ma-trust-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(204,31,31,0.08);
+  border: 1px solid rgba(204,31,31,0.2);
+  color: #7a0f0f;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ma-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.ma-metric-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+}
+.ma-metric-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #777;
+}
+.ma-metric-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ma-red);
+  margin: 0.25rem 0 0.35rem;
+}
+.ma-metric-sub {
+  font-size: 0.85rem;
+  color: #666;
+}
+
 /* FEATURES */
 .ma-features {
   background: #111;
@@ -858,6 +941,103 @@
   line-height: 1.5;
 }
 
+/* FAQ TEASER */
+.ma-faq-teaser {
+  background: #111;
+  padding: 4rem clamp(2rem, 4vw, 4rem);
+  color: #fff;
+}
+.ma-faq-teaser .ma-section-title {
+  color: #fff;
+}
+.ma-faq-teaser .ma-section-divider {
+  background: var(--ma-red);
+}
+.ma-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.ma-faq-card {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 1.4rem 1.3rem;
+}
+.ma-faq-card h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.ma-faq-card p {
+  font-size: 0.88rem;
+  color: #bbb;
+  line-height: 1.6;
+}
+.ma-faq-cta {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* FLOATING ACTIONS + BACK TO TOP */
+.ma-float-actions {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 200;
+}
+.ma-float-btn {
+  background: #fff;
+  color: #111;
+  border: 1px solid #e5e5e5;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.ma-float-btn.primary {
+  background: var(--ma-red);
+  color: #fff;
+  border-color: var(--ma-red);
+}
+.ma-float-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+}
+.ma-backtop {
+  position: fixed;
+  right: 24px;
+  bottom: 130px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.ma-backtop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-4px);
+}
+
 /* PRICING FULL PAGE */
 .ma-pricing-full { 
   background: #f9f9f9; 
@@ -1032,6 +1212,8 @@
 @media (max-width: 900px) {
   .ma-hero { grid-template-columns: 1fr; padding: 2rem; min-height: auto; }
   .ma-hero-img-wrap { height: 240px; }
+  .ma-trust-inner { grid-template-columns: 1fr; }
+  .ma-metrics { grid-template-columns: 1fr 1fr; }
   .ma-features { grid-template-columns: repeat(2, 1fr); padding: 2rem; }
   .ma-arena { padding: 2rem; }
   .ma-arena-grid { grid-template-columns: 1fr; }
@@ -1041,6 +1223,7 @@
   .ma-pricing-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
   .ma-contact { grid-template-columns: 1fr; padding: 2rem; }
   .ma-contact-grid { grid-template-columns: 1fr 1fr; }
+  .ma-faq-grid { grid-template-columns: 1fr 1fr; }
   .ma-pricing-full { padding: 3rem 2rem; }
   .ma-pricing-grid-full { grid-template-columns: repeat(2, 1fr); }
   .ma-faq-items { grid-template-columns: 1fr; }
@@ -1060,15 +1243,19 @@
   .ma-hero h1 { font-size: 2.25rem; }
   .ma-hero-sub { font-size: 1.25rem; }
   .ma-hero p { font-size: 0.98rem; line-height: 1.65; }
+  .ma-metrics { grid-template-columns: 1fr; }
   .ma-features { grid-template-columns: 1fr; }
   .ma-pricing-grid { grid-template-columns: 1fr; }
   .ma-pricing-grid-full { grid-template-columns: 1fr; }
   .ma-contact-grid { grid-template-columns: 1fr; }
+  .ma-faq-grid { grid-template-columns: 1fr; }
   .ma-pricing-premium { transform: scale(1); }
   .ma-section-title { font-size: 1.55rem; }
   .ma-tournament-item { flex-wrap: wrap; }
   .ma-tournament-date { min-width: 42px; padding-right: 1rem; }
   .ma-tournament-time { text-align: center; }
+  .ma-float-actions { right: 16px; bottom: 16px; }
+  .ma-backtop { right: 16px; bottom: 110px; }
 }
 
 /* ===== NEW AUTH MODAL ===== */

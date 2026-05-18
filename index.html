@@ -816,6 +816,56 @@
       if (ticker) ticker.innerHTML += ticker.innerHTML;
     });
 
+    // ---- SCROLL REVEAL ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const revealGroups = [
+        { selector: '.ma-hero-left', variant: 'ma-reveal--left' },
+        { selector: '.ma-hero-img-wrap', variant: 'ma-reveal--right' },
+        { selector: '.ma-section-title, .ma-section-divider', variant: 'ma-reveal--clip' },
+        { selector: '.ma-feat-card', variant: 'ma-reveal--zoom', stagger: 80 },
+        { selector: '.ma-arena-card', variant: 'ma-reveal--pop', stagger: 90 },
+        { selector: '.ma-live-header, .ma-live-sub', variant: 'ma-reveal--left' },
+        { selector: '.ma-live-rooms-grid > *', variant: 'ma-reveal--zoom', stagger: 70 },
+        { selector: '.ma-tournament-item', variant: 'ma-reveal--right', stagger: 70 },
+        { selector: '.ma-pricing-card', variant: 'ma-reveal--pop', stagger: 70 },
+        { selector: '.ma-contact-copy', variant: 'ma-reveal--left' },
+        { selector: '.ma-contact-card', variant: 'ma-reveal--zoom', stagger: 70 },
+        { selector: '.ma-footer', variant: 'ma-reveal--clip' }
+      ];
+
+      const elements = [];
+      revealGroups.forEach((group) => {
+        const nodes = document.querySelectorAll(group.selector);
+        nodes.forEach((node, index) => {
+          node.classList.add('ma-reveal');
+          if (group.variant) node.classList.add(group.variant);
+          if (group.stagger) {
+            node.style.transitionDelay = `${index * group.stagger}ms`;
+          }
+          elements.push(node);
+        });
+      });
+
+      if (prefersReduced) {
+        elements.forEach((el) => el.classList.add('is-visible'));
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries, obs) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('is-visible');
+            obs.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.18, rootMargin: '0px 0px -10% 0px' }
+      );
+
+      elements.forEach((el) => observer.observe(el));
+    });
+
     // ---- TAB SWITCHING (arena) ----
     function switchArenaTab(arena, tab) {
       if (arena === 'manual') {

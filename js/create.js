@@ -144,11 +144,13 @@ async function renderScheduledAuctions() {
     const rooms = roomsSnap.exists() ? (roomsSnap.val() || {}) : {};
 
     const now = Date.now();
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
     const rows = Object.entries(rooms)
       .filter(([roomCode, room]) => {
         if (!roomCode || !room?.config) return false;
         const status = String(room.config.status || '').toLowerCase();
         const scheduledStartAt = Number(room.config.scheduledStartAt || 0) || 0;
+        if (scheduledStartAt > 0 && scheduledStartAt < now - weekMs) return false;
         // Show only rooms in lobby status with a scheduled start time set
         return status === 'lobby' && scheduledStartAt > 0;
       })

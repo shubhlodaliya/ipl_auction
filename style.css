@@ -99,7 +99,6 @@ img { display: block; }
   gap: 0.5rem;
   letter-spacing: 0.5px;
 }
-.logo span { color: #111; }
 .header-badge {
   font-size: 0.7rem;
   background: var(--gold-dim);

@@ -18,7 +18,8 @@
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="home-redesign.css" />
+  <link rel="stylesheet" href="ultra-modern.css" />
+  <link rel="stylesheet" href="home-ultra.css" />
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944"
@@ -254,6 +255,30 @@
 </head>
 
 <body class="ma-page">
+
+  <!-- PARTICLE BACKGROUND -->
+  <div class="particles-container" id="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
 
   <!-- ANNOUNCEMENT BAR -->
   <div class="ma-announce">
@@ -1187,6 +1212,66 @@
         if (codeInput) { codeInput.value = inviteRoom.slice(0, 6); if (typeof checkRoomCode === 'function') checkRoomCode(codeInput.value); }
         if (invitePasscode) { const p = document.getElementById('joinPasscode'); if (p) p.value = invitePasscode; }
       }
+
+      // Scroll Reveal Animation
+      const revealElements = document.querySelectorAll('.ma-reveal, .ma-metric-card, .ma-feat-card, .ma-arena-card, .ma-auction-card, .ma-pricing-card');
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.classList.add('is-visible');
+            }, index * 100);
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+      revealElements.forEach(el => {
+        el.classList.add('ma-reveal');
+        revealObserver.observe(el);
+      });
+
+      // Add ripple effect to buttons
+      document.querySelectorAll('.ma-btn-hero-primary, .ma-arena-btn, .ma-join-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          const ripple = document.createElement('span');
+          ripple.classList.add('ripple');
+          const rect = this.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          ripple.style.width = ripple.style.height = size + 'px';
+          ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+          ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+          this.appendChild(ripple);
+          setTimeout(() => ripple.remove(), 600);
+        });
+      });
+
+      // Counter animation for metrics
+      const counters = document.querySelectorAll('.ma-metric-value[data-count]');
+      const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            const target = parseFloat(el.dataset.count);
+            const suffix = el.dataset.suffix || '';
+            const duration = 2000;
+            const start = performance.now();
+            const isFloat = target % 1 !== 0;
+            
+            const animate = (now) => {
+              const progress = Math.min((now - start) / duration, 1);
+              const eased = 1 - Math.pow(1 - progress, 4); // easeOutQuart
+              const current = isFloat ? (target * eased).toFixed(1) : Math.floor(target * eased);
+              el.textContent = current + suffix;
+              if (progress < 1) requestAnimationFrame(animate);
+            };
+            requestAnimationFrame(animate);
+            counterObserver.unobserve(el);
+          }
+        });
+      }, { threshold: 0.5 });
+
+      counters.forEach(counter => counterObserver.observe(counter));
     });
   </script>
 </body>

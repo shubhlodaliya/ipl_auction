@@ -122,7 +122,7 @@
   top: 0;
   z-index: 100;
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  animation: ma-rise 0.6s ease both;
+  animation: ma-fade 0.6s ease both;
 }
 .ma-logo {
   font-family: 'Rajdhani', sans-serif;
@@ -222,7 +222,7 @@
   align-items: center;
   min-height: 560px;
   overflow: hidden;
-  animation: ma-fade 0.7s ease both;
+  animation: ma-rise 0.8s ease both;
 }
 .ma-hero-badge {
   display: inline-flex;
@@ -438,7 +438,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: clamp(1.25rem, 2vw, 2rem);
-  animation: ma-slide-left 0.75s ease both;
+  animation: ma-fade 0.8s ease both;
 }
 .ma-feat-card { text-align: center; }
 .ma-feat-card {
@@ -514,7 +514,7 @@
   border: 2px dashed #d0e0ff;
   padding: 1.5rem;
   border-radius: 8px;
-  animation: ma-zoom 0.7s ease both;
+  animation: ma-rise 0.8s ease both;
 }
 .ma-arena-card {
   background: #fff;
@@ -570,6 +570,7 @@
 
 /* LIVE AUCTIONS */
 .ma-live { background: #fff; padding: 4rem; }
+.ma-live { animation: ma-rise 0.8s ease both; }
 .ma-live { animation: ma-slide-right 0.75s ease both; }
 .ma-live-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem; }
 .ma-live-header h2 { font-family: 'Rajdhani', sans-serif; font-size: clamp(1.85rem, 2.5vw, 2.5rem); font-weight: 700; color: #111; text-transform: uppercase; }
@@ -654,6 +655,7 @@
 
 /* TOURNAMENTS */
 .ma-tournaments { background: #f9f9f9; padding: 4rem; }
+.ma-tournaments { animation: ma-rise 0.8s ease both; }
 .ma-tournaments { animation: ma-slide-left 0.75s ease both; }
 .ma-tournament-list { display: flex; flex-direction: column; gap: 1rem; max-width: 860px; margin: 0 auto; }
 .ma-tournament-item {
@@ -701,6 +703,7 @@
 
 /* PRICING SECTION */
 .ma-pricing { background: #f9f9f9; padding: 2.5rem 4rem 3rem; }
+.ma-pricing { animation: ma-rise 0.8s ease both; }
 .ma-pricing { animation: ma-slide-right 0.75s ease both; }
 .ma-pricing .ma-section-divider { margin-bottom: 1.6rem; }
 .ma-pricing-grid {
@@ -820,7 +823,7 @@
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 2rem;
   align-items: center;
-  animation: ma-slide-left 0.75s ease both;
+  animation: ma-rise 0.8s ease both;
 }
 .ma-contact-copy {
   max-width: 560px;
@@ -1175,7 +1178,21 @@
   background: #111;
   padding: 3rem 4rem 1.5rem;
   color: #888;
-  animation: ma-fade 0.8s ease both;
+  animation: ma-fade 0.9s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ma-nav,
+  .ma-hero,
+  .ma-features,
+  .ma-arena-grid,
+  .ma-live,
+  .ma-tournaments,
+  .ma-pricing,
+  .ma-contact,
+  .ma-footer {
+    animation: none !important;
+  }
 }
 .ma-footer-grid {
   display: grid;

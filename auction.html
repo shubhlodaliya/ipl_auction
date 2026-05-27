@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auction — Auction Roomx</title>
+  <meta name="description" content="Live IPL auction room for real-time bidding with friends and spectators." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="canonical" href="/auction.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Live IPL Auction Room" />
+  <meta property="og:description" content="Join live bidding and spectator updates in your IPL auction room." />
+  <meta property="og:url" content="/auction.html" />
+  <meta property="og:image" content="/assets/team-logos/csk.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Live IPL Auction Room" />
+  <meta name="twitter:description" content="Real-time mock IPL auction interface for hosts, teams, and spectators." />
+  <meta name="twitter:image" content="/assets/team-logos/csk.png" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🏏 Auction Room</div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <span id="myTeamChip" class="my-team-chip" style="display:none;"></span>
+      <div id="auctionProgress" style="display:none;"></div>
+    </div>
+  </header>
+
+  <!-- WAITING SCREEN -->
+  <div class="waiting-screen" id="waitingScreen">
+    <div class="spinner"></div>
+    <p style="color:var(--text-sec)">Joining auction...</p>
+  </div>
+
+  <!-- MAIN AUCTION LAYOUT -->
+  <div class="auction-layout" id="auctionLayout" style="display:none;">
+
+    <!-- LEFT: Teams Sidebar -->
+    <aside class="teams-sidebar">
+      <div class="spectator-side-bid" id="spectatorSideBid" style="display:none;">
+        <div class="spectator-side-bid-label">Current Bid Team</div>
+        <div class="spectator-side-team" id="spectatorSideTeam">
+          <div class="spectator-side-team-logo" id="spectatorSideTeamLogo">--</div>
+          <div class="spectator-side-team-name" id="spectatorSideTeamName">No bids yet</div>
+        </div>
+        <div class="spectator-side-bid-amount" id="spectatorSideBidAmount">₹—</div>
+      </div>
+      <div class="sidebar-title">Teams</div>
+      <div id="sidebarTeams"></div>
+    </aside>
+
+    <!-- RIGHT: Auction Main -->
+    <div class="auction-main">
+
+      <!-- Top Bar -->
+      <div class="auction-topbar">
+        <div class="auction-progress">
+          <span class="progress-text" id="progressText">Player 0/0</span>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+          </div>
+          <button class="pool-banner-btn" id="currentPoolBanner" onclick="showCurrentPoolDetails()" style="display:none;">
+            <span class="pool-banner-label">Current Pool</span>
+            <span class="pool-banner-name" id="currentPoolBannerName">--</span>
+            <span class="pool-banner-meta" id="currentPoolBannerMeta">0 players</span>
+          </button>
+        </div>
+        <div class="auction-controls-stack">
+          <div class="auction-topbar-actions">
+            <span id="auctionStatus"
+              style="font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:100px;background:var(--gold-dim);color:var(--gold);font-weight:600;">
+              LIVE
+            </span>
+            <button class="auction-room-code-chip" id="auctionRoomCodeChip" onclick="copyAuctionCode()" title="Click to copy auction code">
+              Room: ------
+            </button>
+            <span id="spectatorCountBadge" class="spectator-count-badge">👀 0 watching</span>
+            <span id="voiceStatusBadge" class="chat-mute-badge" style="display:none;">Voice muted by host</span>
+            <button class="btn btn-ghost" onclick="leaveAuction()">Leave</button>
+            <button class="btn btn-ghost" id="soundToggleBtn" onclick="toggleSoundPack()">🔊 Sound On</button>
+            <button class="btn btn-secondary" id="chatToggleBtn" onclick="toggleChatPopup()">Chat</button>
+            <div id="hostAuctionControls" style="display:none;align-items:center;gap:0.6rem;">
+              <button class="btn btn-secondary" id="randomPlayerBtn" onclick="randomChangeCurrentPlayer()">Random Player</button>
+              <button class="btn btn-secondary" id="openPlayerNumberBtn" onclick="openPlayerByNumber()">Open Player No.</button>
+              <button class="btn btn-secondary" id="pauseBtn" onclick="togglePauseAuction()">Pause</button>
+              <button class="btn btn-danger" id="terminateBtn" onclick="terminateAuction()">Terminate</button>
+            </div>
+          </div>
+          <div class="live-list-actions" id="liveListActions" style="display:none;">
+            <button class="btn btn-secondary live-list-btn" onclick="openLivePlayerListModal('sold')">Sold Players</button>
+            <button class="btn btn-secondary live-list-btn" onclick="openLivePlayerListModal('unsold')">Unsold Players</button>
+            <button class="btn btn-secondary live-list-btn" onclick="openLivePlayerListModal('available')">Available Players</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auction Body -->
+      <div class="auction-body">
+
+        <!-- Player Spotlight -->
+        <div class="player-spotlight" id="playerSpotlight">
+          <div class="state-loading">
+            <div class="spinner"></div>
+            <p style="color:var(--text-sec)">Loading next player...</p>
+          </div>
+        </div>
+
+        <!-- Bid Panel -->
+        <div class="bid-panel">
+          <div>
+            <div class="current-bid-label">Current Bid</div>
+            <div class="current-bid-amount" id="currentBidDisplay">₹—</div>
+          </div>
+
+          <!-- Timer -->
+          <div class="timer-container">
+            <svg class="timer-ring-svg" viewBox="0 0 100 100">
+              <circle class="timer-ring-bg" cx="50" cy="50" r="45" />
+              <circle class="timer-ring-progress" id="timerRing" cx="50" cy="50" r="45" />
+            </svg>
+            <div class="timer-value" id="timerValue">—</div>
+          </div>
+
+          <!-- Bid Actions -->
+          <div class="host-proxy-bid-wrap" id="hostProxyBidWrap" style="display:none;">
+            <div class="host-proxy-bid-title">Bid For Team</div>
+            <div class="host-proxy-bid-sub">Select a team, then use bid buttons below.</div>
+            <div class="host-proxy-bid-list" id="hostProxyBidTeams"></div>
+          </div>
+
+          <button class="quick-bid-btn base-bid-btn" id="baseBidBtn" onclick="placeBid(0, true)" disabled>
+            Bid at Base Price
+          </button>
+
+          <div class="quick-bid-row" id="quickBidRow">
+          </div>
+
+          <div class="bid-history-wrap" id="bidHistoryWrap">
+            <div class="bid-history-head">
+              <span>Bid History</span>
+              <span class="bid-history-count" id="bidHistoryCount">0</span>
+            </div>
+            <div class="bid-history-list" id="bidHistoryList">
+              <div class="bid-history-empty">No bids yet for this player.</div>
+            </div>
+          </div>
+
+          <button class="withdraw-btn" id="withdrawBtn" onclick="withdrawFromPlayer()" disabled>
+            Withdraw For This Player
+          </button>
+
+          <div class="withdrawn-teams-wrap" id="withdrawnTeamsWrap" style="display:none;">
+            <div class="withdrawn-teams-title">Withdrawn Teams</div>
+            <div class="withdrawn-teams-list" id="withdrawnTeamsList"></div>
+          </div>
+
+          <p class="no-purse-warning" id="noPurseWarn">⚠️ Not enough purse!</p>
+
+          <button class="sell-now-btn" id="sellNowBtn" onclick="sellNow()" disabled style="display:none;">
+            ✅ SOLD NOW
+          </button>
+
+          <button class="pass-btn" id="unsoldNowBtn" onclick="unsoldNow()" disabled style="display:none;">
+            ❌ UNSOLD NOW
+          </button>
+
+          <button class="undo-action-btn" id="undoActionBtn" onclick="undoAuctionAction()" disabled style="display:none;">
+            ↩ Undo Bid / Reopen Player
+          </button>
+
+          <!-- Host: Pass button -->
+          <button class="pass-btn" id="passBtn" onclick="passPlayer()" disabled>
+            Skip Player
+          </button>
+
+          <button class="skip-pool-btn" id="skipPoolBtn" onclick="skipCurrentPool()" disabled>
+            Skip Current Pool
+          </button>
+
+          <!-- My purse -->
+          <div class="purse-display">
+            <div class="purse-label">My Purse</div>
+            <div class="purse-amount" id="myPurseDisplay">—</div>
+          </div>
+        </div>
+
+        <div class="spectator-panel" id="spectatorPanel" style="display:none;">
+          <div class="spectator-hero">
+            <div class="spectator-title">Spectator Console</div>
+            <div class="spectator-note">Real-time auction feed in view-only mode.</div>
+            <button class="spectator-room-code" id="spectatorRoomCode" onclick="copyAuctionCode()" title="Click to copy auction code">
+              Room Code: ------
+            </button>
+          </div>
+
+          <div class="spectator-stats-grid">
+            <div class="spectator-card spectator-card-bid">
+              <div class="spectator-label">Current Bid</div>
+              <div class="spectator-value" id="spectatorCurrentBid">₹—</div>
+            </div>
+
+            <div class="spectator-card spectator-card-time">
+              <div class="spectator-label">Time Left</div>
+              <div class="spectator-value" id="spectatorTimeLeft">—</div>
+            </div>
+
+            <div class="spectator-card spectator-card-team">
+              <div class="spectator-label">Leading Team</div>
+              <div class="spectator-value spectator-team" id="spectatorLeadingTeam">No bids yet</div>
+            </div>
+          </div>
+
+          <div class="spectator-card spectator-poll-card" id="spectatorPollCard">
+            <div class="spectator-poll-head">
+              <div class="spectator-label" style="margin-bottom:0;">Prediction Poll</div>
+              <span class="spectator-poll-total" id="spectatorPollTotalVotes">0 votes</span>
+            </div>
+            <div class="spectator-poll-sub" id="spectatorPollSub">Vote which team will win this player.</div>
+            <div class="spectator-poll-graph" id="spectatorPollGraph"></div>
+            <div class="spectator-poll-team-list" id="spectatorPollTeams">
+              <div class="bid-history-empty">Waiting for live player...</div>
+            </div>
+          </div>
+
+
+          <div class="bid-history-wrap spectator-history-wrap">
+            <div class="bid-history-head">
+              <span>Bid History</span>
+              <span class="bid-history-count" id="spectatorBidHistoryCount">0</span>
+            </div>
+            <div class="bid-history-list" id="spectatorBidHistoryList">
+              <div class="bid-history-empty">No bids yet for this player.</div>
+            </div>
+          </div>
+
+          <div class="spectator-hint">Results will open automatically when auction ends.</div>
+        </div>
+
+      </div><!-- end auction-body -->
+    </div><!-- end auction-main -->
+  </div><!-- end auction-layout -->
+
+  <!-- BROADCAST SPECTATOR VIEW -->
+  <div class="broadcast-view" id="broadcastView" style="display:none;">
+    <div class="broadcast-bg"></div>
+    <div class="broadcast-overlay"></div>
+    
+    <header class="broadcast-header">
+      <div class="broadcast-logo">
+        <span aria-label="Auction">🏏</span>
+      </div>
+      <div class="broadcast-banner" id="broadcastBannerTitle">MY AUCTION</div>
+      <nav class="broadcast-nav">
+        <span onclick="openAllTeamsModal()" style="cursor:pointer; text-decoration:underline;">TEAMS</span>
+        <div class="broadcast-profile-icon">👤</div>
+      </nav>
+    </header>
+
+    <div class="broadcast-main">
+      <!-- Left side: Player Info -->
+      <div class="broadcast-player-section">
+        <div class="broadcast-photo-wrapper">
+          <div class="broadcast-photo-ring"></div>
+          <div class="broadcast-set-badge" id="broadcastSetBadge" style="display:none;">#</div>
+          <div class="broadcast-photo-inner">
+            <img id="broadcastPlayerImg" src="" alt="Player" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%232c3e50%22/><text x=%2250%22 y=%2250%22 fill=%22%23bdc3c7%22 font-size=%2240%22 text-anchor=%22middle%22 alignment-baseline=%22central%22>👤</text></svg>'" />
+            <div class="broadcast-stamp-sold" id="broadcastStampSold" style="display:none;">SOLD</div>
+            <img class="broadcast-unsold-stamp" id="broadcastUnsoldStamp" src="assets/image.png" alt="UNSOLD" style="display:none;" loading="eager" decoding="async" />
+          </div>
+        </div>
+        <div class="broadcast-name-ribbon">
+          <div class="broadcast-name-text" id="broadcastPlayerName">Waiting for player...</div>
+          <div class="broadcast-player-meta" id="broadcastPlayerMeta"></div>
+        </div>
+      </div>
+
+      <!-- Right side: Team Info -->
+      <div class="broadcast-team-section">
+        <div class="broadcast-team-card">
+          <div class="broadcast-team-logo-wrap" id="broadcastTeamLogoWrap">
+            <div class="placeholder-logo">--</div>
+          </div>
+          <div class="broadcast-team-name" id="broadcastTeamName">NO BIDS YET</div>
+        </div>
+        <div class="broadcast-bid-box">
+          <div class="broadcast-coin">🪙</div>
+          <div class="broadcast-bid-amount" id="broadcastBidAmount">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="broadcast-footer-stats">
+      <div class="broadcast-stat-pills">
+        <div class="stat-pill sold" style="cursor:pointer" onclick="openLivePlayerListModal('sold')">
+          <div class="pill-label">Sold</div>
+          <div class="pill-value" id="broadcastStatSold">0</div>
+        </div>
+        <div class="stat-pill unsold" style="cursor:pointer" onclick="openLivePlayerListModal('unsold')">
+          <div class="pill-label">Unsold</div>
+          <div class="pill-value" id="broadcastStatUnsold">0</div>
+        </div>
+        <div class="stat-pill available" style="cursor:pointer" onclick="openLivePlayerListModal('available')">
+          <div class="pill-label">Available</div>
+          <div class="pill-value" id="broadcastStatAvailable">0</div>
+        </div>
+        <div class="stat-pill all-teams-btn" style="cursor:pointer" onclick="openAllTeamsModal()">
+          <div class="pill-label">Teams</div>
+          <div class="pill-value">View</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Teams Grid -->
+    <div class="broadcast-mobile-teams-container" id="broadcastMobileTeamsContainer"></div>
+    
+    <div class="firecracker-container" id="firecrackerAnim" style="display:none;">
+      <canvas class="firecracker-confetti-canvas" id="firecrackerConfettiCanvas"></canvas>
+      <div class="fireworks-side fireworks-left"></div>
+      <div class="fireworks-side fireworks-right"></div>
+      <div class="fireworks"></div>
+      <div class="firecracker-content">
+        <div class="firecracker-label">SOLD!</div>
+        <div class="firecracker-text" id="firecrackerText"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-popup" id="chatPopup">
+    <div class="chat-popup-window">
+      <div class="chat-popup-header" id="chatPopupDragHandle">
+        <div class="chat-popup-title">Room Chat</div>
+        <div class="chat-popup-actions">
+          <span id="chatMuteBadge" class="chat-mute-badge" style="display:none;">Muted by host</span>
+          <button class="btn btn-ghost chat-popup-close" onclick="toggleChatPopup(false)">Close</button>
+        </div>
+      </div>
+      <div class="chat-popup-body">
+        <div class="chat-voice-box">
+          <div class="chat-voice-head">
+            <span>Voice Room</span>
+            <span id="voiceRoomCount">0 live</span>
+          </div>
+          <div class="chat-voice-list" id="voiceParticipantList"></div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" class="chat-input" type="text" placeholder="Type message..." maxlength="140" onkeydown="if(event.key==='Enter'){sendChatMessage();}" />
+          <button class="btn btn-secondary" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLD / UNSOLD BANNER -->
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-banner" id="resultBanner">
+      <span class="result-word" id="resultWord"></span>
+      <div class="result-detail" id="resultDetail"></div>
+    </div>
+  </div>
+
+  <div class="pool-start-banner" id="poolStartBanner">
+    <div class="pool-start-inner">
+      <div class="pool-start-title">New Pool Started</div>
+      <div class="pool-start-name" id="poolStartName">Marquee Pool</div>
+    </div>
+  </div>
+
+  <!-- ALL TEAMS MODAL -->
+  <div class="team-modal-overlay" id="allTeamsModalOverlay" onclick="closeAllTeamsModal()">
+    <div class="team-modal pool-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>All Teams</h3>
+        <button class="btn btn-ghost" onclick="closeAllTeamsModal()">Close</button>
+      </div>
+      <div class="team-modal-content broadcast-teams-modal-list" id="allTeamsModalContent"></div>
+    </div>
+  </div>
+
+  <!-- TEAM SQUAD MODAL -->
+  <div class="team-modal-overlay" id="teamModalOverlay" onclick="closeTeamSquadModal()">
+    <div class="team-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="teamModalTitle">Team Squad</h3>
+        <button class="btn btn-ghost" onclick="closeTeamSquadModal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="teamModalContent"></div>
+    </div>
+  </div>
+
+  <div class="team-modal-overlay" id="poolModalOverlay" onclick="closePoolDetailsModal()">
+    <div class="team-modal pool-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="poolModalTitle">Current Pool</h3>
+        <button class="btn btn-ghost" onclick="closePoolDetailsModal()">Close</button>
+      </div>
+      <div class="pool-summary" id="poolSummaryRow"></div>
+      <div class="team-modal-content" id="poolModalContent"></div>
+    </div>
+  </div>
+
+  <div class="team-modal-overlay" id="livePlayerListModalOverlay" onclick="closeLivePlayerListModal()">
+    <div class="team-modal pool-modal live-player-list-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="livePlayerListModalTitle">Players</h3>
+        <button class="btn btn-ghost" onclick="closeLivePlayerListModal()">Close</button>
+      </div>
+      <div class="pool-summary" id="livePlayerListSummary"></div>
+      <div class="live-player-search-wrap">
+        <input id="livePlayerListSearch" class="live-player-search-input" type="search" placeholder="Search players..." oninput="filterLivePlayerList()" />
+      </div>
+      <div class="team-modal-content" id="livePlayerListContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="quick-chat-fx-layer" id="quickChatFxLayer" aria-hidden="true"></div>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>© 2026 MyAuction</span>
+      <nav class="site-footer-links" aria-label="Legal and contact links">
+        <a href="about.html">About</a>
+        <a href="guide.html">Guide</a>
+        <a href="howto.html">How-To</a>
+        <a href="manual-setup.html">Manual Setup</a>
+        <a href="faq.html">FAQ</a>
+        <a href="learning-center.html">Learning Center</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms.html">Terms</a>
+        <a href="editorial-policy.html">Editorial Policy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- FIREBASE -->
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer src="js/firebase-config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/auction.js"></script>
+</body>
+</html>
+
+
+

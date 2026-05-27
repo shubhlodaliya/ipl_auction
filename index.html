@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Free IPL Auction Online - Create Real-Time Cricket Auctions with Friends</title>
+  <meta name="description"
+    content="Create or join free IPL player auctions with friends. Real-time multiplayer bidding on authentic IPL cricketers. No registration required!" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="/index.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Free IPL Auction Online" />
+  <meta property="og:url" content="/index.html" />
+  <meta property="og:image" content="/assets/team-logos/csk.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="home-redesign.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944"
+    crossorigin="anonymous"></script>
+  <script
+    type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","name":"IPL Auction","url":"/index.html"},{"@type":"Organization","name":"IPL Auction","url":"/index.html","logo":"/assets/team-logos/csk.png"}]}</script>
+  <style>
+    .ma-hero-img-wrap {
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      height: auto;
+    }
+
+    .ma-hero-illustration {
+      width: 100%;
+      height: auto;
+      max-height: none;
+      object-fit: contain;
+      display: block;
+      padding: 0;
+    }
+
+    .ma-live-rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .ma-no-live {
+      text-align: center;
+      padding: 3rem;
+      color: #888;
+      font-size: 0.95rem;
+      grid-column: 1/-1;
+    }
+
+    .ma-loading-live {
+      text-align: center;
+      padding: 2rem;
+      color: #888;
+      grid-column: 1/-1;
+    }
+
+    @media(max-width:900px) {
+      .ma-live-rooms-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Arena cards - bigger with form inside */
+    .ma-arena-expanded {
+      max-width: 1100px;
+    }
+
+    .ma-arena-card-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .ma-arena-form {
+      border-top: 1px solid #e5e5e5;
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+    }
+
+    .ma-arena-form .form-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .ma-arena-form .form-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #555;
+      display: block;
+      margin-bottom: 0.3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .ma-arena-form .form-input {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+
+    .ma-arena-form .form-input:focus {
+      outline: none;
+      border-color: #cc1f1f;
+    }
+
+    .ma-arena-form .range-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ma-arena-form input[type=range] {
+      flex: 1;
+    }
+
+    .ma-arena-form .range-val {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #cc1f1f;
+      min-width: 60px;
+    }
+
+    .ma-arena-form .mode-toggle {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .ma-arena-form .mode-option {
+      flex: 1;
+      text-align: center;
+      border: 1.5px solid #ddd;
+      border-radius: 4px;
+      padding: 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .ma-arena-form .mode-option.active {
+      border-color: #cc1f1f;
+      color: #cc1f1f;
+      background: #fff0f0;
+    }
+
+    .ma-arena-form .mode-option input {
+      display: none;
+    }
+
+    .ma-arena-form .team-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.4rem;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .ma-join-form {
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 1.25rem;
+      border: 1px solid #e5e5e5;
+    }
+
+    .ma-join-form h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .ma-section-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .ma-section-tab {
+      flex: 1;
+      padding: 0.6rem;
+      border: 1.5px solid #ddd;
+      border-radius: 4px;
+      background: transparent;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      font-family: inherit;
+      color: #666;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    .ma-section-tab.active {
+      border-color: #cc1f1f;
+      color: #cc1f1f;
+      background: #fff0f0;
+    }
+
+    .ma-arena-section {
+      display: none;
+    }
+
+    .ma-arena-section.active {
+      display: block;
+    }
+
+    .ma-past-wrap {
+      margin-top: 1rem;
+      border-top: 1px solid #eee;
+      padding-top: 1rem;
+    }
+
+    .ma-past-wrap h5 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #888;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ma-past-refresh {
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.7rem;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .ma-arena-full {
+      max-width: 1100px;
+    }
+  </style>
+</head>
+
+<body class="ma-page">
+
+  <!-- ANNOUNCEMENT BAR -->
+  <div class="ma-announce">
+    <span>📞</span>
+    <span>Welcome to the Stadium &bull; Free IPL Auction Platform &bull; Play with Friends &bull; Real-Time
+      Bidding</span>
+  </div>
+
+  <!-- NAV -->
+  <nav class="ma-nav">
+    <a class="ma-logo" href="index.html">My<span>Auction</span></a>
+    <div class="ma-nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="#live-auctions">Today's Auctions</a>
+      <a href="#scheduled-auctions">Scheduled Auctions</a>
+      <a href="#arena">IPL Auction</a>
+      <a href="guide.html">Guide</a>
+    </div>
+    <div class="ma-nav-actions">
+      <span id="authUserLabel"
+        style="font-size:0.8rem;color:#666;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none;"></span>
+      <button class="ma-btn-outline" id="authLoginBtn" onclick="openAuthModal('login')">Login</button>
+      <button class="ma-btn-solid" id="authSignupBtn" onclick="openAuthModal('signup')">Register</button>
+      <button class="ma-btn-outline" id="authProfileBtn" onclick="openProfileModal()" style="display:none;">Profile</button>
+      <button class="ma-btn-outline" id="authLogoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="ma-hero">
+    <div class="ma-hero-left">
+      <div class="ma-hero-badge">Live Auction System</div>
+      <h1>MyAuction</h1>
+      <div class="ma-hero-sub">The Ultimate Arena for<br>Cricket Auctions.</div>
+      <p>Precision bidding meets high-stakes cricket management. Whether it's an elite IPL-style draft or a custom club
+        auction, dominate the market with real-time data and professional-grade tools.</p>
+      <div class="ma-hero-btns">
+        <a href="#arena" class="ma-btn-hero-primary">Explore Auctions ↗</a>
+        <a href="guide.html" class="ma-btn-hero-outline">View Guide</a>
+      </div>
+    </div>
+    <div class="ma-hero-img-wrap">
+      <img class="ma-hero-illustration" src="assets/final.png" alt="IPL Auction Platform - Bid and Win Players" />
+    </div>
+  </section>
+
+  <!-- TRUST + METRICS -->
+  <section class="ma-trust" id="trust">
+    <div class="ma-trust-inner">
+      <div class="ma-trust-copy">
+        <p class="ma-trust-kicker">Trusted Auction Arena</p>
+        <h2>Built for speed, clarity, and real-time control.</h2>
+        <p>Run auctions that feel premium: instant updates, visible budgets, and clean bidding flows for every team.</p>
+        <div class="ma-trust-chips">
+          <span class="ma-trust-chip">Secure Passcode Rooms</span>
+          <span class="ma-trust-chip">Auto Budget Tracking</span>
+          <span class="ma-trust-chip">Viewer Mode Support</span>
+          <span class="ma-trust-chip">Manual + IPL Modes</span>
+        </div>
+      </div>
+      <div class="ma-metrics">
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Live Rooms</div>
+          <div class="ma-metric-value" data-count="128">0</div>
+          <div class="ma-metric-sub">Auctions running now</div>
+        </div>
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Avg Bid Latency</div>
+          <div class="ma-metric-value" data-count="420" data-suffix="ms">0</div>
+          <div class="ma-metric-sub">Fast real-time bids</div>
+        </div>
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Success Rate</div>
+          <div class="ma-metric-value" data-count="99.4" data-suffix="%">0</div>
+          <div class="ma-metric-sub">Stable auction flow</div>
+        </div>
+        <div class="ma-metric-card">
+          <div class="ma-metric-label">Auctions Hosted</div>
+          <div class="ma-metric-value" data-count="5600" data-suffix="+">0</div>
+          <div class="ma-metric-sub">Across leagues & clubs</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHOOSE YOUR ARENA (with embedded create/join forms) -->
+  <section class="ma-arena" id="arena">
+    <h2 class="ma-section-title">Choose Your Arena</h2>
+    <div class="ma-section-divider"></div>
+
+    <div class="ma-arena-grid ma-arena-full"
+      style="max-width:1100px;border:2px dashed #d0e0ff;padding:1.5rem;border-radius:8px;">
+
+      <!-- MANUAL AUCTION CARD -->
+      <div class="ma-arena-card">
+        <div class="ma-arena-card-header">
+          <div class="ma-arena-icon red">🎯</div>
+          <h3>Manual Auctions</h3>
+          <div style="margin-left:auto" class="ma-arena-trophy">🏆</div>
+        </div>
+        <p>Host professional player drafts with customizable rules, base prices, and bidding increments. Perfect for
+          local leagues and private tournaments.</p>
+        <ul class="ma-arena-features">
+          <li>Custom Player Pools</li>
+          <li>Real-Time Budget Tracking</li>
+          <li>Instant Leaderboards</li>
+        </ul>
+
+        <a href="manual-setup.html" class="ma-arena-btn" style="margin-top:1rem;">🎯 Open Manual Auction Setup</a>
+        <div style="margin-top:1rem;padding:1rem;background:#f0fff4;border-radius:6px;border:1px solid #bbf7d0;">
+          <p style="font-size:0.82rem;color:#166534;font-weight:600;margin-bottom:0.4rem;">&#8505; Setup includes:</p>
+          <ul style="font-size:0.8rem;color:#15803d;padding-left:1rem;line-height:1.8;">
+            <li>Add custom teams (name, logo, color)</li>
+            <li>Add custom players (photo, role, base price)</li>
+            <li>Custom bid buttons, timer, icon players</li>
+            <li>Host manager-only / paddle mode support</li>
+          </ul>
+        </div>
+        <div
+          style="margin-top:1rem;padding:0.75rem;background:#f9f9f9;border-radius:6px;border:1px solid #e5e5e5;text-align:center;">
+          <p style="font-size:0.8rem;color:#888;margin-bottom:0.4rem;">Already have a room code?</p>
+          <a href="#arena" class="ma-arena-btn" onclick="switchArenaTab('manual','join');" style="display:inline-block;width:auto;padding:0.5rem 1.25rem;font-size:0.78rem;">Go to Join Auction →</a>
+        </div>
+      </div>
+
+      <!-- IPL AUCTION CARD -->
+      <div class="ma-arena-card">
+        <div class="ma-arena-card-header">
+          <div class="ma-arena-icon green">🏏</div>
+          <h3>IPL Auction</h3>
+          <div style="margin-left:auto" class="ma-arena-trophy">🥇</div>
+        </div>
+        <p>A specialized simulation engine mimicking the mega-auction experience. Includes
+          accelerated bidding rounds, and marquee player set protocols.</p>
+        <ul class="ma-arena-features">
+          <li>Team Management</li>
+          <li>Franchise Slot Management</li>
+          <li>Marquee Player Protocols</li>
+        </ul>
+
+        <!-- TABS: Create / Join -->
+        <div class="ma-section-tabs" style="margin-top:1rem;">
+          <button class="ma-section-tab active" id="manualTabCreate" onclick="switchArenaTab('manual','create')">🎉
+            Create Auction</button>
+          <button class="ma-section-tab" id="manualTabJoin" onclick="switchArenaTab('manual','join')">🔗 Join
+            Auction</button>
+        </div>
+
+        <!-- CREATE FORM -->
+        <div class="ma-arena-section active" id="manualSectionCreate">
+          <div class="ma-arena-form">
+            <div class="form-group">
+              <label class="form-label">Your Name</label>
+              <input class="form-input" id="createName" type="text" placeholder="Enter your name" maxlength="24" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Select Your IPL Team</label>
+              <div class="team-grid" id="createTeamGrid"></div>
+              <input type="hidden" id="createTeamId" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Budget per Team</label>
+              <div class="range-wrapper">
+                <input type="range" id="budgetRange" min="500" max="10000" step="100" value="2000"
+                  oninput="document.getElementById('budgetVal').textContent=formatPrice(+this.value)" />
+                <span class="range-val" id="budgetVal">&#8377;2000L</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Max Squad Size</label>
+              <div class="range-wrapper">
+                <input type="range" id="squadRange" min="5" max="25" step="1" value="25"
+                  oninput="document.getElementById('squadVal').textContent=this.value+' players'" />
+                <span class="range-val" id="squadVal">25 players</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Min Squad Size</label>
+              <div class="range-wrapper">
+                <input type="range" id="minSquadRange" min="1" max="25" step="1" value="11"
+                  oninput="document.getElementById('minSquadVal').textContent=this.value+' players'" />
+                <span class="range-val" id="minSquadVal">11 players</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bid Timer (seconds)</label>
+              <div class="range-wrapper">
+                <input type="range" id="timerRange" min="10" max="60" step="5" value="30"
+                  oninput="document.getElementById('timerVal').textContent=this.value+'s'" />
+                <span class="range-val" id="timerVal">30s</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Invite Passcode (required)</label>
+              <input class="form-input" id="createPasscode" type="text" placeholder="Set room passcode"
+                maxlength="20" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Auction Start Time (optional)</label>
+              <input class="form-input" id="createStartTime" type="datetime-local" />
+              <div style="font-size:0.78rem;color:#777;line-height:1.35;">Set your start time now, open later and press Start Auction in lobby.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Player Order</label>
+              <div class="mode-toggle" id="auctionModeToggle">
+                <label class="mode-option active" for="modeRandom">
+                  <input type="radio" id="modeRandom" name="auctionMode" value="random" checked />
+                  <span>Random</span>
+                </label>
+                <label class="mode-option" for="modeCategory">
+                  <input type="radio" id="modeCategory" name="auctionMode" value="category" />
+                  <span>By Category</span>
+                </label>
+              </div>
+            </div>
+            <button class="ma-arena-btn" id="createBtn" onclick="createRoom()">🚀 Create Auction Room</button>
+            <p id="createError" style="color:#cc1f1f;font-size:0.82rem;margin-top:0.5rem;display:none;"></p>
+          </div>
+        </div>
+
+        <!-- JOIN FORM -->
+        <div class="ma-arena-section" id="manualSectionJoin">
+          <div class="ma-arena-form">
+            <div class="form-group">
+              <label class="form-label">Room Code</label>
+              <input class="form-input" id="joinCode" type="text" placeholder="Enter 6-character code" maxlength="6"
+                style="text-transform:uppercase;font-size:1.2rem;letter-spacing:5px;font-weight:700;"
+                oninput="this.value=this.value.toUpperCase();checkRoomCode(this.value)" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Your Name</label>
+              <input class="form-input" id="joinName" type="text" placeholder="Enter your name" maxlength="24" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Passcode</label>
+              <input class="form-input" id="joinPasscode" type="text" placeholder="Enter room passcode"
+                maxlength="20" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pick Your IPL Team</label>
+              <div class="team-grid" id="joinTeamGrid">
+                <div style="grid-column:1/-1;padding:0.75rem;font-size:0.82rem;color:#888;">Enter room code to see
+                  available teams</div>
+              </div>
+              <input type="hidden" id="joinTeamId" />
+            </div>
+            <button class="ma-arena-btn" id="joinBtn" onclick="joinRoom()">🚀 Join Auction</button>
+            <button class="ma-arena-btn" id="watchLiveBtn" onclick="watchLiveAuction()"
+              style="margin-top:0.5rem;background:#555;">👀 Watch Live</button>
+            <p id="joinError" style="color:#cc1f1f;font-size:0.82rem;margin-top:0.5rem;display:none;"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TODAY'S LIVE AUCTIONS -->
+  <section class="ma-live" id="live-auctions">
+    <div class="ma-live-header">
+      <h2>Today's Live Auctions</h2>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <a href="#live-auctions" class="ma-view-all" id="liveExploreLink" onclick="toggleLiveExplore();return false;" style="display:none;">Explore More →</a>
+        <a href="#arena" class="ma-view-all">Join an Auction →</a>
+      </div>
+    </div>
+    <p class="ma-live-sub" id="liveRoomsSub">Showing auctions started today. Click "Join Auction" to watch in viewer mode.</p>
+    <div class="ma-live-rooms-grid" id="liveRoomsGrid">
+      <div class="ma-loading-live">
+        <div class="spinner" style="margin:0 auto 0.5rem;"></div>
+        <p>Loading live auctions...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHEDULED AUCTIONS (Saved rooms with start time) -->
+  <section class="ma-tournaments" id="scheduled-auctions">
+    <h2 class="ma-section-title">Scheduled Auctions</h2>
+    <div class="ma-section-divider"></div>
+    <div class="ma-tournament-list" id="scheduledAuctionsList">
+      <div class="ma-tournament-item" style="justify-content:space-between;">
+        <div style="color:#888;font-size:0.9rem;">Loading scheduled auctions...</div>
+        <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING SECTION -->
+  <section class="ma-pricing">
+    <h2 class="ma-section-title">Our Pricing</h2>
+    <div class="ma-section-divider"></div>
+    <div class="ma-pricing-grid">
+      <!-- Plan 1: 3 Teams - Free -->
+      <div class="ma-pricing-card">
+        <div class="ma-pricing-header">
+          <h3>Plan 1</h3>
+          <p class="ma-pricing-teams">3 Teams</p>
+        </div>
+        <div class="ma-pricing-banner">
+          <span class="ma-pricing-amount">Free</span>
+          <span class="ma-pricing-arrow">➤</span>
+        </div>
+        <p class="ma-pricing-subtitle">Total Teams - Upto 3</p>
+      </div>
+
+      <!-- Plan 2: 4 Teams - ₹1,999 -->
+      <div class="ma-pricing-card">
+        <div class="ma-pricing-header">
+          <h3>Plan 2</h3>
+          <p class="ma-pricing-teams">4 Teams</p>
+        </div>
+        <div class="ma-pricing-banner">
+          <span class="ma-pricing-amount">₹ 299/-</span>
+          <span class="ma-pricing-subtext">Per Auction</span>
+          <span class="ma-pricing-arrow">➤</span>
+        </div>
+        <p class="ma-pricing-subtitle">Total Teams - Upto 4</p>
+      </div>
+
+      <!-- Plan 3: 6 Teams - ₹2,499 -->
+      <div class="ma-pricing-card">
+        <div class="ma-pricing-header">
+          <h3>Plan 3</h3>
+          <p class="ma-pricing-teams">6 Teams</p>
+        </div>
+        <div class="ma-pricing-banner">
+          <span class="ma-pricing-amount">₹ 399/-</span>
+          <span class="ma-pricing-subtext">Per Auctionw</span>
+          <span class="ma-pricing-arrow">➤</span>
+        </div>
+        <p class="ma-pricing-subtitle">Total Teams - Upto 6</p>
+      </div>
+
+      <!-- Plan 4: 8 Teams - ₹2,999 -->
+      <div class="ma-pricing-card">
+        <div class="ma-pricing-header">
+          <h3>Plan 4</h3>
+          <p class="ma-pricing-teams">8 Teams</p>
+        </div>
+        <div class="ma-pricing-banner">
+          <span class="ma-pricing-amount">₹ 499/-</span>
+          <span class="ma-pricing-subtext">Per Auction</span>
+          <span class="ma-pricing-arrow">➤</span>
+        </div>
+        <p class="ma-pricing-subtitle">Total Teams - Upto 8</p>
+      </div>
+
+      <!-- Plan 5: 12 Teams - ₹3,999 -->
+      <div class="ma-pricing-card">
+        <div class="ma-pricing-header">
+          <h3>Plan 5</h3>
+          <p class="ma-pricing-teams">12 Teams</p>
+        </div>
+        <div class="ma-pricing-banner">
+          <span class="ma-pricing-amount">₹ 599/-</span>
+          <span class="ma-pricing-subtext">Per Auction</span>
+          <span class="ma-pricing-arrow">➤</span>
+        </div>
+        <p class="ma-pricing-subtitle">Total Teams - Upto 12</p>
+      </div>
+
+      <!-- Plan 6: 16 Teams - ₹4,999 -->
+      <div class="ma-pricing-card">
+        <div class="ma-pricing-header">
+          <h3>Plan 6</h3>
+          <p class="ma-pricing-teams">16 Teams</p>
+        </div>
+        <div class="ma-pricing-banner">
+          <span class="ma-pricing-amount">₹ 699/-</span>
+          <span class="ma-pricing-subtext">Per Auction</span>
+          <span class="ma-pricing-arrow">➤</span>
+        </div>
+        <p class="ma-pricing-subtitle">Total Teams - Upto 16</p>
+      </div>
+    </div>
+    <div class="ma-pricing-footer">
+      <a href="pricing.html" class="ma-view-all-pricing">View All Plans</a>
+    </div>
+  </section>
+
+  <!-- CONTACT US -->
+  <section class="ma-contact">
+    <div class="ma-contact-copy">
+      <p class="ma-contact-kicker">Need Help?</p>
+      <h2 class="ma-section-title">Contact Us</h2>
+      <div class="ma-section-divider"></div>
+      <p class="ma-contact-text">Have a question about pricing, setup, or your live auction room? Reach out and our team will help you get started quickly.</p>
+      <div class="ma-contact-actions">
+        <a href="contact.html" class="ma-contact-btn primary">Contact Support</a>
+        <a href="mailto:shubhlodaliya@gmail.com" class="ma-contact-btn">Email Us</a>
+      </div>
+    </div>
+    <div class="ma-contact-grid">
+      <a class="ma-contact-card" href="tel:+917622010224">
+        <span class="ma-contact-label">Phone</span>
+        <strong>+91 76220 10224</strong>
+        <small>Mon - Sat, 10 AM to 7 PM</small>
+      </a>
+      <a class="ma-contact-card" href="tel:scm-history-item:d%3A%5Cipl_auction?%7B%22repositoryId%22%3A%22scm0%22%2C%22historyItemId%22%3A%22c6c5db9040414f714edb1fa74280364a5e0ca914%22%2C%22historyItemParentId%22%3A%220ca2b94a0f27aa431b5ec2cf5da03f30ebe74d96%22%2C%22historyItemDisplayId%22%3A%22c6c5db9%22%7D+919106848980">
+        <span class="ma-contact-label">Phone</span>
+        <strong>+91 91068 48980</strong>
+        <small>Mon - Sat, 10 AM to 7 PM</small>
+      </a>
+      <a class="ma-contact-card" href="mailto:shubhlodaliya@gmail.com">
+        <span class="ma-contact-label">Email</span>
+        <strong>shubhlodaliya@gmail.com</strong>
+        <small>We usually reply within 24 hours</small>
+      </a>
+      <a class="ma-contact-card" href="mailto:tilakmoradiya1111@gmail.com">
+        <span class="ma-contact-label">Email</span>
+        <strong>tilakmoradiya1111@gmail.com</strong>
+        <small>Support and partnership inquiries</small>
+      </a>
+    </div>
+  </section>
+
+  <!-- FAQ TEASER -->
+  <section class="ma-faq-teaser">
+    <h2 class="ma-section-title">Quick Answers</h2>
+    <div class="ma-section-divider"></div>
+    <div class="ma-faq-grid">
+      <div class="ma-faq-card">
+        <h4>Can I host a private auction?</h4>
+        <p>Yes. Set a room passcode and share it only with your team owners.</p>
+      </div>
+      <div class="ma-faq-card">
+        <h4>Do viewers need a team?</h4>
+        <p>No. Use Viewer mode to watch auctions live without joining a squad.</p>
+      </div>
+      <div class="ma-faq-card">
+        <h4>Can I customize players and teams?</h4>
+        <p>Manual auctions support custom teams, logos, and player pools.</p>
+      </div>
+    </div>
+    <div class="ma-faq-cta">
+      <a class="ma-btn-hero-outline" href="faq.html">View Full FAQ</a>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="ma-features">
+    <div class="ma-feat-card">
+      <div class="ma-feat-icon red">⚡</div>
+      <h4>Live Draft System</h4>
+      <p>Sub-second latency bidding with visual hammer-drop feedback.</p>
+    </div>
+    <div class="ma-feat-card">
+      <div class="ma-feat-icon green">📊</div>
+      <h4>Real-Time Analytics</h4>
+      <p>Dynamic budget tracking and squad balance projections for all franchises.</p>
+    </div>
+    <div class="ma-feat-card">
+      <div class="ma-feat-icon blue">🔒</div>
+      <h4>Secure Bidding</h4>
+      <p>Encrypted bid submission with multi-factor owner verification.</p>
+    </div>
+    <div class="ma-feat-card">
+      <div class="ma-feat-icon gold">⚙️</div>
+      <h4>Custom Rules</h4>
+      <p>Configure RTMs, base price tiers, and auction parameters per tournament.</p>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <!-- <div class="ma-ticker">
+    <div class="ma-ticker-inner" id="tickerInner">
+      <span class="ma-ticker-item"><span class="tag live">LIVE</span> <strong>M. SIRAJ</strong> &bull;
+        &#8377;1.2Cr</span>
+      <span class="ma-ticker-item"><span class="tag upcoming">UPCOMING</span> <strong>MEGA DRAFT</strong> &bull; 14:00
+        GMT</span>
+      <span class="ma-ticker-item"><span class="tag record">RECORD</span> <strong>STADIUM REVENUE</strong> &bull;
+        $40M</span>
+      <span class="ma-ticker-item"><span class="tag active">ACTIVE</span> <strong id="tickerOwners">---</strong> OWNERS
+        ONLINE</span>
+      <span class="ma-ticker-item"><span class="tag live">LIVE</span> <strong>R. PANT</strong> &bull;
+        &#8377;24.75Cr</span>
+      <span class="ma-ticker-item"><span class="tag upcoming">UPCOMING</span> <strong>CHAMPIONS TROPHY MOCK</strong>
+        &bull; 14:30 GMT</span>
+      <span class="ma-ticker-item"><span class="tag record">RECORD</span> <strong id="tickerRooms">---</strong> LIVE
+        ROOMS</span>
+    </div>
+  </div> -->
+
+  <!-- FOOTER -->
+  <footer class="ma-footer">
+    <div class="ma-footer-grid">
+      <div class="ma-footer-brand">
+        <a class="ma-logo" href="index.html">My<span style="color:#fff">Auction</span></a>
+        <p>Professional Cricket Auction Platform. Elevating the game through data-driven bidding systems.</p>
+      </div>
+      <div class="ma-footer-col">
+        <h5>Platform</h5>
+        <a href="about.html">About Us</a>
+        <a href="guide.html">Auction Rules</a>
+        <a href="howto.html">How To Play</a>
+        <a href="manual-setup.html">Manual Setup</a>
+      </div>
+      <div class="ma-footer-col">
+        <h5>Legal</h5>
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="editorial-policy.html">Editorial Policy</a>
+      </div>
+      <div class="ma-footer-col">
+        <h5>Help</h5>
+        <a href="contact.html">Contact Support</a>
+        <a href="faq.html">FAQ</a>
+        <a href="learning-center.html">Learning Center</a>
+      </div>
+    </div>
+    <div class="ma-footer-bottom">
+      <span>&copy; 2026 MyAuction. Professional Cricket Auction Platform.</span>
+      <div class="ma-footer-socials">
+        <a href="#">f</a>
+        <a href="#">t</a>
+        <a href="#">in</a>
+      </div>
+      <span>v1.4 STABLE &bull; GLOBAL SERVER STATUS: OPTIMAL</span>
+    </div>
+  </footer>
+
+  <!-- FLOATING QUICK ACTIONS -->
+  <div class="ma-float-actions" aria-label="Quick actions">
+    <a href="#arena" class="ma-float-btn primary">Create Auction</a>
+    <a href="#arena" class="ma-float-btn">Join Auction</a>
+  </div>
+  <button class="ma-backtop" id="backToTop" aria-label="Back to top">↑</button>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- AUTH MODAL -->
+  <div class="team-modal-overlay" id="authModalOverlay" onclick="closeAuthModal()">
+    <div class="new-auth-card" onclick="event.stopPropagation()">
+      <div class="new-auth-header">
+        <h3 id="authModalTitle">Login</h3>
+      </div>
+      <form class="new-auth-form" onsubmit="event.preventDefault(); submitAuthForm();">
+        <div class="new-auth-group" id="authNameWrap" style="display:none;">
+          <label class="new-auth-label">Full Name</label>
+          <div class="new-auth-input-wrap">
+            <svg class="new-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <input class="new-auth-input" id="authName" type="text" maxlength="40" placeholder=" " />
+          </div>
+        </div>
+
+        <div class="new-auth-group">
+          <label class="new-auth-label" id="authEmailLabel">Username or Email Address</label>
+          <div class="new-auth-input-wrap">
+            <svg class="new-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <input class="new-auth-input" id="authEmail" type="email" placeholder=" " />
+          </div>
+        </div>
+
+        <div class="new-auth-group">
+          <label class="new-auth-label">Password</label>
+          <div class="new-auth-input-wrap">
+            <svg class="new-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <input class="new-auth-input" id="authPassword" type="password" minlength="6" placeholder=" " />
+            <button type="button" class="new-auth-eye" onclick="document.getElementById('authPassword').type = document.getElementById('authPassword').type === 'password' ? 'text' : 'password'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="new-auth-options" id="authOptionsWrap">
+          <label class="new-auth-checkbox">
+            <input type="checkbox" id="authRemember" />
+            <span>Remember Me</span>
+          </label>
+          <a href="#" class="new-auth-forgot" onclick="event.preventDefault()">Forgot Password?</a>
+        </div>
+
+        <button class="new-auth-submit" id="authSubmitBtn" type="submit">Login</button>
+        
+        <div class="new-auth-toggle">
+          <span id="authToggleText">New to MyAuction?</span> 
+          <a href="#" id="authToggleLink" onclick="event.preventDefault(); switchAuthMode(typeof authMode!=='undefined' && authMode === 'login' ? 'signup' : 'login')">Register here</a>
+        </div>
+
+        <div class="new-auth-divider"><span>or continue with</span></div>
+        
+        <button class="new-auth-google" id="authGoogleBtn" type="button" onclick="signInWithGoogle()">
+          <span class="auth-google-mark" aria-hidden="true">G</span>
+          Google
+        </button>
+
+        <p id="authError" class="new-auth-error" style="display:none;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- PROFILE MODAL (Past Auctions) -->
+  <div class="team-modal-overlay" id="profileModalOverlay" onclick="closeProfileModal()">
+    <div class="team-modal" onclick="event.stopPropagation()" style="max-width:720px;">
+      <div class="team-modal-header">
+        <h3>Profile</h3>
+        <button class="btn btn-ghost" onclick="closeProfileModal()">Close</button>
+      </div>
+      <div style="padding:1rem 1.1rem 1.1rem;">
+        <div class="ma-past-wrap" style="margin:0;">
+          <h5 style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+            <span>My Past Auctions</span>
+            <button class="ma-past-refresh" onclick="renderPastAuctions()">Refresh</button>
+          </h5>
+          <div id="pastAuctionsList" style="max-height:60vh;overflow:auto;">
+            <div class="state-loading" style="padding:0.85rem 0;">
+              <div class="spinner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE -->
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script defer src="js/firebase-config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/create.js"></script>
+
+  <script>
+    // ---- TICKER LOOP ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const ticker = document.getElementById('tickerInner');
+      if (ticker) ticker.innerHTML += ticker.innerHTML;
+    });
+
+    // ---- METRIC COUNTERS ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const counters = document.querySelectorAll('.ma-metric-value[data-count]');
+      if (!counters.length) return;
+
+      const animateCount = (el) => {
+        const target = Number(el.dataset.count || 0);
+        const suffix = el.dataset.suffix || '';
+        const isFloat = String(target).includes('.');
+        const duration = 1200;
+        const start = performance.now();
+
+        const tick = (now) => {
+          const progress = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = target * eased;
+          el.textContent = isFloat ? value.toFixed(1) + suffix : Math.round(value).toString() + suffix;
+          if (progress < 1) requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
+      };
+
+      const observer = new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          animateCount(entry.target);
+          obs.unobserve(entry.target);
+        });
+      }, { threshold: 0.4 });
+
+      counters.forEach((el) => observer.observe(el));
+    });
+
+    // ---- SCROLL REVEAL ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const revealGroups = [
+        { selector: '.ma-hero-left', variant: 'ma-reveal--left' },
+        { selector: '.ma-hero-img-wrap', variant: 'ma-reveal--right' },
+        { selector: '.ma-trust-copy', variant: 'ma-reveal--left' },
+        { selector: '.ma-metric-card', variant: 'ma-reveal--zoom', stagger: 80 },
+        { selector: '.ma-feat-card', variant: 'ma-reveal--zoom', stagger: 80 },
+        { selector: '.ma-arena-card', variant: 'ma-reveal--pop', stagger: 90 },
+        { selector: '.ma-live-header, .ma-live-sub', variant: 'ma-reveal--left' },
+        { selector: '.ma-live-rooms-grid > *', variant: 'ma-reveal--zoom', stagger: 70 },
+        { selector: '.ma-tournament-item', variant: 'ma-reveal--right', stagger: 70 },
+        { selector: '.ma-pricing-card', variant: 'ma-reveal--pop', stagger: 70 },
+        { selector: '.ma-contact-copy', variant: 'ma-reveal--left' },
+        { selector: '.ma-contact-card', variant: 'ma-reveal--zoom', stagger: 70 },
+        { selector: '.ma-faq-card', variant: 'ma-reveal--right', stagger: 70 }
+      ];
+
+      const elements = [];
+      revealGroups.forEach((group) => {
+        const nodes = document.querySelectorAll(group.selector);
+        nodes.forEach((node, index) => {
+          node.classList.add('ma-reveal');
+          if (group.variant) node.classList.add(group.variant);
+          if (group.stagger) {
+            node.style.transitionDelay = `${index * group.stagger}ms`;
+          }
+          elements.push(node);
+        });
+      });
+
+      if (prefersReduced) {
+        elements.forEach((el) => el.classList.add('is-visible'));
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries, obs) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('is-visible');
+            obs.unobserve(entry.target);
+          });
+        },
+        { threshold: 0.18, rootMargin: '0px 0px -10% 0px' }
+      );
+
+      elements.forEach((el) => observer.observe(el));
+    });
+
+    // ---- BACK TO TOP ----
+    document.addEventListener('DOMContentLoaded', function () {
+      const backToTop = document.getElementById('backToTop');
+      if (!backToTop) return;
+
+      const toggle = () => {
+        backToTop.classList.toggle('is-visible', window.scrollY > 500);
+      };
+
+      toggle();
+      window.addEventListener('scroll', toggle, { passive: true });
+      backToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    // ---- TAB SWITCHING (arena) ----
+    function switchArenaTab(arena, tab) {
+      if (arena === 'manual') {
+        document.getElementById('manualTabCreate').classList.toggle('active', tab === 'create');
+        document.getElementById('manualTabJoin').classList.toggle('active', tab === 'join');
+        document.getElementById('manualSectionCreate').classList.toggle('active', tab === 'create');
+        document.getElementById('manualSectionJoin').classList.toggle('active', tab === 'join');
+      }
+    }
+
+    // Legacy switchTab still needed by create.js URL param handler
+    function switchTab(tab) {
+      switchArenaTab('manual', tab === 'join' ? 'join' : 'create');
+    }
+
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 2500);
+    }
+
+    function openProfileModal() {
+      window.location.href = 'profile.html';
+    }
+
+    function closeProfileModal() {
+    }
+
+    // ---- LIVE ROOMS LOADER ----
+    let liveExploreAll = false;
+    let liveRoomsListenerAttached = false;
+    let liveRoomsCache = null;
+
+    function formatTimeSince(ts) {
+      if (!ts) return '';
+      const diff = Math.floor((Date.now() - ts) / 1000);
+      if (diff < 60) return diff + 's ago';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      return Math.floor(diff / 3600) + 'h ago';
+    }
+
+    function getTodayBoundsMs() {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      return { start, end: start + 24 * 60 * 60 * 1000 };
+    }
+
+    function isTimestampToday(ts) {
+      const t = Number(ts || 0);
+      if (!Number.isFinite(t) || t <= 0) return false;
+      const { start, end } = getTodayBoundsMs();
+      return t >= start && t < end;
+    }
+
+    function getRoomStartedAt(cfg) {
+      return Number(cfg?.startedAt || cfg?.reAuctionStartedAt || cfg?.createdAt || cfg?.updatedAt || 0);
+    }
+
+    function toggleLiveExplore() {
+      liveExploreAll = !liveExploreAll;
+      if (liveRoomsCache) renderLiveRooms(liveRoomsCache);
+    }
+
+    function updateLiveExploreUi({ allLiveCount = 0, todayLiveCount = 0 } = {}) {
+      const exploreLink = document.getElementById('liveExploreLink');
+      const sub = document.getElementById('liveRoomsSub');
+
+      if (sub) {
+        sub.textContent = liveExploreAll
+          ? 'Showing all live auctions started today. Click "Join Auction" to watch in viewer mode.'
+          : 'Showing auctions started today. Click "Join Auction" to watch in viewer mode.';
+      }
+
+      if (!exploreLink) return;
+
+      // Explore more should only expand today's list (no older live rooms).
+      if (todayLiveCount <= 6) {
+        exploreLink.style.display = 'none';
+        return;
+      }
+
+      exploreLink.style.display = 'inline-flex';
+      exploreLink.textContent = liveExploreAll ? 'Show Less →' : 'Explore More →';
+    }
+
+    function renderLiveRooms(rooms) {
+      const grid = document.getElementById('liveRoomsGrid');
+      if (!grid) return;
+
+      const allLive = Object.entries(rooms || {})
+        .filter(([code, room]) => room && room.config && room.config.status === 'auction')
+        .sort((a, b) => getRoomStartedAt(b[1].config) - getRoomStartedAt(a[1].config));
+
+      const todayLive = allLive.filter(([code, room]) => isTimestampToday(getRoomStartedAt(room.config)));
+      updateLiveExploreUi({ allLiveCount: allLive.length, todayLiveCount: todayLive.length });
+
+      // Update ticker (use ALL live rooms count)
+      const ownerEl = document.getElementById('tickerOwners');
+      const roomEl = document.getElementById('tickerRooms');
+      if (ownerEl) {
+        let totalOwners = 0;
+        Object.values(rooms || {}).forEach(r => { if (r && r.teams) totalOwners += Object.keys(r.teams).length; });
+        ownerEl.textContent = totalOwners;
+      }
+      // Keep this section strictly "Today's Live Auctions".
+      if (roomEl) roomEl.textContent = todayLive.length;
+
+      if (!todayLive.length) {
+        grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions right now. <a href="#arena" style="color:#cc1f1f;">Start one above!</a></div>';
+        return;
+      }
+
+      const displayed = liveExploreAll ? todayLive : todayLive.slice(0, 6);
+
+      if (!displayed.length) {
+        grid.innerHTML = '<div class="ma-no-live">🏏 No live auctions started today. <a href="#arena" style="color:#cc1f1f;">Start one above!</a></div>';
+        return;
+      }
+
+      grid.innerHTML = displayed.map(([code, room]) => {
+        const cfg = room.config || {};
+        const teams = room.teams || {};
+        const teamCount = Object.keys(teams).length;
+        const title = cfg.auctionTitle || (cfg.auctionType === 'manual' ? 'Custom Auction' : 'IPL Auction');
+        const started = formatTimeSince(getRoomStartedAt(cfg));
+        const auctionTypeLabel = cfg.auctionType === 'manual' ? 'Manual Auction' : 'IPL Auction';
+        const auctionTypeClass = cfg.auctionType === 'manual' ? 'manual' : 'ipl';
+
+        return `
+          <div class="ma-auction-card">
+            <div class="ma-auction-card-head">
+              <span class="ma-live-badge">&#9679; Live Now</span>
+              <span class="ends">Started ${started}</span>
+            </div>
+            <div class="ma-auction-card-body">
+              <h4>${escHtml(title)} <span style="font-size:0.7rem;color:#888;font-weight:400;">#${escHtml(code)}</span></h4>
+              <div class="ma-auction-meta">
+                <div class="ma-auction-meta-item">
+                  <label>Auction Type</label>
+                  <span class="ma-auction-type ${auctionTypeClass}">${auctionTypeLabel}</span>
+                </div>
+                <div class="ma-auction-meta-item">
+                  <label>Active Teams</label>
+                  <span>${teamCount} Owner${teamCount !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
+              <button class="ma-join-btn" onclick="watchRoom('${escHtml(code)}')">👀 Join Auction (Viewer)</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function loadLiveRooms() {
+      const grid = document.getElementById('liveRoomsGrid');
+      if (!grid) return;
+      if (typeof db === 'undefined') { setTimeout(loadLiveRooms, 800); return; }
+
+      if (liveRoomsListenerAttached) {
+        if (liveRoomsCache) renderLiveRooms(liveRoomsCache);
+        return;
+      }
+      liveRoomsListenerAttached = true;
+
+      db.ref('rooms').on('value', function (snap) {
+        liveRoomsCache = snap.exists() ? (snap.val() || {}) : {};
+        renderLiveRooms(liveRoomsCache);
+      });
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function watchRoom(code) {
+      if (typeof saveSession === 'function') {
+        saveSession({ roomCode: code, teamId: null, playerName: 'Viewer', isHost: false, isSpectator: true });
+      }
+      window.location.href = 'auction.html?room=' + encodeURIComponent(code);
+    }
+
+    // Init after firebase ready
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof db !== 'undefined') {
+        loadLiveRooms();
+      } else {
+        setTimeout(loadLiveRooms, 1200);
+      }
+      if (typeof renderCreateTeamGrid === 'function') renderCreateTeamGrid();
+
+      // Handle invite URL params
+      const params = new URLSearchParams(window.location.search);
+      const inviteRoom = (params.get('room') || '').trim().toUpperCase();
+      const invitePasscode = (params.get('passcode') || '').trim();
+      if (inviteRoom) {
+        switchArenaTab('manual', 'join');
+        document.querySelector('#arena')?.scrollIntoView({ behavior: 'smooth' });
+        const codeInput = document.getElementById('joinCode');
+        if (codeInput) { codeInput.value = inviteRoom.slice(0, 6); if (typeof checkRoomCode === 'function') checkRoomCode(codeInput.value); }
+        if (invitePasscode) { const p = document.getElementById('joinPasscode'); if (p) p.value = invitePasscode; }
+      }
+    });
+  </script>
+</body>
+
+</html>
+

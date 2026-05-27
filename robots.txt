@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Keep transient room pages out of search results
+Disallow: /auction.html
+Disallow: /lobby.html
+Disallow: /results.html
+
+Sitemap: https://myiplauction.pro/sitemap.xml

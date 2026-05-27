@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual IPL Auction Setup - Custom Room Configuration</title>
+  <meta name="description" content="Create a fully manual IPL auction room with custom teams, player pools, bidding options, and timer controls." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="/manual-setup.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Manual IPL Auction Setup" />
+  <meta property="og:description" content="Configure custom teams, players, timer, icon picks, and bid controls for your fantasy auction room." />
+  <meta property="og:url" content="/manual-setup.html" />
+  <meta property="og:image" content="/assets/team-logos/csk.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Manual IPL Auction Setup" />
+  <meta name="twitter:description" content="Advanced room setup for mock IPL auctions with full manual control." />
+  <meta name="twitter:image" content="/assets/team-logos/csk.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "IPL Auction",
+        "url": "/index.html",
+        "logo": "/assets/team-logos/csk.png"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "/index.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Manual Setup",
+            "item": "/manual-setup.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="ma-info">
+  <header class="header">
+    <div class="logo">🏏 MyAuction</div>
+    <div style="display:flex;align-items:center;gap:0.55rem;flex-wrap:wrap;justify-content:flex-end;">
+      <a class="btn btn-ghost" href="guide.html" style="text-decoration:none;">Auction Rules Guide</a>
+      <a class="btn btn-ghost" href="howto.html" style="text-decoration:none;">Room Setup Tutorial</a>
+      <a class="btn btn-ghost" href="faq.html" style="text-decoration:none;">FAQ</a>
+      <button class="btn btn-ghost" onclick="window.location.href='index.html'">Back</button>
+    </div>
+  </header>
+
+  <main class="results-layout" style="max-width:1280px;">
+    <div class="glass" style="padding:1.2rem;display:grid;gap:1rem;">
+      <h2 class="display" style="font-size:1.5rem;">Create Fully Manual Auction</h2>
+      <p style="color:var(--text-sec);font-size:0.88rem;">Team logos and player photos are uploaded to Cloudinary automatically.</p>
+
+      <div class="manual-grid-two">
+        <div class="form-group">
+          <label class="form-label">Invite Passcode (required)</label>
+          <input class="form-input" id="invitePasscode" type="text" maxlength="20" placeholder="Set room passcode" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Auction Title</label>
+          <input class="form-input" id="auctionTitle" type="text" maxlength="40" value="My Auction" placeholder="Enter auction title" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Auction Start Time (optional)</label>
+          <input class="form-input" id="manualStartTime" type="datetime-local" />
+        </div>
+      </div>
+
+      <div class="manual-grid-four">
+        <div class="form-group">
+          <label class="form-label">Purse Per Team (Lakh)</label>
+          <input class="form-input" id="budgetLakh" type="number" min="100" step="5" value="2000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Players Per Team</label>
+          <input class="form-input" id="maxSquadSize" type="number" min="1" step="1" value="25" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min Players Per Team</label>
+          <input class="form-input" id="minSquadSize" type="number" min="1" step="1" value="11" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bid Timer (seconds)</label>
+          <input class="form-input" id="timerSeconds" type="number" min="5" step="1" value="30" />
+          <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.85rem;color:var(--text-sec);margin-top:0.35rem;">
+            <input id="timerUnlimited" type="checkbox" onchange="toggleManualTimerUnlimited(this.checked)" />
+            <span>Unlimited Timer (manual bidding control)</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bid Buttons (Lakh, comma)</label>
+          <input class="form-input" id="bidOptions" type="text" value="25,50,100" placeholder="e.g. 10,25,50" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icon Player Fixed Price (Lakh)</label>
+          <input class="form-input" id="iconPlayerPrice" type="number" min="0" step="1" value="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Icon Players Per Team</label>
+          <input class="form-input" id="maxIconPlayers" type="number" min="0" step="1" value="0" />
+        </div>
+      </div>
+
+      <section class="manual-section">
+        <div class="manual-section-head">
+          <h3>Teams</h3>
+          <button class="btn btn-secondary" onclick="addTeamRow()">+ Add Team</button>
+        </div>
+        <div id="manualTeamsList" class="manual-list"></div>
+      </section>
+
+      <section class="manual-section">
+        <div class="manual-section-head">
+          <h3>Players</h3>
+          <div class="manual-players-actions">
+            <input class="form-input" id="bulkBasePrice" type="number" min="1" step="1" style="max-width:180px;" placeholder="Base Lakh" />
+            <button class="btn btn-secondary" onclick="applyBasePriceToAll()">Apply Base To All</button>
+            <input class="form-input" id="excelPlayersFile" type="file" accept=".xlsx,.xls,.csv" style="max-width:260px;" />
+            <button class="btn btn-secondary" onclick="importExcelPlayers()">Import Excel Players</button>
+            <button class="btn btn-secondary" onclick="addPlayerRow()">+ Add Player</button>
+          </div>
+        </div>
+
+        <div class="manual-custom-field-bar">
+          <input class="form-input" id="customFieldLabel" type="text" maxlength="24" placeholder="Custom field name (e.g. Batting Style)" />
+          <button class="btn btn-secondary" onclick="addCustomPlayerField()">+ Add Custom Field</button>
+          <div id="customFieldList" class="manual-custom-field-list"></div>
+        </div>
+
+        <div id="manualPlayersList" class="manual-list"></div>
+      </section>
+
+      <div class="manual-grid-two">
+        <div class="form-group">
+          <label class="form-label">Host Team</label>
+          <select class="form-input" id="hostTeamSelect"></select>
+
+          <div style="display:grid;gap:0.45rem;margin-top:0.55rem;">
+            <label style="display:flex;align-items:flex-start;gap:0.55rem;font-size:0.85rem;color:var(--text-sec);line-height:1.25;">
+              <input id="hostRolePlaying" name="hostRoleMode" type="radio" value="playing" checked onchange="toggleHostRoleMode(this.value)" />
+              <span>Playing Host (host also plays as a team)</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:0.55rem;font-size:0.85rem;color:var(--text-sec);line-height:1.25;">
+              <input id="hostRoleManagerOnly" name="hostRoleMode" type="radio" value="manager" onchange="toggleHostRoleMode(this.value)" />
+              <span>Host manages only (does not play)</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:0.55rem;font-size:0.85rem;color:var(--text-sec);line-height:1.25;">
+              <input id="hostRolePaddle" name="hostRoleMode" type="radio" value="paddle" onchange="toggleHostRoleMode(this.value)" />
+              <span>Host bids for all teams (paddle mode). Captains bid physically and host clicks bids for any team.</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="createManualRoomBtn" onclick="createManualRoom()">Create Manual Auction Room</button>
+      <p id="manualSetupError" style="display:none;color:var(--red);font-size:0.85rem;"></p>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script defer src="js/firebase-config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/manual-create.js"></script>
+  <script>
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 2200);
+    }
+  </script>
+</body>
+</html>
+

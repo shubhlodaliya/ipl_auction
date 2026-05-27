@@ -1,0 +1,3014 @@
+// ============================================================
+// RESULTS.JS — Final auction results display
+// ============================================================
+
+const reAuctionState = {
+  roomCode: null,
+  room: null,
+  session: null,
+  playersById: {},
+  unsoldQueue: [],
+  eligibleTeamIds: [],
+  data: {},
+  listeners: {},
+  filterRole: 'All',
+  searchQuery: '',
+  playerListScrollTop: 0,
+  searchCaret: null,
+  searchWasFocused: false
+};
+
+const playing11State = {
+  roomCode: null,
+  session: null,
+  myTeamId: null,
+  mySquad: [],
+  playing11: [],
+  captain: null,
+  vice_captain: null,
+  wicket_keeper: null,
+  stage: 'selection',
+  selectionScrollTop: 0,
+  designationScrollTop: 0
+};
+
+const resultsExportState = {
+  roomCode: null,
+  roomTitle: '',
+  teams: {},
+  sortedTeams: [],
+  teamSquads: {},
+  soldCount: 0,
+  unsoldCount: 0,
+  totalSales: 0,
+  roomTeamCatalog: {},
+  roomMinSquadSize: 1
+};
+
+const teamPowerUiState = {
+  visible: false,
+  data: null
+};
+
+const topPickUiState = {
+  visible: false,
+  picks: [],
+  roomTeamCatalog: {},
+  playerMap: {}
+};
+
+const highlightsUiState = {
+  visible: false,
+  moments: [],
+  summaryText: '',
+  currentIndex: 0,
+  autoplayTimer: null,
+  autoplayDelayMs: 3400
+};
+
+function getResultsBrandTitle(room) {
+  const title = String(room?.config?.auctionTitle || '').trim();
+  if (title) return title;
+  return room?.config?.auctionType === 'manual' ? 'My Auction' : 'IPL Auction';
+}
+
+function applyResultsBranding(room) {
+  const title = getResultsBrandTitle(room);
+  const logo = document.querySelector('.header .logo');
+  if (logo) logo.textContent = `🏏 ${title}`;
+  document.title = `Results — ${title}`;
+
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) ogTitle.setAttribute('content', `${title} Results`);
+  const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+  if (twitterTitle) twitterTitle.setAttribute('content', `${title} Results`);
+}
+
+const analystPromptTemplate = `You are an expert cricket analyst similar to Cricbuzz, ESPN, or professional IPL analysts.
+
+I will provide a PDF generated from an IPL auction game.
+
+The PDF contains multiple teams. Each team has:
+1) A full squad list
+2) A section called "Best Playing 11"
+
+Your task is to analyze every team professionally and rank them from strongest to weakest.
+
+IMPORTANT RULES:
+- DO NOT change the playing XI.
+- Use the "Best Playing 11" as the main team.
+- Also analyze the remaining squad players as bench strength and backups.
+- Compare teams against each other before ranking.
+
+------------------------------------------------
+
+STEP 1: EXTRACT DATA FROM THE PDF
+
+For each team extract:
+
+Team Name
+
+BEST PLAYING XI
+- Player Name
+- Role (Batsman / Wicket Keeper / All-rounder / Bowler)
+- Captain
+- Vice Captain
+
+FULL SQUAD
+- All remaining players not included in the playing XI
+
+------------------------------------------------
+
+STEP 2: PROFESSIONAL TEAM ANALYSIS
+
+Analyze the Best Playing XI first, then evaluate squad depth.
+
+Evaluate the following aspects:
+
+1) TOP ORDER STRENGTH
+(Openers + No.3)
+
+Consider:
+- Powerplay dominance
+- T20 strike rate ability
+- Ability to handle swing and pressure
+
+2) MIDDLE ORDER STABILITY
+(No.4 - No.6)
+
+Consider:
+- Ability to rebuild innings
+- Ability to handle pressure situations
+- Rotation of strike
+
+3) FINISHING POWER
+(No.6 - No.8)
+
+Consider:
+- Big hitters
+- Death overs acceleration
+- Power hitting ability
+
+4) BOWLING ATTACK
+
+Evaluate:
+
+Powerplay bowlers
+Middle overs control
+Death over specialists
+Variety (pace + spin)
+
+5) ALL-ROUNDER IMPACT
+
+Evaluate players who contribute significantly in:
+
+Batting
+Bowling
+Match situations
+
+6) TEAM BALANCE
+
+Ideal structure:
+
+4-5 batsmen
+1-2 wicket keepers
+2-3 all-rounders
+3-4 bowlers
+
+Evaluate whether the team composition is balanced.
+
+7) MATCH WINNERS
+
+Identify players capable of winning matches single-handedly.
+
+Examples:
+- Elite finishers
+- Game-changing bowlers
+- Superstar performers
+
+8) LEADERSHIP
+
+Evaluate:
+
+Captain's experience
+Tactical decision making
+Calmness under pressure
+
+9) BENCH STRENGTH (NEW)
+
+Analyze the remaining squad players.
+
+Evaluate:
+
+Quality backup batsmen
+Backup bowlers
+Backup wicket-keepers
+Backup all-rounders
+Injury replacements
+Strategic flexibility
+
+Determine whether the team has strong squad depth for a long tournament.
+
+------------------------------------------------
+
+STEP 3: SCORING SYSTEM
+
+Score each team using this system:
+
+Batting Strength: 25
+Bowling Attack: 25
+All-Rounders: 20
+Team Balance: 10
+Match Winners: 8
+Leadership: 4
+Bench Strength: 8
+
+TOTAL SCORE: 100
+
+------------------------------------------------
+
+STEP 4: TEAM ANALYSIS OUTPUT
+
+For each team provide analysis in the following format:
+
+TEAM ANALYSIS
+
+Team: <Team Name>
+
+Best Playing XI:
+1. Player - Role
+2. Player - Role
+3. Player - Role
+...
+
+Bench / Backup Players:
+- Player
+- Player
+- Player
+...
+
+Strengths:
+- ...
+- ...
+- ...
+
+Weaknesses:
+- ...
+- ...
+
+Score Breakdown:
+
+Batting: /25
+Bowling: /25
+All-rounders: /20
+Balance: /10
+Match Winners: /8
+Leadership: /4
+Bench Strength: /8
+
+Total Score: /100
+
+------------------------------------------------
+
+STEP 5: FINAL TEAM RANKING
+
+After analyzing all teams, rank them from strongest to weakest.
+
+Example:
+
+FINAL TEAM POWER RANKINGS
+
+1) Team Name - Score
+2) Team Name - Score
+3) Team Name - Score
+4) Team Name - Score
+5) Team Name - Score
+6) Team Name - Score
+7) Team Name - Score
+
+------------------------------------------------
+
+STEP 6: FINAL ANALYST VERDICT
+
+Explain like a professional cricket analyst.
+
+Include:
+
+- Why Rank #1 team is the strongest
+- Which team has the best batting lineup
+- Which team has the best bowling attack
+- Which team has the best bench strength
+- Which team could be the dark horse of the tournament
+
+Provide insights similar to Cricbuzz or ESPN expert analysis.`;
+
+window.addEventListener('DOMContentLoaded', loadResults);
+window.addEventListener('beforeunload', cleanupReAuctionListeners);
+
+function tpNum(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function tpClamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function tpAvg(values) {
+  if (!Array.isArray(values) || values.length === 0) return 0;
+  return values.reduce((sum, v) => sum + tpNum(v), 0) / values.length;
+}
+
+function tpRound(value) {
+  return Number(tpNum(value).toFixed(1));
+}
+
+function normalizeRoleText(role) {
+  return String(role || '').trim().toLowerCase().replace(/[-_]/g, ' ');
+}
+
+function normalizeRoleBucket(role) {
+  const txt = normalizeRoleText(role);
+  if (txt.includes('wicket')) return 'wicketkeeper';
+  if (txt.includes('all')) return 'allrounder';
+  if (txt.includes('bowl') || txt.includes('spin') || txt.includes('fast') || txt.includes('pace')) return 'bowler';
+  return 'batsman';
+}
+
+function getPlayerImpact(player) {
+  return tpNum(player?.t20ImpactRating ?? player?.impactRating ?? 0);
+}
+
+function estimatePlayerRatings(player, soldPriceLakh = 0) {
+  const roleBucket = normalizeRoleBucket(player?.role);
+  const priceSignal = tpClamp(42 + (Math.log10(tpNum(soldPriceLakh) + 12) * 23), 35, 94);
+  const intlBoost = String(player?.country || '').toLowerCase() !== 'india' ? 3.5 : 0;
+
+  const defaultByRole = {
+    batsman: { bat: 76, bowl: 18, exp: 69, impact: 74 },
+    wicketkeeper: { bat: 74, bowl: 14, exp: 67, impact: 73 },
+    allrounder: { bat: 70, bowl: 66, exp: 70, impact: 76 },
+    bowler: { bat: 28, bowl: 77, exp: 68, impact: 72 }
+  };
+
+  const d = defaultByRole[roleBucket] || defaultByRole.batsman;
+  const baseExperience = tpClamp((priceSignal * 0.55) + (d.exp * 0.45) + intlBoost, 35, 95);
+  const battingRating = tpClamp(tpNum(player?.battingRating) || ((priceSignal * 0.62) + (d.bat * 0.38) + (roleBucket === 'bowler' ? -12 : 0)), 20, 98);
+  const bowlingRating = tpClamp(tpNum(player?.bowlingRating) || ((priceSignal * 0.58) + (d.bowl * 0.42) + (roleBucket === 'batsman' ? -10 : 0)), 10, 98);
+  const experienceRating = tpClamp(tpNum(player?.experienceRating) || baseExperience, 25, 98);
+  const t20ImpactRating = tpClamp(tpNum(player?.t20ImpactRating) || ((battingRating * 0.45) + (bowlingRating * 0.25) + (experienceRating * 0.3)), 25, 98);
+
+  return {
+    ...player,
+    roleBucket,
+    battingRating,
+    bowlingRating,
+    experienceRating,
+    t20ImpactRating
+  };
+}
+
+function calculateTopOrderScore(playingXI) {
+  return tpRound(tpAvg((playingXI || []).slice(0, 3).map(p => p.battingRating)));
+}
+
+function calculateMiddleOrderScore(playingXI) {
+  return tpRound(tpAvg((playingXI || []).slice(3, 6).map(p => p.battingRating)));
+}
+
+function calculateFinisherScore(playingXI) {
+  return tpRound(tpAvg((playingXI || []).slice(5, 8).map(p => p.t20ImpactRating)));
+}
+
+function calculateBowlingScore(playingXI) {
+  const attack = (playingXI || []).filter((p) => p.roleBucket === 'bowler' || (p.roleBucket === 'allrounder' && p.bowlingRating >= 55));
+  return tpRound(tpAvg(attack.map(p => p.bowlingRating)));
+}
+
+function calculateAllRounderScore(playingXI) {
+  const allRounders = (playingXI || []).filter((p) => p.roleBucket === 'allrounder');
+  return tpRound(tpAvg(allRounders.map(p => p.t20ImpactRating)));
+}
+
+function calculateTeamBalanceScore(playingXI) {
+  const count = { batsman: 0, wicketkeeper: 0, allrounder: 0, bowler: 0 };
+  (playingXI || []).forEach((p) => {
+    const key = p.roleBucket || 'batsman';
+    count[key] = (count[key] || 0) + 1;
+  });
+
+  const ranges = {
+    batsman: [4, 5],
+    wicketkeeper: [1, 2],
+    allrounder: [2, 3],
+    bowler: [3, 4]
+  };
+
+  const penalty = Object.keys(ranges).reduce((sum, key) => {
+    const [min, max] = ranges[key];
+    const val = count[key] || 0;
+    if (val < min) return sum + (min - val);
+    if (val > max) return sum + (val - max);
+    return sum;
+  }, 0);
+
+  return tpRound(tpClamp(10 - (penalty * 1.5), 0, 10));
+}
+
+function calculateMatchWinnerScore(playingXI, benchPlayers) {
+  const players = [...(Array.isArray(playingXI) ? playingXI : []), ...(Array.isArray(benchPlayers) ? benchPlayers : [])]
+    .filter(Boolean);
+  if (!players.length) return 0;
+
+  const impacts = players
+    .map((p) => getPlayerImpact(p))
+    .filter((n) => Number.isFinite(n) && n > 0)
+    .sort((a, b) => b - a);
+
+  if (!impacts.length) return 0;
+
+  // Use top impact players from the full squad to reflect "match-winner" quality.
+  // Map avg(top4 impact) to a 0..100 score, where 70 => 0 and 90 => 100.
+  const topCount = Math.min(4, impacts.length);
+  const topAvg = impacts.slice(0, topCount).reduce((sum, v) => sum + v, 0) / topCount;
+  const score = ((topAvg - 70) / 20) * 100;
+  return tpRound(tpClamp(score, 0, 100));
+}
+
+function calculateBenchStrength(benchPlayers) {
+  const bench = Array.isArray(benchPlayers) ? benchPlayers : [];
+  const benchRatings = bench.map((p) => {
+    if (p.roleBucket === 'allrounder') return (p.battingRating * 0.3) + (p.bowlingRating * 0.3) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.2);
+    if (p.roleBucket === 'bowler') return (p.battingRating * 0.15) + (p.bowlingRating * 0.45) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.2);
+    if (p.roleBucket === 'wicketkeeper') return (p.battingRating * 0.4) + (p.bowlingRating * 0.1) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.3);
+    return (p.battingRating * 0.5) + (p.bowlingRating * 0.1) + (p.experienceRating * 0.2) + (p.t20ImpactRating * 0.2);
+  });
+  return tpRound(tpAvg(benchRatings));
+}
+
+function calculateTeamPowerScore(teamModel) {
+  const TOP_ORDER_SCORE = calculateTopOrderScore(teamModel.playingXI);
+  const squadCount = Number(teamModel?.squadCount || 0);
+  const minSquadSize = Number(teamModel?.minSquadSize || 1);
+  if (squadCount < minSquadSize) {
+    return {
+      teamId: teamModel.teamId,
+      teamName: teamModel.teamName,
+      score: 0,
+      invalidReason: `Minimum squad not met: ${squadCount}/${minSquadSize}`,
+      metrics: {
+        TOP_ORDER_SCORE: 0,
+        MIDDLE_ORDER_SCORE: 0,
+        FINISHER_SCORE: 0,
+        BOWLING_SCORE: 0,
+        ALL_ROUNDER_SCORE: 0,
+        TEAM_BALANCE_SCORE: 0,
+        MATCH_WINNER_SCORE: 0,
+        BENCH_STRENGTH_SCORE: 0
+      }
+    };
+  }
+  const MIDDLE_ORDER_SCORE = calculateMiddleOrderScore(teamModel.playingXI);
+  const FINISHER_SCORE = calculateFinisherScore(teamModel.playingXI);
+  const BOWLING_SCORE = calculateBowlingScore(teamModel.playingXI);
+  const ALL_ROUNDER_SCORE = calculateAllRounderScore(teamModel.playingXI);
+  const TEAM_BALANCE_SCORE = calculateTeamBalanceScore(teamModel.playingXI);
+  const MATCH_WINNER_SCORE = calculateMatchWinnerScore(teamModel.playingXI, teamModel.benchPlayers);
+  const BENCH_STRENGTH_SCORE = calculateBenchStrength(teamModel.benchPlayers);
+
+  const battingScore = ((TOP_ORDER_SCORE + MIDDLE_ORDER_SCORE) / 2) * 0.20;
+  const finishingScore = FINISHER_SCORE * 0.10;
+  const bowlingScore = BOWLING_SCORE * 0.25;
+  const allRounderScore = ALL_ROUNDER_SCORE * 0.15;
+  const balanceScore = (TEAM_BALANCE_SCORE * 10) * 0.10;
+  const matchWinnerScore = MATCH_WINNER_SCORE * 0.10;
+  const benchScore = BENCH_STRENGTH_SCORE * 0.10;
+
+  const TEAM_POWER_SCORE = tpRound(tpClamp(
+    battingScore +
+    finishingScore +
+    bowlingScore +
+    allRounderScore +
+    balanceScore +
+    matchWinnerScore +
+    benchScore,
+    0,
+    100
+  ));
+
+  return {
+    teamId: teamModel.teamId,
+    teamName: teamModel.teamName,
+    score: TEAM_POWER_SCORE,
+    metrics: {
+      TOP_ORDER_SCORE,
+      MIDDLE_ORDER_SCORE,
+      FINISHER_SCORE,
+      BOWLING_SCORE,
+      ALL_ROUNDER_SCORE,
+      TEAM_BALANCE_SCORE,
+      MATCH_WINNER_SCORE,
+      BENCH_STRENGTH_SCORE
+    }
+  };
+}
+
+function buildTeamPowerModel(teamId, team, squad, playing11Data) {
+  const squadById = new Map((squad || []).map((entry) => [String(entry.player.id), entry]));
+  let selectedIds = (playing11Data?.playing11 || []).map(pid => String(pid));
+
+  if (selectedIds.length !== 11) {
+    selectedIds = (squad || [])
+      .slice()
+      .sort((a, b) => b.price - a.price)
+      .slice(0, 11)
+      .map((entry) => String(entry.player.id));
+  }
+
+  const playingXI = selectedIds
+    .map((id) => squadById.get(id))
+    .filter(Boolean)
+    .map((entry) => estimatePlayerRatings(entry.player, entry.price));
+
+  const benchPlayers = (squad || [])
+    .filter((entry) => !selectedIds.includes(String(entry.player.id)))
+    .map((entry) => estimatePlayerRatings(entry.player, entry.price));
+  const minSquadSize = Number(resultsExportState?.roomMinSquadSize || 1);
+
+  return {
+    teamId,
+    teamName: team.name,
+    squadCount: (squad || []).length,
+    minSquadSize,
+    playingXI,
+    benchPlayers
+  };
+}
+
+function rankTeams(teamModels) {
+  const scored = (teamModels || []).map((model) => calculateTeamPowerScore(model));
+  scored.sort((a, b) => b.score - a.score);
+
+  const rankings = scored.map((entry, idx) => ({
+    rank: idx + 1,
+    teamId: entry.teamId,
+    team: entry.teamName,
+    score: entry.score,
+    invalidReason: entry.invalidReason || '',
+    metrics: entry.metrics
+  }));
+
+  const bestBattingTeam = scored
+    .slice()
+    .sort((a, b) => ((b.metrics.TOP_ORDER_SCORE + b.metrics.MIDDLE_ORDER_SCORE + b.metrics.FINISHER_SCORE) - (a.metrics.TOP_ORDER_SCORE + a.metrics.MIDDLE_ORDER_SCORE + a.metrics.FINISHER_SCORE)))[0]?.teamName || null;
+
+  const bestBowlingTeam = scored
+    .slice()
+    .sort((a, b) => b.metrics.BOWLING_SCORE - a.metrics.BOWLING_SCORE)[0]?.teamName || null;
+
+  const bestBenchStrength = scored
+    .slice()
+    .sort((a, b) => b.metrics.BENCH_STRENGTH_SCORE - a.metrics.BENCH_STRENGTH_SCORE)[0]?.teamName || null;
+
+  const darkHorsePool = rankings.slice(2);
+  const darkHorseTeam = (darkHorsePool[0] || rankings[1] || rankings[0])?.team || null;
+
+  return {
+    rankings,
+    bestBattingTeam,
+    bestBowlingTeam,
+    bestBenchStrength,
+    darkHorseTeam
+  };
+}
+
+function renderTeamPowerInsights(powerData) {
+  const section = document.getElementById('teamPowerSection');
+  const topline = document.getElementById('teamPowerTopline');
+  const grid = document.getElementById('teamPowerGrid');
+  const toggleBtn = document.getElementById('teamPowerToggleBtn');
+  if (!section || !topline || !grid) return;
+
+  if (!powerData || !Array.isArray(powerData.rankings) || !powerData.rankings.length) {
+    section.style.display = 'none';
+    if (toggleBtn) {
+      toggleBtn.disabled = true;
+      toggleBtn.textContent = 'Team Power Ranking Unavailable';
+    }
+    return;
+  }
+
+  teamPowerUiState.data = powerData;
+  topline.innerHTML = `
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">#1 Team</div>
+      <div class="team-power-chip-value">${powerData.rankings[0].team} (${powerData.rankings[0].score})</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Best Batting</div>
+      <div class="team-power-chip-value">${powerData.bestBattingTeam || '-'}</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Best Bowling</div>
+      <div class="team-power-chip-value">${powerData.bestBowlingTeam || '-'}</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Best Bench</div>
+      <div class="team-power-chip-value">${powerData.bestBenchStrength || '-'}</div>
+    </div>
+    <div class="team-power-chip">
+      <div class="team-power-chip-label">Dark Horse</div>
+      <div class="team-power-chip-value">${powerData.darkHorseTeam || '-'}</div>
+    </div>
+  `;
+
+  grid.innerHTML = powerData.rankings.map((item) => `
+    <article class="team-power-card fade-in">
+      <div class="team-power-rankline">
+        <span class="team-power-rank">#${item.rank}</span>
+        <span class="team-power-score">${item.score}</span>
+      </div>
+      <div class="team-power-team">${item.team}</div>
+      ${item.invalidReason ? `<div class="team-power-invalid-reason">${item.invalidReason}. Overall AI score is set to 0.</div>` : ''}
+      <div style="margin-top:0.35rem;font-size:0.7rem;color:var(--text-dim);">Overall score uses all metrics below.</div>
+      <div class="team-power-metrics" style="margin-top:0.55rem;">
+        <span>Top Order: <b>${item.metrics.TOP_ORDER_SCORE}</b></span>
+        <span>Middle: <b>${item.metrics.MIDDLE_ORDER_SCORE}</b></span>
+        <span>Finish: <b>${item.metrics.FINISHER_SCORE}</b></span>
+        <span>Bowling: <b>${item.metrics.BOWLING_SCORE}</b></span>
+        <span>All-round: <b>${item.metrics.ALL_ROUNDER_SCORE}</b></span>
+        <span>Balance: <b>${item.metrics.TEAM_BALANCE_SCORE}</b></span>
+        <span>Match Winners: <b>${item.metrics.MATCH_WINNER_SCORE}</b></span>
+        <span>Bench: <b>${item.metrics.BENCH_STRENGTH_SCORE}</b></span>
+      </div>
+    </article>
+  `).join('');
+
+  section.style.display = teamPowerUiState.visible ? 'block' : 'none';
+  if (toggleBtn) {
+    toggleBtn.disabled = false;
+    toggleBtn.textContent = teamPowerUiState.visible ? 'Hide Team Power Ranking' : 'Show Team Power Ranking';
+  }
+}
+
+function toggleTeamPowerRankings() {
+  const section = document.getElementById('teamPowerSection');
+  const toggleBtn = document.getElementById('teamPowerToggleBtn');
+
+  if (!section || !toggleBtn) return;
+  if (!teamPowerUiState.data || !Array.isArray(teamPowerUiState.data.rankings) || !teamPowerUiState.data.rankings.length) {
+    showToast('Team Power Ranking is not ready yet.', 'error');
+    return;
+  }
+
+  teamPowerUiState.visible = !teamPowerUiState.visible;
+  section.style.display = teamPowerUiState.visible ? 'block' : 'none';
+  toggleBtn.textContent = teamPowerUiState.visible ? 'Hide Team Power Ranking' : 'Show Team Power Ranking';
+}
+
+function escHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toTitleCase(value) {
+  return String(value || '').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function getTeamLabelById(teamId, teams, roomTeamCatalog) {
+  const team = teams?.[teamId] || roomTeamCatalog?.[teamId] || getTeam(teamId);
+  return {
+    name: team?.name || team?.short || teamId || 'Unknown Team',
+    short: team?.name || team?.short || teamId || '—'
+  };
+}
+
+function buildAuctionMoments(payload) {
+  const soldPlayers = payload?.soldPlayers || {};
+  const teams = payload?.teams || {};
+  const playerMap = payload?.playerMap || {};
+  const roomTeamCatalog = payload?.roomTeamCatalog || {};
+  const playerQueue = Array.isArray(payload?.playerQueue) ? payload.playerQueue : [];
+  const teamPowerData = payload?.teamPowerData || null;
+
+  const queueIndexMap = new Map(playerQueue.map((pid, idx) => [String(pid), idx]));
+  const events = Object.entries(soldPlayers).map(([pid, sale]) => {
+    const player = playerMap[pid] || playerMap[String(pid)] || null;
+    const teamLabel = getTeamLabelById(sale?.teamId, teams, roomTeamCatalog);
+    const basePrice = Number(player?.base_price_lakh) || 0;
+    const soldPrice = Number(sale?.soldPrice) || 0;
+    const soldAt = Number(sale?.soldAt) || 0;
+    const role = String(player?.role || 'Player').trim();
+    return {
+      playerId: String(pid),
+      playerName: player?.name || String(pid),
+      role,
+      roleBucket: normalizeRoleBucket(role),
+      teamId: sale?.teamId || '',
+      teamName: teamLabel.name,
+      teamShort: teamLabel.short,
+      basePrice,
+      soldPrice,
+      soldAt,
+      queueIndex: queueIndexMap.has(String(pid)) ? queueIndexMap.get(String(pid)) : Number.MAX_SAFE_INTEGER,
+      ratioToBase: basePrice > 0 ? (soldPrice / basePrice) : 0
+    };
+  }).filter((e) => e.soldPrice > 0);
+
+  if (!events.length) return [];
+
+  events.sort((a, b) => {
+    if (a.soldAt && b.soldAt) return a.soldAt - b.soldAt;
+    if (a.soldAt) return -1;
+    if (b.soldAt) return 1;
+    return a.queueIndex - b.queueIndex;
+  });
+
+  const roleGroups = events.reduce((acc, e) => {
+    if (!acc[e.roleBucket]) acc[e.roleBucket] = [];
+    acc[e.roleBucket].push(e.soldPrice);
+    return acc;
+  }, {});
+  const roleMedianMap = {};
+  Object.keys(roleGroups).forEach((bucket) => {
+    const values = roleGroups[bucket].slice().sort((a, b) => a - b);
+    const mid = Math.floor(values.length / 2);
+    roleMedianMap[bucket] = values.length % 2 === 0
+      ? (values[mid - 1] + values[mid]) / 2
+      : values[mid];
+  });
+
+  const highestBid = events.slice().sort((a, b) => b.soldPrice - a.soldPrice)[0];
+
+  const bestSteal = events
+    .map((e) => {
+      const roleMedian = Number(roleMedianMap[e.roleBucket]) || e.soldPrice;
+      const roleDiscount = roleMedian > 0 ? ((roleMedian - e.soldPrice) / roleMedian) : 0;
+      const pressureDiscount = e.ratioToBase > 0 ? ((1.8 - e.ratioToBase) / 1.8) : 0;
+      const stealScore = (roleDiscount * 0.75) + (pressureDiscount * 0.25);
+      return { ...e, stealScore, roleMedian };
+    })
+    .sort((a, b) => b.stealScore - a.stealScore)[0];
+
+  let fastestSell = null;
+  for (let i = 1; i < events.length; i += 1) {
+    const prev = events[i - 1];
+    const cur = events[i];
+    if (!prev.soldAt || !cur.soldAt) continue;
+    const gapMs = cur.soldAt - prev.soldAt;
+    if (gapMs <= 0) continue;
+    if (!fastestSell || gapMs < fastestSell.gapMs) {
+      fastestSell = { ...cur, gapMs };
+    }
+  }
+  if (!fastestSell) {
+    fastestSell = { ...events[0], gapMs: 0 };
+  }
+
+  const biddingWar = events
+    .slice()
+    .sort((a, b) => b.ratioToBase - a.ratioToBase || b.soldPrice - a.soldPrice)[0];
+
+  const allTeamIds = new Set(Object.keys(teams));
+  events.forEach((e) => { if (e.teamId) allTeamIds.add(e.teamId); });
+
+  const teamIds = Array.from(allTeamIds);
+  const earlyCutoff = Math.max(1, Math.ceil(events.length * 0.35));
+  const earlyEvents = events.slice(0, earlyCutoff);
+  const lateEvents = events.slice(Math.floor(events.length * 0.7));
+
+  const earlySpend = Object.fromEntries(teamIds.map((id) => [id, 0]));
+  earlyEvents.forEach((e) => { earlySpend[e.teamId] = (earlySpend[e.teamId] || 0) + e.soldPrice; });
+
+  const finalSpend = Object.fromEntries(teamIds.map((id) => [id, 0]));
+  events.forEach((e) => { finalSpend[e.teamId] = (finalSpend[e.teamId] || 0) + e.soldPrice; });
+
+  const buildRankMapFromMetric = (metricMap) => {
+    const ordered = teamIds.slice().sort((a, b) => {
+      const d = (metricMap[b] || 0) - (metricMap[a] || 0);
+      if (d !== 0) return d;
+      return String(a).localeCompare(String(b));
+    });
+    return new Map(ordered.map((teamId, idx) => [teamId, idx + 1]));
+  };
+
+  const earlyRankMap = buildRankMapFromMetric(earlySpend);
+  let finalRankMap = null;
+  if (teamPowerData?.rankings?.length) {
+    finalRankMap = new Map(teamPowerData.rankings.map((r) => [r.teamId, r.rank]));
+  } else {
+    finalRankMap = buildRankMapFromMetric(finalSpend);
+  }
+
+  let comebackEntry = null;
+  teamIds.forEach((teamId) => {
+    const earlyRank = Number(earlyRankMap.get(teamId) || teamIds.length);
+    const finalRank = Number(finalRankMap.get(teamId) || teamIds.length);
+    const gain = earlyRank - finalRank;
+    if (!comebackEntry || gain > comebackEntry.gain) {
+      const teamLabel = getTeamLabelById(teamId, teams, roomTeamCatalog);
+      comebackEntry = {
+        teamId,
+        teamName: teamLabel.name,
+        earlyRank,
+        finalRank,
+        gain
+      };
+    }
+  });
+
+  const lateCounts = {};
+  lateEvents.forEach((e) => { lateCounts[e.teamId] = (lateCounts[e.teamId] || 0) + 1; });
+  const lateChargeTeamId = Object.keys(lateCounts).sort((a, b) => (lateCounts[b] || 0) - (lateCounts[a] || 0))[0] || null;
+  const lateChargeLabel = lateChargeTeamId ? getTeamLabelById(lateChargeTeamId, teams, roomTeamCatalog) : null;
+
+  const moments = [];
+
+  moments.push({
+    key: 'highest-bid',
+    icon: '💥',
+    title: 'Highest Bid Detonation',
+    subtitle: `${highestBid.playerName} joined ${highestBid.teamName}`,
+    value: formatPrice(highestBid.soldPrice),
+    meta: `${toTitleCase(highestBid.role)} · Base ${formatPrice(highestBid.basePrice || 0)}`,
+    accent: 'gold'
+  });
+
+  moments.push({
+    key: 'best-steal',
+    icon: '🎯',
+    title: 'Best Value Steal',
+    subtitle: `${bestSteal.playerName} to ${bestSteal.teamName}`,
+    value: formatPrice(bestSteal.soldPrice),
+    meta: `Role median ${formatPrice(bestSteal.roleMedian || bestSteal.soldPrice)} · ${toTitleCase(bestSteal.role)}`,
+    accent: 'blue'
+  });
+
+  moments.push({
+    key: 'fastest-sell',
+    icon: '⚡',
+    title: 'Fastest Sell',
+    subtitle: `${fastestSell.playerName} snapped up by ${fastestSell.teamName}`,
+    value: fastestSell.gapMs > 0 ? `${Math.max(1, Math.round(fastestSell.gapMs / 1000))}s` : 'Instant',
+    meta: fastestSell.gapMs > 0 ? 'Gap from previous sale' : 'First completed sale',
+    accent: 'green'
+  });
+
+  if (comebackEntry && comebackEntry.gain > 0) {
+    moments.push({
+      key: 'biggest-comeback',
+      icon: '🚀',
+      title: 'Biggest Comeback',
+      subtitle: `${comebackEntry.teamName} surged late`,
+      value: `#${comebackEntry.earlyRank} → #${comebackEntry.finalRank}`,
+      meta: `${comebackEntry.gain} place climb after early phase`,
+      accent: 'pink'
+    });
+  } else {
+    moments.push({
+      key: 'late-charge',
+      icon: '🔥',
+      title: 'Late Charge',
+      subtitle: `${lateChargeLabel?.name || 'Top team'} dominated the final phase`,
+      value: `${lateChargeTeamId ? (lateCounts[lateChargeTeamId] || 0) : 0} signings`,
+      meta: 'Players bought in final 30% of auction',
+      accent: 'pink'
+    });
+  }
+
+  moments.push({
+    key: 'bidding-war',
+    icon: '⚔️',
+    title: 'Bidding War Peak',
+    subtitle: `${biddingWar.playerName} won by ${biddingWar.teamName}`,
+    value: `${biddingWar.ratioToBase > 0 ? biddingWar.ratioToBase.toFixed(2) : '1.00'}x`,
+    meta: `Sold ${formatPrice(biddingWar.soldPrice)} from base ${formatPrice(biddingWar.basePrice || 0)}`,
+    accent: 'orange'
+  });
+
+  return moments.slice(0, 5);
+}
+
+function renderHighlightsReel(moments, roomCode = '') {
+  const section = document.getElementById('highlightsReelSection');
+  const grid = document.getElementById('highlightsReelGrid');
+  const sub = document.getElementById('highlightsReelSub');
+  const dots = document.getElementById('highlightsDots');
+  const prevBtn = document.getElementById('highlightsPrevBtn');
+  const nextBtn = document.getElementById('highlightsNextBtn');
+  const viewport = document.getElementById('highlightsViewport');
+  if (!section || !grid || !dots || !prevBtn || !nextBtn || !viewport) return;
+
+  if (!Array.isArray(moments) || !moments.length) {
+    stopHighlightsAutoplay();
+    highlightsUiState.visible = false;
+    highlightsUiState.moments = [];
+    highlightsUiState.summaryText = '';
+    highlightsUiState.currentIndex = 0;
+    section.style.display = 'none';
+    return;
+  }
+
+  stopHighlightsAutoplay();
+
+  highlightsUiState.visible = true;
+  highlightsUiState.moments = moments.slice(0, 5);
+  highlightsUiState.currentIndex = 0;
+  highlightsUiState.summaryText = [
+    `Top 5 Auction Moments${roomCode ? ` (Room ${roomCode})` : ''}`,
+    ...highlightsUiState.moments.map((m, idx) => `${idx + 1}. ${m.title}: ${m.subtitle} | ${m.value} | ${m.meta}`)
+  ].join('\n');
+
+  if (sub) {
+    sub.textContent = roomCode
+      ? `Share-worthy recap from Room ${roomCode}.`
+      : 'Share-worthy recap from this auction.';
+  }
+
+  grid.innerHTML = highlightsUiState.moments.map((m, idx) => `
+    <div class="highlights-carousel-slide" data-index="${idx}">
+      <article class="highlight-moment-card ${escHtml(m.accent || 'gold')}" style="--moment-delay:${idx * 0.1}s;">
+        <div class="highlight-moment-rank">#${idx + 1}</div>
+        <div class="highlight-moment-icon">${escHtml(m.icon || '⭐')}</div>
+        <div class="highlight-moment-title">${escHtml(m.title)}</div>
+        <div class="highlight-moment-sub">${escHtml(m.subtitle)}</div>
+        <div class="highlight-moment-value">${escHtml(m.value)}</div>
+        <div class="highlight-moment-meta">${escHtml(m.meta)}</div>
+        <div class="highlight-moment-glow" aria-hidden="true"></div>
+      </article>
+    </div>
+  `).join('');
+
+  dots.innerHTML = highlightsUiState.moments.map((m, idx) => `
+    <button class="highlights-dot" aria-label="Go to slide ${idx + 1}" onclick="goToHighlightsSlide(${idx})"></button>
+  `).join('');
+
+  const singleSlide = highlightsUiState.moments.length <= 1;
+  prevBtn.disabled = singleSlide;
+  nextBtn.disabled = singleSlide;
+  dots.style.display = singleSlide ? 'none' : 'flex';
+
+  viewport.onmouseenter = () => stopHighlightsAutoplay();
+  viewport.onmouseleave = () => startHighlightsAutoplay();
+  viewport.ontouchstart = () => stopHighlightsAutoplay();
+  viewport.ontouchend = () => startHighlightsAutoplay();
+
+  updateHighlightsCarouselUi();
+  startHighlightsAutoplay();
+
+  section.style.display = 'block';
+}
+
+function updateHighlightsCarouselUi() {
+  const track = document.getElementById('highlightsReelGrid');
+  const dotButtons = Array.from(document.querySelectorAll('#highlightsDots .highlights-dot'));
+  if (!track) return;
+
+  const total = highlightsUiState.moments.length;
+  if (!total) {
+    track.style.transform = 'translateX(0%)';
+    return;
+  }
+
+  const safeIndex = ((highlightsUiState.currentIndex % total) + total) % total;
+  highlightsUiState.currentIndex = safeIndex;
+  track.style.transform = `translateX(-${safeIndex * 100}%)`;
+
+  dotButtons.forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === safeIndex);
+  });
+}
+
+function stopHighlightsAutoplay() {
+  if (highlightsUiState.autoplayTimer) {
+    clearInterval(highlightsUiState.autoplayTimer);
+    highlightsUiState.autoplayTimer = null;
+  }
+}
+
+function startHighlightsAutoplay() {
+  stopHighlightsAutoplay();
+  if (!highlightsUiState.visible || highlightsUiState.moments.length <= 1) return;
+  highlightsUiState.autoplayTimer = setInterval(() => {
+    nextHighlightsSlide(true);
+  }, highlightsUiState.autoplayDelayMs);
+}
+
+function nextHighlightsSlide(fromAuto = false) {
+  if (!highlightsUiState.moments.length) return;
+  highlightsUiState.currentIndex = (highlightsUiState.currentIndex + 1) % highlightsUiState.moments.length;
+  updateHighlightsCarouselUi();
+  if (!fromAuto) startHighlightsAutoplay();
+}
+
+function prevHighlightsSlide() {
+  if (!highlightsUiState.moments.length) return;
+  highlightsUiState.currentIndex = (highlightsUiState.currentIndex - 1 + highlightsUiState.moments.length) % highlightsUiState.moments.length;
+  updateHighlightsCarouselUi();
+  startHighlightsAutoplay();
+}
+
+function goToHighlightsSlide(index) {
+  const n = Number(index);
+  if (!Number.isFinite(n) || !highlightsUiState.moments.length) return;
+  const safe = Math.max(0, Math.min(highlightsUiState.moments.length - 1, Math.floor(n)));
+  highlightsUiState.currentIndex = safe;
+  updateHighlightsCarouselUi();
+  startHighlightsAutoplay();
+}
+
+async function copyHighlightsSummary() {
+  if (!highlightsUiState.summaryText) {
+    showToast('Highlights are not ready yet.', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(highlightsUiState.summaryText);
+    showToast('Highlights copied. Share it anywhere!', 'success');
+  } catch (err) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = highlightsUiState.summaryText;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Highlights copied. Share it anywhere!', 'success');
+    } catch (copyErr) {
+      console.error(copyErr);
+      showToast('Copy failed. Please allow clipboard access.', 'error');
+    }
+    if (err) console.error(err);
+  }
+}
+
+function isPaddleModeRoom(room) {
+  return !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams);
+}
+
+
+function applyResultsRoleUi(session, room) {
+  const isHost = !!session?.isHost;
+  const hasTeam = !!session?.teamId;
+
+  const headerNewAuctionBtn = document.getElementById('newAuctionHeaderBtn');
+  const bottomNewAuctionBtn = document.getElementById('newAuctionBottomBtn');
+  const playing11Btn = document.getElementById('playing11Btn');
+
+  if (headerNewAuctionBtn) {
+    headerNewAuctionBtn.style.display = isHost ? 'inline-flex' : 'none';
+  }
+  if (bottomNewAuctionBtn) {
+    bottomNewAuctionBtn.style.display = isHost ? 'inline-flex' : 'none';
+  }
+
+  if (playing11Btn) {
+    // Playing 11 is only meaningful for users attached to a team.
+    playing11Btn.style.display = hasTeam ? 'inline-flex' : 'none';
+  }
+}
+
+async function loadResults() {
+  // Try to get roomCode from session, or from URL param
+  const session = getSession();
+  const params = new URLSearchParams(window.location.search);
+  const roomCode = (session && session.roomCode) || params.get('room');
+  const shouldAutoPdf = params.get('pdf') === '1' || params.get('download') === 'pdf';
+
+  const isViewer = !!(session?.isSpectator || params.get('view') === 'spectator' || params.get('view') === 'viewer');
+  if (isViewer) {
+    document.body.classList.add('results-viewer-mode');
+  }
+
+  if (!roomCode) {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('resultsContent').style.display = 'block';
+    document.getElementById('resultsGrid').innerHTML = `
+      <div class="state-empty" style="grid-column:1/-1">
+        <p>No auction data found.</p>
+        <button class="btn btn-primary" onclick="newAuction()">Start New Auction</button>
+      </div>`;
+    return;
+  }
+
+  try {
+    const roomSnap = await db.ref(`rooms/${roomCode}`).get();
+
+    if (!roomSnap.exists()) {
+      document.getElementById('loadingScreen').innerHTML = `<p style="color:var(--red)">Room data not found.</p>`;
+      return;
+    }
+
+    const room = roomSnap.val();
+    applyResultsBranding(room);
+    applyResultsRoleUi(session, room);
+    const isManualAuction = room.config?.auctionType === 'manual';
+    const teamPowerToggleBtn = document.getElementById('teamPowerToggleBtn');
+    const teamPowerHint = document.getElementById('teamPowerHint');
+    const teamPowerSection = document.getElementById('teamPowerSection');
+    if (isManualAuction) {
+      if (teamPowerSection) teamPowerSection.style.display = 'none';
+      if (teamPowerToggleBtn) teamPowerToggleBtn.style.display = 'none';
+      if (teamPowerHint) teamPowerHint.style.display = 'none';
+      teamPowerUiState.visible = false;
+      teamPowerUiState.data = null;
+    } else {
+      if (teamPowerToggleBtn) teamPowerToggleBtn.style.display = '';
+      if (teamPowerHint) teamPowerHint.style.display = '';
+    }
+
+    const playersData = isManualAuction ? (room.manualPlayers || []) : await loadPlayers();
+    const roomTeamCatalog = isManualAuction
+      ? (room.manualTeams || {})
+      : Object.fromEntries(IPL_TEAMS.map(t => [t.id, t]));
+    const playerMap = {};
+    playersData.forEach(p => {
+      playerMap[p.id] = p;
+      playerMap[String(p.id)] = p;
+    });
+
+    const teams = room.teams || {};
+    const soldPlayers = room.soldPlayers || {};
+    const playerQueue = normalizeQueue(room.playerQueue);
+
+    // Summary stats
+    const totalSales = Object.values(soldPlayers).reduce((s, sp) => s + sp.soldPrice, 0);
+    const soldCount = Object.keys(soldPlayers).length;
+    const unsoldCount = buildUnsoldQueue(playerQueue, soldPlayers).length;
+
+    const topPickList = Object.entries(soldPlayers)
+      .map(([pid, sale]) => {
+        const player = playerMap[pid] || playerMap[String(pid)] || null;
+        const team = teams[sale.teamId] || roomTeamCatalog[sale.teamId] || getTeam(sale.teamId) || null;
+        return {
+          playerId: String(pid),
+          playerName: player?.name || String(pid),
+          role: player?.role || '',
+          teamId: sale.teamId,
+          teamName: team?.name || team?.short || sale.teamId || '—',
+          teamShort: team?.short || sale.teamId || '—',
+          teamLogo: team?.logo || '',
+          teamColor: team?.primary || '#FFCB30',
+          price: Number(sale.soldPrice) || 0,
+          soldAt: sale.soldAt || 0
+        };
+      })
+      .filter(item => item.price > 0)
+      .sort((a, b) => b.price - a.price || String(a.playerName).localeCompare(String(b.playerName)))
+      .slice(0, 10);
+
+    topPickUiState.picks = topPickList;
+    topPickUiState.roomTeamCatalog = roomTeamCatalog;
+    topPickUiState.playerMap = playerMap;
+
+    const topPickEntry = topPickList[0] || null;
+    const topPickName = topPickEntry?.playerName || '—';
+    const topPickTeamName = topPickEntry?.teamName || '—';
+    const topPickPrice = topPickEntry ? formatPrice(topPickEntry.price) : '—';
+
+    document.getElementById('summaryStats').innerHTML = `
+      <div class="glass results-summary-card" id="summarySoldCard" style="padding:0.8rem 1.5rem;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Players Sold</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--gold)">${soldCount}</div>
+      </div>
+      <div class="glass results-summary-card" id="summaryUnsoldCard" style="padding:0.8rem 1.5rem;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Unsold</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--red)">${unsoldCount}</div>
+      </div>
+      <div class="glass results-summary-card" id="summaryTeamsCard" style="padding:0.8rem 1.5rem;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Teams</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--blue)">${Object.keys(teams).length}</div>
+      </div>
+      <div class="glass results-summary-card" id="summarySpentCard" style="padding:0.8rem 1.5rem;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Total Spent</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--green)">${formatPrice(totalSales)}</div>
+      </div>
+      <div class="glass results-summary-card" id="summaryTopPickCard" style="padding:0.8rem 1.5rem;text-align:center;min-width:210px;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Top Pick</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;color:var(--gold);line-height:1.2;">${topPickName}</div>
+        <div style="font-size:0.85rem;color:var(--text-sec);margin-top:0.2rem;">${topPickTeamName} • ${topPickPrice}</div>
+      </div>
+    `;
+
+    // Build team squad map
+    // soldPlayers: { playerId: { teamId, soldPrice } }
+    const teamSquads = {}; // teamId → [ { player, price, isIcon } ]
+    Object.entries(soldPlayers).forEach(([pid, sale]) => {
+      if (!teamSquads[sale.teamId]) teamSquads[sale.teamId] = [];
+      const player = playerMap[pid];
+      if (player) {
+        teamSquads[sale.teamId].push({
+          player,
+          price: sale.soldPrice,
+          isIcon: sale?.via === 'icon' || sale?.type === 'icon'
+        });
+      }
+    });
+
+    resultsExportState.roomMinSquadSize = Number(room.config?.minSquadSize || 1);
+
+    let teamPowerData = null;
+    if (!isManualAuction) {
+      // Build Team Power Rankings using Playing XI + bench depth.
+      const playing11Snap = await db.ref(`rooms/${roomCode}/playing11`).get();
+      const playing11Map = playing11Snap.exists() ? (playing11Snap.val() || {}) : {};
+      const teamModels = Object.entries(teams).map(([teamId, team]) =>
+        buildTeamPowerModel(teamId, team, teamSquads[teamId] || [], playing11Map[teamId])
+      );
+      teamPowerData = rankTeams(teamModels);
+      renderTeamPowerInsights(teamPowerData);
+    }
+
+    const sortedTeams = isManualAuction
+      ? Object.entries(teams)
+        .sort((a, b) => {
+          const spendA = (teamSquads[a[0]] || []).reduce((s, x) => s + x.price, 0);
+          const spendB = (teamSquads[b[0]] || []).reduce((s, x) => s + x.price, 0);
+          return spendB - spendA;
+        })
+      : (() => {
+          const rankingOrderIds = teamPowerData.rankings.map(r => r.teamId);
+          const rankedSet = new Set(rankingOrderIds);
+          const unranked = Object.entries(teams)
+            .filter(([teamId]) => !rankedSet.has(teamId))
+            .sort((a, b) => {
+              const spendA = (teamSquads[a[0]] || []).reduce((s, x) => s + x.price, 0);
+              const spendB = (teamSquads[b[0]] || []).reduce((s, x) => s + x.price, 0);
+              return spendB - spendA;
+            });
+          return [
+            ...rankingOrderIds.map((teamId) => [teamId, teams[teamId]]),
+            ...unranked
+          ].filter(([, team]) => !!team);
+        })();
+
+    const teamScoreMap = new Map((teamPowerData?.rankings || []).map((entry) => [entry.teamId, entry.score]));
+
+    resultsExportState.roomCode = roomCode;
+    resultsExportState.roomTitle = getResultsBrandTitle(room);
+    resultsExportState.isManualAuction = isManualAuction;
+    resultsExportState.teams = teams;
+    resultsExportState.sortedTeams = sortedTeams;
+    resultsExportState.teamSquads = teamSquads;
+    resultsExportState.soldCount = soldCount;
+    resultsExportState.unsoldCount = unsoldCount;
+    resultsExportState.totalSales = totalSales;
+    resultsExportState.roomTeamCatalog = roomTeamCatalog;
+    const teamExportSelect = document.getElementById('teamExportSelect');
+    if (teamExportSelect) teamExportSelect.dataset.isManualAuction = isManualAuction ? '1' : '0';
+    updateTeamExportSelect(sortedTeams, roomCode);
+
+    document.getElementById('resultsGrid').innerHTML = sortedTeams.map(([tId, team], idx) => {
+      const t = roomTeamCatalog[tId] || getTeam(tId);
+      const squad = (teamSquads[tId] || []).sort((a, b) => b.price - a.price);
+      const totalSpend = squad.reduce((s, x) => s + x.price, 0);
+      const remaining = team.purse;
+
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
+
+      return `
+        <div class="result-team-card fade-in" style="animation-delay:${idx * 0.07}s;--team-color:${t?.primary || '#888'}">
+          <div class="result-team-header">
+            <div class="result-team-emoji-wrap">
+              ${t?.logo ? `<img class="result-team-logo" src="${t.logo}" alt="${team.name} logo" loading="lazy" decoding="async" />` : `<div class="result-team-emoji">${getPlayerInitials(team.name)}</div>`}
+              ${medal ? `<span class="result-medal">${medal}</span>` : ''}
+            </div>
+            <div class="result-team-info">
+              <div class="result-team-name">${team.name}</div>
+            </div>
+            <div class="result-team-actions">
+              <button class="btn btn-ghost result-export-card-btn" onclick="exportTeamPdfById('${tId}')" title="Download ${team.name} PDF" aria-label="Download ${team.name} PDF">
+                <span class="result-export-icon">&#8681;</span>
+                <span class="result-export-text">PDF</span>
+              </button>
+              <div class="result-team-stats">
+                <div>
+                  <span class="result-stat-val">${formatPrice(totalSpend)}</span>
+                  <span class="result-stat-label">Spent</span>
+                </div>
+                <div>
+                  <span class="result-stat-val">${squad.length}</span>
+                  <span class="result-stat-label">Players</span>
+                </div>
+                ${!isManualAuction ? `
+                <div>
+                  <span class="result-stat-val">${teamScoreMap.has(tId) ? teamScoreMap.get(tId) : '-'}</span>
+                  <span class="result-stat-label">Power</span>
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="result-squad-list">
+            ${squad.length === 0 ? `<div class="result-no-squad">No players purchased</div>` :
+              squad.map(({ player, price, isIcon }) => {
+                const color = getRoleColor(player.role);
+                const initials = getPlayerInitials(player.name);
+                const icon = getRoleIcon(player.role);
+                const avatarHtml = player.photo_url
+                  ? `<img src="${player.photo_url}" alt="${player.name}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+                  : initials;
+                return `
+                  <div class="result-player-row">
+                    <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+                    <div style="flex:1;">
+                      <div class="result-player-name">${player.name}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
+                      <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${player.role} · ${getCountryFlag(player.country)} ${player.country || 'Manual'}${isIcon ? ' · Icon Player' : ''}</div>
+                    </div>
+                    <div class="result-player-price">${formatPrice(price)}</div>
+                  </div>
+                `;
+              }).join('')
+            }
+          </div>
+        </div>
+      `;
+    }).join('');
+
+      if (isViewer) {
+      setupViewerQuickCards();
+    }
+
+    // Update subtitle
+    document.getElementById('resultsSub').textContent = isManualAuction
+      ? `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams`
+      : `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams · #1 ${teamPowerData.rankings[0]?.team || '-'}`;
+
+    setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers);
+    setupPlaying11(roomCode, session, teams, teamSquads);
+
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('resultsContent').style.display = 'block';
+
+    if (shouldAutoPdf) {
+      showToast('Preparing PDF download...', 'success');
+      setTimeout(() => {
+        exportResultsPdf().catch((err) => {
+          console.error('Auto PDF export failed:', err);
+          showToast('Failed to export PDF. Try again.', 'error');
+        });
+      }, 350);
+    }
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loadingScreen').innerHTML = `
+      <p style="color:var(--red)">Failed to load results. <button class="btn btn-ghost" onclick="location.reload()">Retry</button></p>`;
+  }
+}
+
+function setupViewerQuickCards() {
+  const unsold = document.getElementById('summaryUnsoldCard');
+  const teams = document.getElementById('summaryTeamsCard');
+
+  const attach = (el, type, label) => {
+    if (!el) return;
+    el.setAttribute('role', 'button');
+    el.tabIndex = 0;
+    el.setAttribute('aria-label', label);
+    
+    el.addEventListener('click', () => openViewerQuickModal(type));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openViewerQuickModal(type);
+      }
+    });
+  };
+
+  attach(unsold, 'unsold', 'View unsold players');
+  attach(teams, 'teams', 'View all teams');
+}
+
+function closeViewerQuickModal() {
+  const overlay = document.getElementById('viewerQuickModalOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('visible');
+}
+
+function openViewerQuickModal(type) {
+  const overlay = document.getElementById('viewerQuickModalOverlay');
+  const titleEl = document.getElementById('viewerQuickModalTitle');
+  const contentEl = document.getElementById('viewerQuickModalContent');
+  if (!overlay || !titleEl || !contentEl) return;
+
+  if (type === 'teams') {
+    titleEl.textContent = 'All Teams';
+    const grid = document.getElementById('resultsGrid');
+    contentEl.innerHTML = grid?.innerHTML || '<div class="state-empty"><p>No teams found.</p></div>';
+    overlay.classList.add('visible');
+    return;
+  }
+
+  if (type === 'unsold') {
+    titleEl.textContent = 'Unsold Players';
+    const playersById = reAuctionState.playersById || {};
+    const queue = Array.isArray(reAuctionState.unsoldQueue) ? reAuctionState.unsoldQueue : [];
+
+    if (!queue.length && Number(resultsExportState?.unsoldCount || 0) > 0) {
+      contentEl.innerHTML = '<div class="state-empty"><p>Loading unsold players...</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    const rows = queue
+      .map((pid) => {
+        const player = playersById[pid] || playersById[String(pid)] || null;
+        return player ? {
+          id: String(pid),
+          name: player.name || String(pid),
+          role: player.role || '',
+          country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
+          base: Number(player.base_price_lakh) || 0,
+          photo: player.photo_url || ''
+        } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+    if (!rows.length) {
+      contentEl.innerHTML = '<div class="state-empty"><p>No unsold players.</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    contentEl.innerHTML = `
+      <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> unsold players</div>
+      <div class="viewer-unsold-list">
+        ${rows.map((p) => {
+          const initials = getPlayerInitials(p.name);
+          const color = getRoleColor(p.role);
+          const icon = getRoleIcon(p.role);
+          const avatarHtml = p.photo
+            ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+            : escapeHtml(initials);
+          const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
+          return `
+            <div class="result-player-row">
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="result-player-name">${escapeHtml(p.name)}</div>
+                <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
+              </div>
+              <div class="result-player-price">${formatPrice(p.base)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    overlay.classList.add('visible');
+  }
+}
+
+window.openViewerQuickModal = openViewerQuickModal;
+window.closeViewerQuickModal = closeViewerQuickModal;
+
+// ============================================================
+// PLAYING 11 SETUP
+// ============================================================
+
+function setupPlaying11(roomCode, session, teams, teamSquads) {
+  if (!session || !session.teamId) return;
+
+  playing11State.roomCode = roomCode;
+  playing11State.session = session;
+  playing11State.myTeamId = session.teamId;
+  playing11State.mySquad = (teamSquads[session.teamId] || []).map(x => ({
+    player: x.player,
+    price: x.price
+  }));
+  
+  loadPlaying11FromFirebase();
+}
+
+async function loadPlaying11FromFirebase() {
+  const { roomCode, myTeamId } = playing11State;
+  if (!roomCode || !myTeamId) return;
+
+  try {
+    const snap = await db.ref(`rooms/${roomCode}/playing11/${myTeamId}`).get();
+    if (snap.exists()) {
+      const data = snap.val();
+      playing11State.playing11 = (data.playing11 || []).map(pid => String(pid));
+      playing11State.captain = data.captain != null ? String(data.captain) : null;
+      playing11State.vice_captain = data.vice_captain != null ? String(data.vice_captain) : null;
+      playing11State.wicket_keeper = data.wicket_keeper != null ? String(data.wicket_keeper) : null;
+    }
+  } catch (err) {
+    console.error('Failed to load Playing 11:', err);
+  }
+}
+
+function openPlaying11Modal() {
+  const overlay = document.getElementById('playing11ModalOverlay');
+  if (!overlay) return;
+  overlay.classList.add('visible');
+  playing11State.stage = (playing11State.playing11.length === 11) ? 'designation' : 'selection';
+  playing11State.selectionScrollTop = 0;
+  playing11State.designationScrollTop = 0;
+  renderPlaying11Modal();
+}
+
+function closePlaying11Modal() {
+  const overlay = document.getElementById('playing11ModalOverlay');
+  if (overlay) overlay.classList.remove('visible');
+}
+
+function openTopPickModal() {
+  const overlay = document.getElementById('topPickModalOverlay');
+  if (!overlay) return;
+  topPickUiState.visible = true;
+  renderTopPickModal();
+  overlay.classList.add('visible');
+}
+
+function closeTopPickModal() {
+  const overlay = document.getElementById('topPickModalOverlay');
+  if (overlay) overlay.classList.remove('visible');
+  topPickUiState.visible = false;
+}
+
+function renderTopPickModal() {
+  const content = document.getElementById('topPickModalContent');
+  const title = document.getElementById('topPickModalTitle');
+  if (!content || !title) return;
+
+  const picks = Array.isArray(topPickUiState.picks) ? topPickUiState.picks : [];
+  title.textContent = 'Top 10 Picks';
+
+  if (!picks.length) {
+    content.innerHTML = `
+      <div class="state-empty">
+        <p>No sold players found for this auction.</p>
+      </div>
+    `;
+    return;
+  }
+
+  content.innerHTML = picks.map((pick, idx) => {
+    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+    const player = topPickUiState.playerMap?.[pick.playerId] || topPickUiState.playerMap?.[String(pick.playerId)] || null;
+    const initials = player ? getPlayerInitials(player.name) : getPlayerInitials(pick.playerName);
+    const avatar = player?.photo_url
+      ? `<img class="top-pick-player-photo" src="${player.photo_url}" alt="${pick.playerName}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+      : `<div class="top-pick-player-fallback">${initials}</div>`;
+    return `
+      <div class="top-pick-row">
+        <div class="top-pick-rank">${medal}</div>
+        <div class="top-pick-player-wrap" style="--team-color:${pick.teamColor};">
+          ${avatar}
+        </div>
+        <div class="top-pick-main">
+          <div class="top-pick-name">${pick.playerName}</div>
+          <div class="top-pick-team">${pick.teamName}</div>
+        </div>
+        <div class="top-pick-price">${formatPrice(pick.price)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPlaying11Modal() {
+  const content = document.getElementById('playing11ModalContent');
+  if (!content) return;
+
+  const { mySquad, playing11, captain, vice_captain, wicket_keeper } = playing11State;
+
+  if (!mySquad.length) {
+    content.innerHTML = `
+      <div class="state-empty">
+        <p>No squad data available for Playing 11 selection.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const isSelectionStage = playing11State.stage === 'selection' || playing11.length < 11;
+
+  if (isSelectionStage) {
+    // PLAYER SELECTION STAGE - Show all squad members to select
+    const getTick = (selected) => selected
+      ? '<span class="playing11-select-tick selected" aria-hidden="true">✓</span>'
+      : '<span class="playing11-select-tick" aria-hidden="true"></span>';
+
+    const playerList = mySquad.map(entry => `
+      <button type="button" class="playing11-player-select-row ${playing11.includes(String(entry.player.id)) ? 'selected' : ''}"
+        onclick="togglePlaying11Player('${String(entry.player.id)}')">
+        ${getTick(playing11.includes(String(entry.player.id)))}
+        <span class="playing11-player-select-name">${entry.player.name}</span>
+        <span class="playing11-player-select-role">${entry.player.role}</span>
+        <span class="playing11-player-select-price">${formatPrice(entry.price)}</span>
+      </button>
+    `).join('');
+
+    content.innerHTML = `
+      <div class="playing11-selection-stage">
+        <div class="playing11-count-badge">Selected: <strong>${playing11.length}/11</strong></div>
+        <div class="playing11-all-players-list">
+          ${playerList}
+        </div>
+      </div>
+    `;
+
+    const list = content.querySelector('.playing11-all-players-list');
+    if (list) list.scrollTop = playing11State.selectionScrollTop || 0;
+  } else {
+    // DESIGNATION STAGE - Show 11 selected players with C/VC/WK buttons
+    const selectedPlayers = playing11.map(pid => 
+      mySquad.find(e => String(e.player.id) === String(pid))
+    ).filter(Boolean);
+
+    const playerDesignationHtml = selectedPlayers.map(entry => {
+      const playerId = String(entry.player.id);
+      const isCaptain = captain === playerId;
+      const isVC = vice_captain === playerId;
+      const isWK = wicket_keeper === playerId;
+
+      return `
+        <div class="playing11-designation-row">
+          <div class="playing11-player-info">
+            <span class="playing11-player-name-des">${entry.player.name}</span>
+            <span class="playing11-player-role-des">${entry.player.role}</span>
+          </div>
+          <div class="playing11-designation-buttons">
+            <button class="playing11-des-btn ${isCaptain ? 'active' : ''}" 
+              onclick="setPlayerDesignation('${playerId}', 'captain')" 
+              title="Captain">
+              ⭐ C
+            </button>
+            <button class="playing11-des-btn ${isVC ? 'active' : ''}" 
+              onclick="setPlayerDesignation('${playerId}', 'vice_captain')" 
+              title="Vice-Captain">
+              👤 VC
+            </button>
+            <button class="playing11-des-btn ${isWK ? 'active' : ''}" 
+              onclick="setPlayerDesignation('${playerId}', 'wicket_keeper')" 
+              title="Wicket-Keeper">
+              🥅 WK
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    content.innerHTML = `
+      <div class="playing11-designation-stage">
+        <div class="playing11-designation-info">
+          <p>Select one player each for Captain (C), Vice-Captain (VC), and Wicket-Keeper (WK)</p>
+        </div>
+        <div class="playing11-designation-list">
+          ${playerDesignationHtml}
+        </div>
+        <div class="playing11-designation-summary">
+          <div class="playing11-summary-item">
+            <span>⭐ Captain:</span>
+            <span class="playing11-summary-value">${captain ? mySquad.find(e => String(e.player.id) === String(captain))?.player.name || 'Not Selected' : 'Not Selected'}</span>
+          </div>
+          <div class="playing11-summary-item">
+            <span>👤 Vice-Captain:</span>
+            <span class="playing11-summary-value">${vice_captain ? mySquad.find(e => String(e.player.id) === String(vice_captain))?.player.name || 'Not Selected' : 'Not Selected'}</span>
+          </div>
+          <div class="playing11-summary-item">
+            <span>🥅 Wicket-Keeper:</span>
+            <span class="playing11-summary-value">${wicket_keeper ? mySquad.find(e => String(e.player.id) === String(wicket_keeper))?.player.name || 'Not Selected' : 'Not Selected'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const designationList = content.querySelector('.playing11-designation-list');
+    if (designationList) designationList.scrollTop = playing11State.designationScrollTop || 0;
+  }
+
+  // Add action buttons at the bottom
+  const allActionsHTML = `
+    <div class="playing11-actions">
+      ${isSelectionStage ? `
+        <button class="btn btn-secondary" onclick="closePlaying11Modal()">Cancel</button>
+        ${playing11.length === 11
+          ? `<button class="btn btn-primary" onclick="goToDesignationStage()">Continue</button>`
+          : `<button class="btn btn-primary" onclick="clearPlaying11Selection()">Clear All</button>`
+        }
+      ` : `
+        <button class="btn btn-secondary" onclick="resetPlaying11ToSelection()">Back to Selection</button>
+        <button class="btn btn-primary" onclick="savePlaying11()" ${(!captain || !vice_captain || !wicket_keeper) ? 'disabled' : ''}>
+          Save Playing 11
+        </button>
+      `}
+    </div>
+  `;
+
+  content.innerHTML += allActionsHTML;
+}
+
+function togglePlaying11Player(playerId) {
+  const normalizedId = String(playerId);
+  const list = document.querySelector('#playing11ModalContent .playing11-all-players-list');
+  if (list) playing11State.selectionScrollTop = list.scrollTop;
+
+  const idx = playing11State.playing11.indexOf(normalizedId);
+  if (idx === -1) {
+    if (playing11State.playing11.length < 11) {
+      playing11State.playing11.push(normalizedId);
+    }
+  } else {
+    playing11State.playing11.splice(idx, 1);
+    // Clear captain/vc/wk if player is removed
+    if (playing11State.captain === normalizedId) playing11State.captain = null;
+    if (playing11State.vice_captain === normalizedId) playing11State.vice_captain = null;
+    if (playing11State.wicket_keeper === normalizedId) playing11State.wicket_keeper = null;
+  }
+  playing11State.stage = 'selection';
+  renderPlaying11Modal();
+}
+
+function goToDesignationStage() {
+  if (playing11State.playing11.length !== 11) {
+    showToast('Please select exactly 11 players first.', 'error');
+    return;
+  }
+  playing11State.stage = 'designation';
+  renderPlaying11Modal();
+}
+
+
+function setPlayerDesignation(playerId, role) {
+  const normalizedId = String(playerId);
+  const designationList = document.querySelector('#playing11ModalContent .playing11-designation-list');
+  if (designationList) playing11State.designationScrollTop = designationList.scrollTop;
+
+  playing11State.stage = 'designation';
+  // Toggle the designation on/off
+  if (role === 'captain') {
+    playing11State.captain = playing11State.captain === normalizedId ? null : normalizedId;
+  } else if (role === 'vice_captain') {
+    playing11State.vice_captain = playing11State.vice_captain === normalizedId ? null : normalizedId;
+  } else if (role === 'wicket_keeper') {
+    playing11State.wicket_keeper = playing11State.wicket_keeper === normalizedId ? null : normalizedId;
+  }
+  renderPlaying11Modal();
+}
+
+function clearPlaying11Selection() {
+  playing11State.playing11 = [];
+  playing11State.captain = null;
+  playing11State.vice_captain = null;
+  playing11State.wicket_keeper = null;
+  playing11State.stage = 'selection';
+  playing11State.selectionScrollTop = 0;
+  playing11State.designationScrollTop = 0;
+  renderPlaying11Modal();
+}
+
+function resetPlaying11ToSelection() {
+  playing11State.stage = 'selection';
+  renderPlaying11Modal();
+}
+async function savePlaying11() {
+  const { roomCode, myTeamId, playing11, captain, vice_captain, wicket_keeper } = playing11State;
+
+  if (!roomCode || !myTeamId) {
+    showToast('Team information missing.', 'error');
+    return;
+  }
+
+  if (playing11.length !== 11) {
+    showToast('Please select exactly 11 players.', 'error');
+    return;
+  }
+
+  if (!captain || !vice_captain || !wicket_keeper) {
+    showToast('Please designate Captain, Vice-Captain, and Wicket-Keeper.', 'error');
+    return;
+  }
+
+  try {
+    await db.ref(`rooms/${roomCode}/playing11/${myTeamId}`).set({
+      playing11,
+      captain,
+      vice_captain,
+      wicket_keeper,
+      savedAt: Date.now()
+    });
+    showToast('Playing 11 saved successfully!', 'success');
+    closePlaying11Modal();
+  } catch (err) {
+    console.error('Error saving Playing 11:', err);
+    showToast('Failed to save Playing 11.', 'error');
+  }
+}
+
+function normalizeQueue(queue) {
+  if (Array.isArray(queue)) return queue;
+  return Object.values(queue || {});
+}
+
+function isSoldPlayer(soldPlayers, playerId) {
+  return !!(soldPlayers?.[playerId] || soldPlayers?.[String(playerId)]);
+}
+
+function buildUnsoldQueue(playerQueue, soldPlayers) {
+  return playerQueue.filter(pid => !isSoldPlayer(soldPlayers, pid));
+}
+
+function setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers) {
+  cleanupReAuctionListeners();
+
+  reAuctionState.roomCode = roomCode;
+  reAuctionState.room = room;
+  reAuctionState.session = session || null;
+  reAuctionState.playersById = playerMap;
+  reAuctionState.unsoldQueue = buildUnsoldQueue(playerQueue, soldPlayers);
+
+  const teams = room.teams || {};
+  const maxSquadSize = room.config?.maxSquadSize || 0;
+  reAuctionState.eligibleTeamIds = Object.entries(teams)
+    .filter(([, team]) => (team.squad || []).length < maxSquadSize)
+    .map(([teamId]) => teamId);
+
+  const section = document.getElementById('reAuctionSection');
+  if (!section) return;
+
+  section.style.display = 'block';
+
+  reAuctionState.listeners.reAuction = db.ref(`rooms/${roomCode}/reAuction`).on('value', snap => {
+    reAuctionState.data = snap.val() || {};
+    renderReAuctionSection();
+  });
+
+  reAuctionState.listeners.status = db.ref(`rooms/${roomCode}/config/status`).on('value', snap => {
+    if (snap.val() === 'auction') {
+      window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}`;
+    }
+  });
+
+  renderReAuctionSection();
+}
+
+function cleanupReAuctionListeners() {
+  const { roomCode, listeners } = reAuctionState;
+  if (!roomCode) return;
+  if (listeners.reAuction) db.ref(`rooms/${roomCode}/reAuction`).off('value', listeners.reAuction);
+  if (listeners.status) db.ref(`rooms/${roomCode}/config/status`).off('value', listeners.status);
+  reAuctionState.listeners = {};
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function normalizeReAuctionRole(role) {
+  const token = String(role || '').trim().toLowerCase().replace(/[_\s-]+/g, ' ');
+  if (!token) return 'Others';
+  if (token.includes('wicket')) return 'Wicket-keeper';
+  if (token.includes('all round') || token.includes('all-round')) return 'All-rounder';
+  if (token.includes('fast')) return 'Fast Bowler';
+  if (token.includes('spin')) return 'Spinner';
+  if (token.includes('bowl')) return 'Bowler';
+  if (token.includes('bat')) return 'Batsman';
+  return 'Others';
+}
+
+function getReAuctionRoleFilters(queue, playersById) {
+  const preferredOrder = ['Batsman', 'Bowler', 'Fast Bowler', 'Spinner', 'Wicket-keeper', 'All-rounder', 'Others'];
+  const present = new Set();
+
+  queue.forEach((pid) => {
+    const p = playersById[pid] || playersById[String(pid)];
+    if (!p) return;
+    present.add(normalizeReAuctionRole(p.role));
+  });
+
+  return ['All', ...preferredOrder.filter((role) => present.has(role))];
+}
+
+function setReAuctionRoleFilter(role) {
+  reAuctionState.filterRole = role || 'All';
+  renderReAuctionSection();
+}
+
+function setReAuctionSearch(value) {
+  reAuctionState.searchQuery = String(value || '');
+  renderReAuctionSection();
+}
+
+function setReAuctionSearchWithCaret(value, caretPos) {
+  reAuctionState.searchQuery = String(value || '');
+  reAuctionState.searchCaret = Number.isFinite(Number(caretPos)) ? Number(caretPos) : null;
+  reAuctionState.searchWasFocused = true;
+  renderReAuctionSection();
+}
+
+function setReAuctionListScroll(scrollTop) {
+  reAuctionState.playerListScrollTop = Math.max(0, Number(scrollTop) || 0);
+}
+
+window.setReAuctionRoleFilter = setReAuctionRoleFilter;
+window.setReAuctionSearch = setReAuctionSearch;
+window.setReAuctionSearchWithCaret = setReAuctionSearchWithCaret;
+window.setReAuctionListScroll = setReAuctionListScroll;
+
+function renderReAuctionSection() {
+  const body = document.getElementById('reAuctionBody');
+  const hint = document.getElementById('reAuctionHint');
+  if (!body || !hint) return;
+
+  const prevSearchEl = document.getElementById('reAuctionSearchInput');
+  const prevListEl = document.getElementById('reAuctionPlayerList');
+  if (prevListEl) {
+    reAuctionState.playerListScrollTop = prevListEl.scrollTop;
+  }
+  if (prevSearchEl && document.activeElement === prevSearchEl) {
+    reAuctionState.searchWasFocused = true;
+    reAuctionState.searchCaret = prevSearchEl.selectionStart;
+  }
+
+  const { room, session, unsoldQueue, eligibleTeamIds, data } = reAuctionState;
+  const teams = room?.teams || {};
+  const myTeamId = session?.teamId;
+  const amHost = !!session?.isHost;
+  const isHostControlledMode = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && amHost);
+  const myEligible = !!myTeamId && eligibleTeamIds.includes(myTeamId);
+
+  if (!unsoldQueue.length) {
+    hint.textContent = 'No unsold players left. Re-auction is not needed.';
+    body.innerHTML = `<div class="state-empty"><p>All players are sold.</p></div>`;
+    return;
+  }
+
+  if (!eligibleTeamIds.length ) {
+    hint.textContent = 'All teams have full squads. Re-auction is not available.';
+    body.innerHTML = `<div class="state-empty"><p>No team has an empty slot.</p></div>`;
+    return;
+  }
+
+  const selections = data.selections || {};
+  const readyMap = data.ready || {};
+
+  const selectedUnion = new Set();
+  if (isHostControlledMode) {
+    const hostSelections = selections.__host__ || {};
+    Object.keys(hostSelections).forEach(pid => {
+      if (hostSelections[pid]) selectedUnion.add(String(pid));
+    });
+  } else {
+    eligibleTeamIds.forEach(teamId => {
+      const teamSel = selections[teamId] || {};
+      Object.keys(teamSel).forEach(pid => {
+        if (teamSel[pid]) selectedUnion.add(String(pid));
+      });
+    });
+  }
+
+  const selectedQueue = unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
+  const allReady = isHostControlledMode
+    ? selectedQueue.length > 0
+    : eligibleTeamIds.every(teamId => !!readyMap[teamId]);
+
+  const mySelection = isHostControlledMode
+    ? (selections.__host__ || {})
+    : (selections[myTeamId] || {});
+  const mySelectedCount = Object.keys(mySelection).filter(pid => mySelection[pid]).length;
+  const myReady = !!readyMap[myTeamId];
+
+  const roleFilters = getReAuctionRoleFilters(unsoldQueue, reAuctionState.playersById);
+  const activeRole = roleFilters.includes(reAuctionState.filterRole) ? reAuctionState.filterRole : 'All';
+  reAuctionState.filterRole = activeRole;
+
+  const searchTerm = String(reAuctionState.searchQuery || '').trim().toLowerCase();
+  const filteredQueue = unsoldQueue.filter((pid) => {
+    const player = reAuctionState.playersById[pid] || reAuctionState.playersById[String(pid)];
+    if (!player) return false;
+
+    const normalizedRole = normalizeReAuctionRole(player.role);
+    const roleMatch = activeRole === 'All'
+      ? true
+      : (activeRole === 'Bowler'
+        ? ['Bowler', 'Fast Bowler', 'Spinner'].includes(normalizedRole)
+        : normalizedRole === activeRole);
+
+    if (!roleMatch) return false;
+
+    if (!searchTerm) return true;
+    const haystack = `${String(player.name || '').toLowerCase()} ${String(player.country || '').toLowerCase()} ${String(player.role || '').toLowerCase()}`;
+    return haystack.includes(searchTerm);
+  });
+
+  const roleFilterHtml = roleFilters.map((role) => `
+    <button class="reauction-role-chip ${role === activeRole ? 'active' : ''}" onclick="setReAuctionRoleFilter('${escapeHtml(role)}')">${escapeHtml(role)}</button>
+  `).join('');
+
+  const playerListHtml = filteredQueue.map(pid => {
+    const player = reAuctionState.playersById[pid] || reAuctionState.playersById[String(pid)];
+    if (!player) return '';
+    const checked = !!(mySelection[String(pid)] || mySelection[pid]);
+    return `
+      <label class="reauction-player-row ${checked ? 'selected' : ''}">
+        <input type="checkbox" ${checked ? 'checked' : ''}
+          onchange="toggleReAuctionPlayer('${String(pid)}')"
+          ${(myEligible || isHostControlledMode) ? '' : 'disabled'} />
+        <span class="reauction-player-name">${player.name}</span>
+        <span class="reauction-player-meta">${getRoleIcon(player.role)} ${player.role} · ${formatPrice(player.base_price_lakh)}</span>
+      </label>
+    `;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="reauction-status-grid">
+      <div class="reauction-stat-card">
+        <div class="reauction-stat-label">Unsold Players</div>
+        <div class="reauction-stat-value">${unsoldQueue.length}</div>
+      </div>
+      <div class="reauction-stat-card">
+        <div class="reauction-stat-label">Eligible Teams</div>
+        <div class="reauction-stat-value">${eligibleTeamIds.length}</div>
+      </div>
+      <div class="reauction-stat-card">
+        <div class="reauction-stat-label">Selected For Re-Auction</div>
+        <div class="reauction-stat-value">${selectedQueue.length}</div>
+      </div>
+    </div>
+
+    ${(myEligible || isHostControlledMode) ? `
+      <div class="reauction-controls">
+        <span>${isHostControlledMode ? 'Host selection' : 'Your selection'}: ${mySelectedCount}</span>
+        ${isHostControlledMode ? '<span>Host can start once at least 1 player is selected.</span>' : `
+        <button class="btn ${myReady ? 'btn-secondary' : 'btn-primary'}" onclick="toggleReAuctionReady()">
+          ${myReady ? 'Mark Pending' : 'Mark Ready'}
+        </button>`}
+      </div>
+    ` : `<div class="reauction-note">Only teams with empty slots can select players.</div>`}
+
+    <div class="reauction-filter-row">
+      <input
+        id="reAuctionSearchInput"
+        class="reauction-search-input"
+        type="text"
+        placeholder="Search player..."
+        value="${escapeHtml(reAuctionState.searchQuery || '')}"
+        oninput="setReAuctionSearchWithCaret(this.value, this.selectionStart)"
+      />
+      <div class="reauction-role-chips">${roleFilterHtml}</div>
+      <div class="reauction-filter-meta">Showing ${filteredQueue.length} of ${unsoldQueue.length}</div>
+    </div>
+
+    <div id="reAuctionPlayerList" class="reauction-player-list" onscroll="setReAuctionListScroll(this.scrollTop)">${playerListHtml || '<div class="reauction-empty">No players match current filters.</div>'}</div>
+
+    ${amHost ? `
+      <div class="reauction-host-actions">
+        <p>${isHostControlledMode ? `Host controlled mode: <strong>${selectedQueue.length > 0 ? 'Ready to start' : 'Select players'}</strong>` : `All teams ready: <strong>${allReady ? 'Yes' : 'No'}</strong>`}</p>
+        <button class="btn btn-primary btn-lg" onclick="startReAuctionFromResults()" ${(!allReady || selectedQueue.length === 0) ? 'disabled' : ''}>
+          Start Re-Auction (${selectedQueue.length} players)
+        </button>
+      </div>
+    ` : ''}
+  `;
+
+  const listEl = document.getElementById('reAuctionPlayerList');
+  if (listEl) {
+    listEl.scrollTop = reAuctionState.playerListScrollTop || 0;
+  }
+
+  const searchEl = document.getElementById('reAuctionSearchInput');
+  if (searchEl && reAuctionState.searchWasFocused) {
+    searchEl.focus({ preventScroll: true });
+    const caret = Number.isFinite(Number(reAuctionState.searchCaret))
+      ? Math.min(Number(reAuctionState.searchCaret), searchEl.value.length)
+      : searchEl.value.length;
+    try {
+      searchEl.setSelectionRange(caret, caret);
+    } catch (_) {
+      // Ignore selection errors on non-supporting browsers.
+    }
+  }
+
+  reAuctionState.searchWasFocused = false;
+  reAuctionState.searchCaret = null;
+
+  hint.textContent = isHostControlledMode
+    ? 'Host selects unsold players and starts re-auction.'
+    : 'Teams with empty slots select unsold players, mark ready, then host starts re-auction.';
+}
+
+async function toggleReAuctionPlayer(playerId) {
+  const { roomCode, room, session, eligibleTeamIds, data } = reAuctionState;
+  if (isPaddleModeRoom(room) && !session?.isHost) {
+    showToast('Only host can select re-auction players in paddle mode.', 'error');
+    return;
+  }
+    const hostControlled = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && session?.isHost);
+
+  const selectionOwner = hostControlled ? '__host__' : session?.teamId;
+  if (!selectionOwner) return;
+  if (!hostControlled && !eligibleTeamIds.includes(selectionOwner)) return;
+
+  const listEl = document.getElementById('reAuctionPlayerList');
+  if (listEl) {
+    reAuctionState.playerListScrollTop = listEl.scrollTop;
+  }
+
+  const teamId = selectionOwner;
+  const teamSelections = data.selections?.[teamId] || {};
+  const isSelected = !!teamSelections[playerId];
+
+  const updates = {};
+  updates[`rooms/${roomCode}/reAuction/selections/${teamId}/${playerId}`] = isSelected ? null : true;
+  updates[`rooms/${roomCode}/reAuction/ready/${teamId}`] = false;
+  updates[`rooms/${roomCode}/reAuction/updatedAt`] = Date.now();
+  await db.ref().update(updates);
+}
+
+async function toggleReAuctionReady() {
+  const { roomCode, session, eligibleTeamIds, data } = reAuctionState;
+    if (isPaddleModeRoom(reAuctionState.room) && !session?.isHost) {
+    showToast('Only host can control re-auction in paddle mode.', 'error');
+    return;
+  }
+  if (!roomCode || !session?.teamId || !eligibleTeamIds.includes(session.teamId)) return;
+
+  const teamId = session.teamId;
+  const ready = !!data.ready?.[teamId];
+
+  if (!ready) {
+    const selectedCount = Object.keys(data.selections?.[teamId] || {}).filter(pid => (data.selections?.[teamId] || {})[pid]).length;
+    if (selectedCount === 0) {
+      showToast('Select at least 1 player before marking ready.', 'error');
+      return;
+    }
+  }
+
+  await db.ref(`rooms/${roomCode}/reAuction/ready/${teamId}`).set(!ready);
+  await db.ref(`rooms/${roomCode}/reAuction/updatedAt`).set(Date.now());
+}
+
+async function startReAuctionFromResults() {
+  const { roomCode, session, playersById } = reAuctionState;
+  if (!roomCode || !session?.isHost) return;
+
+  const roomSnap = await db.ref(`rooms/${roomCode}`).get();
+  if (!roomSnap.exists()) {
+    showToast('Room not found.', 'error');
+    return;
+  }
+
+  const room = roomSnap.val();
+  const teams = room.teams || {};
+  const soldPlayers = room.soldPlayers || {};
+  const playerQueue = normalizeQueue(room.playerQueue);
+  const unsoldQueue = buildUnsoldQueue(playerQueue, soldPlayers);
+  const maxSquadSize = room.config?.maxSquadSize || 0;
+  const eligibleTeamIds = Object.entries(teams)
+    .filter(([, team]) => (team.squad || []).length < maxSquadSize)
+    .map(([teamId]) => teamId);
+
+  const reAuction = room.reAuction || {};
+  const selections = reAuction.selections || {};
+  const readyMap = reAuction.ready || {};
+const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.hostBidsForAllTeams);
+
+  const allReady = hostControlled
+    ? true
+    : (eligibleTeamIds.length > 0 && eligibleTeamIds.every(teamId => !!readyMap[teamId]));
+  if (!allReady) {
+    showToast('All eligible teams must be ready.', 'error');
+    return;
+  }
+
+  const selectedUnion = new Set();
+  if (hostControlled) {
+    const hostSelections = selections.__host__ || {};
+    Object.keys(hostSelections).forEach(pid => {
+      if (hostSelections[pid]) selectedUnion.add(String(pid));
+    });
+  } else {
+    eligibleTeamIds.forEach(teamId => {
+      const teamSel = selections[teamId] || {};
+      Object.keys(teamSel).forEach(pid => {
+        if (teamSel[pid]) selectedUnion.add(String(pid));
+      });
+    });
+  }
+
+  const selectedQueue = unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
+  if (!selectedQueue.length) {
+    showToast('No players selected for re-auction.', 'error');
+    return;
+  }
+
+  const firstPlayerId = selectedQueue[0];
+  const firstPlayer = playersById[firstPlayerId] || playersById[String(firstPlayerId)];
+  if (!firstPlayer) {
+    showToast('Failed to load selected players.', 'error');
+    return;
+  }
+
+  const now = Date.now();
+  const timerSec = room.config?.timerSeconds || 30;
+  const unlimitedTimer = !!room.config?.unlimitedTimer || room.config?.timerMode === 'unlimited' || Number(room.config?.timerSeconds) === 0;
+  const reAuctionRound = (room.config?.reAuctionRound || 0) + 1;
+  const liveUnsoldMap = room.unsoldPlayers || {};
+  const nextUnsoldMap = { ...liveUnsoldMap };
+  selectedQueue.forEach((pid) => {
+    delete nextUnsoldMap[String(pid)];
+  });
+
+  const updates = {};
+  updates[`rooms/${roomCode}/playerQueue`] = selectedQueue;
+  updates[`rooms/${roomCode}/poolByIndex`] = {};
+  updates[`rooms/${roomCode}/currentIndex`] = 0;
+  updates[`rooms/${roomCode}/currentAuction`] = {
+    playerId: firstPlayerId,
+    currentBid: firstPlayer.base_price_lakh,
+    highestBidder: null,
+    bidHistory: [],
+    poolId: null,
+    poolLabel: null,
+    skipVotes: {},
+    poolSkipVotes: {},
+    withdrawnTeams: {},
+    timerEnd: unlimitedTimer ? null : (now + timerSec * 1000),
+    status: 'bidding'
+  };
+  updates[`rooms/${roomCode}/auctionControl`] = { paused: false, pausedAt: null };
+  updates[`rooms/${roomCode}/config/status`] = 'auction';
+  updates[`rooms/${roomCode}/config/reAuctionRound`] = reAuctionRound;
+  updates[`rooms/${roomCode}/config/reAuctionStartedAt`] = now;
+  updates[`rooms/${roomCode}/reAuction/started`] = true;
+  updates[`rooms/${roomCode}/reAuction/startedAt`] = now;
+  updates[`rooms/${roomCode}/reAuction/startedBy`] = session.teamId;
+  updates[`rooms/${roomCode}/unsoldPlayers`] = nextUnsoldMap;
+
+  await db.ref().update(updates);
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast'; }, 2400);
+}
+
+function formatPricePdf(lakh) {
+  return formatPrice(lakh)
+    .replace('₹', 'INR ')
+    .replace('Cr', ' Cr')
+    .replace('L', ' L');
+}
+
+function updateTeamExportSelect(sortedTeams, roomCode) {
+  const select = document.getElementById('teamExportSelect');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Select Team</option>';
+  sortedTeams.forEach(([teamId, team]) => {
+    const option = document.createElement('option');
+    option.value = teamId;
+    const isManualAuction = select.dataset.isManualAuction === '1';
+    option.textContent = isManualAuction
+      ? `${team.name}`
+      : `${team.name} (${team.short || teamId.toUpperCase()})`;
+    select.appendChild(option);
+  });
+
+  select.dataset.roomCode = roomCode;
+}
+
+function createPdfDocument() {
+  return new window.jspdf.jsPDF({
+    orientation: 'portrait',
+    unit: 'pt',
+    format: 'a4'
+  });
+}
+
+const PDF_THEME = {
+  navy: [8, 20, 44],
+  blue: [18, 93, 152],
+  cyan: [0, 166, 214],
+  gold: [240, 183, 35],
+  mint: [35, 166, 122],
+  danger: [208, 64, 57],
+  slate900: [23, 38, 56],
+  slate700: [61, 81, 106],
+  slate500: [102, 121, 143],
+  slate300: [214, 222, 231],
+  slate200: [232, 237, 243],
+  white: [255, 255, 255]
+};
+
+const pdfImageCache = new Map();
+
+function getExtraFieldValue(player, keys) {
+  if (!player || !keys || !keys.length) return '';
+  const extra = player.extraFields && typeof player.extraFields === 'object' ? player.extraFields : {};
+  for (const key of keys) {
+    const direct = player[key];
+    if (direct != null && String(direct).trim()) return String(direct).trim();
+    const extraVal = extra[key];
+    if (extraVal != null && String(extraVal).trim()) return String(extraVal).trim();
+  }
+  return '';
+}
+
+async function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function blobToPngDataUrl(blob) {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    try {
+      return await blobToDataUrl(blob);
+    } catch (fallbackErr) {
+      return null;
+    }
+  }
+}
+
+async function loadImageDataUrl(url) {
+  const safeUrl = String(url || '').trim();
+  if (!safeUrl) return null;
+  if (pdfImageCache.has(safeUrl)) return pdfImageCache.get(safeUrl);
+  try {
+    const response = await fetch(safeUrl, { mode: 'cors' });
+    if (!response.ok) throw new Error('Image fetch failed');
+    const blob = await response.blob();
+    const dataUrl = await blobToPngDataUrl(blob);
+    if (!dataUrl) throw new Error('Image conversion failed');
+    pdfImageCache.set(safeUrl, dataUrl);
+    return dataUrl;
+  } catch (err) {
+    pdfImageCache.set(safeUrl, null);
+    return null;
+  }
+}
+
+function drawPdfCircleBadge(doc, x, y, radius, label) {
+  doc.setFillColor(247, 250, 255);
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.setLineWidth(0.8);
+  doc.circle(x, y, radius, 'FD');
+
+  doc.setTextColor(...PDF_THEME.navy);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(label, x, y + 4, { align: 'center' });
+}
+
+async function drawImageInBox(doc, url, x, y, w, h, fallbackLabel) {
+  const dataUrl = await loadImageDataUrl(url);
+  if (dataUrl) {
+    doc.addImage(dataUrl, 'PNG', x, y, w, h);
+    return;
+  }
+
+  doc.setFillColor(242, 245, 250);
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.roundedRect(x, y, w, h, 6, 6, 'FD');
+  if (fallbackLabel) {
+    doc.setTextColor(...PDF_THEME.slate700);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(fallbackLabel, x + (w / 2), y + (h / 2) + 4, { align: 'center' });
+  }
+}
+
+async function drawPdfHeader(doc, title, teamName, roomCode, leftBadgeText, teamLogoUrl) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.setLineWidth(1);
+  doc.line(36, 40, pageWidth - 36, 40);
+
+  drawPdfCircleBadge(doc, 58, 22, 18, leftBadgeText || 'IPL');
+
+  doc.setTextColor(...PDF_THEME.blue);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(String(title || 'IPL Auction'), pageWidth / 2, 26, { align: 'center' });
+
+  doc.setTextColor(...PDF_THEME.slate900);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text(String(teamName || 'Team Squad'), pageWidth / 2, 54, { align: 'center' });
+
+  doc.setTextColor(...PDF_THEME.slate500);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.text(`Room: ${roomCode}`, pageWidth / 2, 70, { align: 'center' });
+
+  if (teamLogoUrl) {
+    const logoSize = 36;
+    const logoX = pageWidth - 36 - logoSize;
+    const logoY = 6;
+    await drawImageInBox(doc, teamLogoUrl, logoX, logoY, logoSize, logoSize, 'LOGO');
+  }
+}
+
+function drawPdfPriceTag(doc, x, y, text) {
+  const padX = 6;
+  const padY = 4;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  const width = doc.getTextWidth(text) + (padX * 2);
+  const height = 16;
+  doc.setFillColor(228, 246, 235);
+  doc.setDrawColor(200, 236, 212);
+  doc.roundedRect(x, y, width, height, 6, 6, 'FD');
+  doc.setTextColor(22, 132, 74);
+  doc.text(text, x + padX, y + padY + 7);
+}
+
+async function renderPdfTeamRoster(doc, payload) {
+  const {
+    roomCode,
+    roomTitle,
+    team,
+    teamId,
+    teamLogo,
+    squad
+  } = payload;
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const leftMargin = 36;
+  const rightMargin = 36;
+  const topStart = 92;
+  const bottomMargin = 36;
+  const gutter = 12;
+
+  await drawPdfHeader(
+    doc,
+    roomTitle || 'IPL Auction Tournament',
+    team?.name || teamId || 'Team',
+    roomCode || '-',
+    'IPL',
+    teamLogo
+  );
+
+  const totalCards = squad.length || 0;
+  const rowsNeeded = Math.max(1, Math.ceil(totalCards / 2));
+  const availableHeight = pageHeight - bottomMargin - topStart;
+  const baseCardHeight = 78;
+  const cardHeight = Math.max(54, Math.min(baseCardHeight, Math.floor((availableHeight - (rowsNeeded - 1) * gutter) / rowsNeeded)));
+  const cardWidth = (pageWidth - leftMargin - rightMargin - gutter) / 2;
+  const scale = cardHeight / baseCardHeight;
+
+  const nameSize = Math.max(9.5, 12 * scale);
+  const metaSize = Math.max(7.2, 9 * scale);
+  const lineGap = Math.max(11, 14 * scale);
+  const imageSize = Math.max(40, 52 * scale);
+
+  let x = leftMargin;
+  let y = topStart;
+
+  if (!squad.length) {
+    doc.setTextColor(...PDF_THEME.slate700);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('No players purchased', leftMargin, topStart + 16);
+    return;
+  }
+
+  for (let i = 0; i < squad.length; i += 1) {
+    const { player, price } = squad[i];
+    const isRight = i % 2 === 1;
+    x = leftMargin + (isRight ? cardWidth + gutter : 0);
+
+    if (i > 0 && i % 2 === 0) {
+      y += cardHeight + gutter;
+    }
+
+    doc.setDrawColor(...PDF_THEME.slate300);
+    doc.setLineWidth(0.7);
+    doc.roundedRect(x, y, cardWidth, cardHeight, 8, 8, 'S');
+
+    const innerPad = 10;
+    const imageBox = {
+      x: x + cardWidth - imageSize - innerPad,
+      y: y + innerPad,
+      w: imageSize,
+      h: imageSize
+    };
+
+    const nameText = String(player?.name || 'Player').trim();
+    const roleText = getExtraFieldValue(player, ['role', 'skill']) || '-';
+    const mobileText = getExtraFieldValue(player, ['mobile', 'phone', 'contact', 'contactNumber', 'whatsapp']) || '-';
+    const specText = getExtraFieldValue(player, ['spec', 'hand', 'batting_style', 'bowling_style', 'style']) || '-';
+
+    doc.setTextColor(...PDF_THEME.slate900);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(nameSize);
+    doc.text(nameText, x + innerPad, y + innerPad + 12);
+
+    doc.setTextColor(...PDF_THEME.slate700);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(metaSize);
+    doc.text(`Mobile: ${mobileText}`, x + innerPad, y + innerPad + 12 + lineGap);
+    doc.text(`Skill: ${roleText}`, x + innerPad, y + innerPad + 12 + (lineGap * 2));
+    doc.text(`Spec: ${specText}`, x + innerPad, y + innerPad + 12 + (lineGap * 3));
+
+    const priceLabel = formatPricePdf(price || 0);
+    drawPdfPriceTag(doc, x + innerPad, y + cardHeight - 22, priceLabel);
+
+    doc.setTextColor(...PDF_THEME.blue);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(metaSize);
+    doc.text(String(team?.name || teamId || '').toUpperCase(), x + cardWidth - innerPad, y + cardHeight - 8, { align: 'right' });
+
+    const fallbackInitials = getPlayerInitials(nameText || 'P');
+    await drawImageInBox(doc, player?.photo_url || '', imageBox.x, imageBox.y, imageBox.w, imageBox.h, fallbackInitials);
+  }
+}
+
+function drawSectionTitle(doc, label, y, accent = PDF_THEME.blue) {
+  doc.setDrawColor(...PDF_THEME.slate300);
+  doc.setLineWidth(0.8);
+  doc.line(40, y + 8, 555, y + 8);
+
+  doc.setFillColor(...accent);
+  doc.roundedRect(40, y - 10, 8, 18, 2, 2, 'F');
+
+  doc.setTextColor(...PDF_THEME.slate900);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(label, 54, y + 3);
+}
+
+function getSquadRoleMix(squad) {
+  return (squad || []).reduce((acc, entry) => {
+    const role = String(entry?.player?.role || '').toLowerCase();
+    if (role.includes('all-rounder')) acc.allRounder += 1;
+    else if (role.includes('wicket')) acc.wicketKeeper += 1;
+    else if (role.includes('bowler') || role.includes('spinner') || role.includes('fast')) acc.bowler += 1;
+    else acc.batsman += 1;
+    return acc;
+  }, { batsman: 0, wicketKeeper: 0, allRounder: 0, bowler: 0 });
+}
+
+function drawInfoChips(doc, y, chips) {
+  let x = 40;
+  chips.forEach((chip) => {
+    const text = `${chip.label}: ${chip.value}`;
+    const w = Math.max(90, doc.getTextWidth(text) + 24);
+    doc.setFillColor(...chip.bg);
+    doc.roundedRect(x, y, w, 20, 10, 10, 'F');
+
+    doc.setTextColor(...chip.fg);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text(text, x + 12, y + 13);
+
+    x += w + 8;
+  });
+}
+
+function renderPdfHeader(doc, title, roomCode, generatedAt) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  doc.setFillColor(...PDF_THEME.navy);
+  doc.rect(0, 0, pageWidth, 118, 'F');
+
+  // Layered accent bars for a premium look.
+  doc.setFillColor(...PDF_THEME.blue);
+  doc.rect(0, 88, pageWidth, 30, 'F');
+  doc.setFillColor(...PDF_THEME.cyan);
+  doc.rect(0, 102, pageWidth, 16, 'F');
+
+  doc.setFillColor(255, 255, 255, 0.08);
+  doc.circle(pageWidth - 60, 34, 52, 'F');
+  doc.circle(pageWidth - 10, 64, 36, 'F');
+
+  doc.setTextColor(...PDF_THEME.white);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(24);
+  doc.text(title, 40, 40);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('IPL Auction Analytics Dossier', 40, 58);
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Room: ${roomCode}`, 40, 78);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Generated: ${generatedAt.toLocaleString()}`, 40, 94);
+}
+
+function appendPdfFooter(doc) {
+  const pageCount = doc.internal.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+    doc.setPage(pageNumber);
+    doc.setDrawColor(...PDF_THEME.slate300);
+    doc.line(40, pageHeight - 26, pageWidth - 40, pageHeight - 26);
+
+    doc.setTextColor(...PDF_THEME.slate500);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('IPL Auction Report', 40, pageHeight - 12);
+    doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 40, pageHeight - 18, { align: 'right' });
+  }
+}
+
+function renderAuctionSummaryTable(doc, teams, soldCount, unsoldCount, totalSales) {
+  const teamsCount = Object.keys(teams).length;
+  drawSectionTitle(doc, 'Auction Snapshot', 134, PDF_THEME.blue);
+
+  const stats = [
+    { label: 'Teams', value: String(teamsCount), bg: [228, 242, 255], fg: PDF_THEME.slate900 },
+    { label: 'Players Sold', value: String(soldCount), bg: [231, 247, 238], fg: PDF_THEME.slate900 },
+    { label: 'Unsold', value: String(unsoldCount), bg: [255, 236, 234], fg: PDF_THEME.slate900 },
+    { label: 'Total Spend', value: formatPricePdf(totalSales), bg: [255, 248, 227], fg: PDF_THEME.slate900 }
+  ];
+  drawInfoChips(doc, 148, stats);
+
+  doc.autoTable({
+    startY: 182,
+    margin: { left: 40, right: 40 },
+    theme: 'plain',
+    head: [['Metric', 'Value', 'Insight']],
+    body: [
+      ['Teams in Auction', String(teamsCount), teamsCount >= 8 ? 'High competition pool' : 'Compact competition pool'],
+      ['Players Sold', String(soldCount), soldCount > 0 ? 'Active auction outcome' : 'No completed sales yet'],
+      ['Players Unsold', String(unsoldCount), unsoldCount <= 5 ? 'Efficient conversion rate' : 'Large unsold reserve remains'],
+      ['Total Spend', formatPricePdf(totalSales), totalSales > 0 ? 'Budget utilization completed' : 'No spending recorded']
+    ],
+    styles: {
+      fontSize: 10,
+      cellPadding: 7,
+      lineColor: PDF_THEME.slate300,
+      lineWidth: 0.6,
+      textColor: PDF_THEME.slate900
+    },
+    headStyles: {
+      fillColor: PDF_THEME.navy,
+      textColor: PDF_THEME.white,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: { fillColor: PDF_THEME.slate200 },
+    columnStyles: {
+      0: { cellWidth: 132, fontStyle: 'bold' },
+      1: { cellWidth: 120 },
+      2: { cellWidth: 223 }
+    }
+  });
+}
+
+function renderTeamSection(doc, teamId, team, squad, roomTeamCatalog, rank, playing11Data, playerMap) {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const teamSpend = squad.reduce((sum, entry) => sum + entry.price, 0);
+  const purseLeft = team.purse || 0;
+  const t = roomTeamCatalog[teamId] || getTeam(teamId) || {};
+
+  let startY = (doc.lastAutoTable?.finalY || 132) + 16;
+  if (startY > pageHeight - 240) {
+    doc.addPage();
+    startY = 70;
+  }
+
+  const roleMix = getSquadRoleMix(squad);
+  const rankPrefix = typeof rank === 'number' ? `${rank}. ` : '';
+  const headerColor = rank === 1
+    ? PDF_THEME.gold
+    : rank === 2
+      ? [163, 170, 185]
+      : rank === 3
+        ? [174, 120, 81]
+        : PDF_THEME.blue;
+
+  doc.setFillColor(245, 248, 252);
+  doc.roundedRect(34, startY - 18, 527, 52, 10, 10, 'F');
+
+  doc.setFillColor(...headerColor);
+  doc.roundedRect(40, startY - 12, 8, 40, 3, 3, 'F');
+
+  doc.setTextColor(...PDF_THEME.slate900);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  const isManualAuction = !!resultsExportState?.isManualAuction;
+  const teamLabel = isManualAuction
+    ? (team.name || team.short || t.name || t.short || teamId)
+    : `${team.name} (${team.short || t.short || teamId})`;
+  doc.text(`${rankPrefix}${teamLabel}`, 56, startY);
+
+  doc.setTextColor(...PDF_THEME.slate700);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.text(`Owner: ${team.ownerName || '-'}`, 56, startY + 14);
+
+  drawInfoChips(doc, startY + 24, [
+    { label: 'Squad', value: String(squad.length), bg: [228, 242, 255], fg: PDF_THEME.slate900 },
+    { label: 'Spent', value: formatPricePdf(teamSpend), bg: [255, 248, 227], fg: PDF_THEME.slate900 },
+    { label: 'Purse Left', value: formatPricePdf(purseLeft), bg: [231, 247, 238], fg: PDF_THEME.slate900 }
+  ]);
+
+  doc.setTextColor(...PDF_THEME.slate700);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.2);
+  doc.text(
+    `Role Mix  BAT ${roleMix.batsman}  WK ${roleMix.wicketKeeper}  AR ${roleMix.allRounder}  BOWL ${roleMix.bowler}`,
+    430,
+    startY + 14,
+    { align: 'right' }
+  );
+
+  doc.autoTable({
+    startY: startY + 52,
+    margin: { left: 40, right: 40 },
+    theme: 'plain',
+    head: [['Owner', 'Players', 'Spent', 'Purse Left']],
+    body: [[
+      team.ownerName || '-',
+      String(squad.length),
+      formatPricePdf(teamSpend),
+      formatPricePdf(purseLeft)
+    ]],
+    styles: {
+      fontSize: 9.5,
+      cellPadding: 6,
+      lineColor: PDF_THEME.slate300,
+      lineWidth: 0.6,
+      textColor: PDF_THEME.slate900
+    },
+    headStyles: {
+      fillColor: PDF_THEME.navy,
+      textColor: PDF_THEME.white,
+      fontStyle: 'bold'
+    },
+    bodyStyles: { fillColor: [250, 252, 255] },
+    columnStyles: {
+      0: { cellWidth: 180 },
+      1: { cellWidth: 90, halign: 'center' },
+      2: { cellWidth: 125, halign: 'right' },
+      3: { halign: 'right' }
+    }
+  });
+
+  const rows = squad.length
+    ? squad.map(({ player, price }, rowIndex) => [
+        String(rowIndex + 1),
+        player.name || '-',
+        player.role || '-',
+        player.country || 'Manual',
+        formatPricePdf(price)
+      ])
+    : [['-', 'No players purchased', '-', '-', '-']];
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 8,
+    margin: { left: 40, right: 40 },
+    theme: 'plain',
+    head: [['#', 'Player', 'Role', 'Country', 'Price']],
+    body: rows,
+    styles: {
+      fontSize: 9,
+      cellPadding: 5,
+      lineColor: PDF_THEME.slate300,
+      lineWidth: 0.5,
+      textColor: PDF_THEME.slate900
+    },
+    headStyles: {
+      fillColor: PDF_THEME.blue,
+      textColor: PDF_THEME.white,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: { fillColor: [247, 250, 254] },
+    columnStyles: {
+      0: { cellWidth: 26 },
+      1: { cellWidth: 195 },
+      2: { cellWidth: 95 },
+      3: { cellWidth: 110 },
+      4: { halign: 'right' }
+    }
+  });
+
+  // Add Playing 11 section if available
+  if (playing11Data && playing11Data.playing11 && playing11Data.playing11.length === 11) {
+    const selectedIds = (playing11Data.playing11 || []).map(pid => String(pid));
+    const captainId = playing11Data.captain != null ? String(playing11Data.captain) : null;
+    const viceCaptainId = playing11Data.vice_captain != null ? String(playing11Data.vice_captain) : null;
+    const wicketKeeperId = playing11Data.wicket_keeper != null ? String(playing11Data.wicket_keeper) : null;
+
+    startY = doc.lastAutoTable.finalY + 14;
+    if (startY > pageHeight - 150) {
+      doc.addPage();
+      startY = 70;
+    }
+
+    drawSectionTitle(doc, 'Best Playing 11', startY, PDF_THEME.mint);
+
+    const playing11Players = selectedIds.map(pid => {
+      const entry = squad.find(e => String(e.player.id) === pid);
+      if (!entry) return null;
+      const player = entry.player;
+      let designation = '';
+      if (pid === captainId) designation = ' (C)';
+      else if (pid === viceCaptainId) designation = ' (VC)';
+      else if (pid === wicketKeeperId) designation = ' (WK)';
+
+      return [
+        player.name + designation,
+        player.role || '-',
+        player.country || 'Manual',
+        formatPricePdf(entry.price)
+      ];
+    }).filter(Boolean);
+
+    doc.autoTable({
+      startY: startY + 14,
+      margin: { left: 40, right: 40 },
+      theme: 'plain',
+      head: [['Player', 'Role', 'Country', 'Price']],
+      body: playing11Players.length ? playing11Players : [['Playing 11 could not be resolved from squad data', '-', '-', '-']],
+      styles: {
+        fontSize: 9,
+        cellPadding: 5,
+        lineColor: PDF_THEME.slate300,
+        lineWidth: 0.5,
+        textColor: PDF_THEME.slate900
+      },
+      headStyles: {
+        fillColor: PDF_THEME.mint,
+        textColor: PDF_THEME.white,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: { fillColor: [239, 250, 245] },
+      columnStyles: {
+        0: { cellWidth: 205 },
+        1: { cellWidth: 95 },
+        2: { cellWidth: 110 },
+        3: { halign: 'right' }
+      }
+    });
+  }
+}
+
+async function exportResultsPdf() {
+  const {
+    roomCode,
+    roomTitle,
+    sortedTeams,
+    teamSquads,
+    roomTeamCatalog
+  } = resultsExportState;
+
+  if (!roomCode || !sortedTeams.length) {
+    showToast('Results data is not ready yet.', 'error');
+    return;
+  }
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    showToast('PDF library failed to load. Please retry.', 'error');
+    return;
+  }
+
+  const doc = createPdfDocument();
+  const generatedAt = new Date();
+
+  for (let i = 0; i < sortedTeams.length; i++) {
+    const [teamId, team] = sortedTeams[i];
+    const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
+    const meta = roomTeamCatalog[teamId] || getTeam(teamId) || {};
+
+    if (i > 0) doc.addPage();
+
+    await renderPdfTeamRoster(doc, {
+      roomCode,
+      roomTitle,
+      team,
+      teamId,
+      teamLogo: meta.logo || '',
+      squad
+    });
+  }
+
+  const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
+  const datePart = generatedAt.toISOString().slice(0, 10);
+  doc.save(`ipl-auction-${safeRoom}-${datePart}.pdf`);
+}
+
+async function exportTeamPdfById(selectedTeamId) {
+  const {
+    roomCode,
+    roomTitle,
+    sortedTeams,
+    teamSquads,
+    roomTeamCatalog,
+    isManualAuction
+  } = resultsExportState;
+
+  if (!roomCode || !sortedTeams.length) {
+    showToast('Results data is not ready yet.', 'error');
+    return;
+  }
+  if (!selectedTeamId) {
+    showToast('Please select a team first.', 'error');
+    return;
+  }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    showToast('PDF library failed to load. Please retry.', 'error');
+    return;
+  }
+
+  const selectedEntry = sortedTeams.find(([teamId]) => teamId === selectedTeamId);
+  if (!selectedEntry) {
+    showToast('Selected team not found.', 'error');
+    return;
+  }
+
+  const [teamId, team] = selectedEntry;
+  const squad = (teamSquads[teamId] || []).slice().sort((a, b) => b.price - a.price);
+  const doc = createPdfDocument();
+  const generatedAt = new Date();
+  const meta = roomTeamCatalog[teamId] || getTeam(teamId) || {};
+
+  await renderPdfTeamRoster(doc, {
+    roomCode,
+    roomTitle,
+    team,
+    teamId,
+    teamLogo: meta.logo || '',
+    squad
+  });
+
+  const safeRoom = String(roomCode).replace(/[^a-zA-Z0-9-_]/g, '_');
+  const safeTeam = String(isManualAuction ? team.name : (team.short || teamId)).replace(/[^a-zA-Z0-9-_]/g, '_');
+  const datePart = generatedAt.toISOString().slice(0, 10);
+  doc.save(`ipl-auction-${safeRoom}-${safeTeam}-${datePart}.pdf`);
+}
+
+function exportSelectedTeamPdf() {
+  const select = document.getElementById('teamExportSelect');
+  const selectedTeamId = select ? select.value : '';
+  exportTeamPdfById(selectedTeamId);
+}
+
+async function copyAnalystPrompt() {
+  try {
+    await navigator.clipboard.writeText(analystPromptTemplate);
+    showToast('Prompt copied. Now upload the All Teams PDF to any AI and paste the prompt.', 'success');
+  } catch (err) {
+    try {
+      const fallback = document.createElement('textarea');
+      fallback.value = analystPromptTemplate;
+      fallback.setAttribute('readonly', '');
+      fallback.style.position = 'fixed';
+      fallback.style.opacity = '0';
+      document.body.appendChild(fallback);
+      fallback.select();
+      document.execCommand('copy');
+      document.body.removeChild(fallback);
+      showToast('Prompt copied. Now upload the All Teams PDF to any AI and paste the prompt.', 'success');
+    } catch (copyErr) {
+      console.error(copyErr);
+      showToast('Copy failed. Please allow clipboard permission and try again.', 'error');
+    }
+    if (err) console.error(err);
+  }
+}
+
+window.openPlaying11Modal = openPlaying11Modal;
+window.closePlaying11Modal = closePlaying11Modal;
+window.togglePlaying11Player = togglePlaying11Player;
+window.setPlayerDesignation = setPlayerDesignation;
+window.clearPlaying11Selection = clearPlaying11Selection;
+window.resetPlaying11ToSelection = resetPlaying11ToSelection;
+window.savePlaying11 = savePlaying11;
+window.toggleReAuctionPlayer = toggleReAuctionPlayer;
+window.toggleReAuctionReady = toggleReAuctionReady;
+window.startReAuctionFromResults = startReAuctionFromResults;
+window.exportResultsPdf = exportResultsPdf;
+window.exportTeamPdfById = exportTeamPdfById;
+window.exportSelectedTeamPdf = exportSelectedTeamPdf;
+window.copyAnalystPrompt = copyAnalystPrompt;
+window.toggleTeamPowerRankings = toggleTeamPowerRankings;
+window.copyHighlightsSummary = copyHighlightsSummary;
+window.nextHighlightsSlide = nextHighlightsSlide;
+window.prevHighlightsSlide = prevHighlightsSlide;
+window.goToHighlightsSlide = goToHighlightsSlide;

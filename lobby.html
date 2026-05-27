@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lobby — Auction Room</title>
+  <meta name="description" content="Auction lobby for room code sharing, team joining, and pre-auction setup." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="canonical" href="/lobby.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="IPL Auction Lobby" />
+  <meta property="og:description" content="Invite players, manage teams, and prepare your IPL auction room before live bidding." />
+  <meta property="og:url" content="/lobby.html" />
+  <meta property="og:image" content="/assets/team-logos/csk.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="IPL Auction Lobby" />
+  <meta name="twitter:description" content="Share room code and organize teams before starting the auction." />
+  <meta name="twitter:image" content="/assets/team-logos/csk.png" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944" crossorigin="anonymous"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "IPL Auction",
+        "url": "/index.html",
+        "logo": "/assets/team-logos/csk.png"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "/index.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Lobby",
+            "item": "/lobby.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🏏 Auction Room</div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <span id="myTeamChip" class="my-team-chip" style="display:none;"></span>
+      <button class="btn btn-ghost" onclick="leaveRoom()">Leave</button>
+    </div>
+  </header>
+
+  <!-- WAITING SCREEN (shown while not in lobby) -->
+  <div class="waiting-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <p style="color:var(--text-sec)">Connecting to room...</p>
+  </div>
+
+  <!-- LOBBY CONTENT -->
+  <div id="lobbyContent" style="display:none;">
+    <div class="lobby-layout">
+
+      <!-- Room Code Box -->
+      <div class="room-code-box fade-in" onclick="copyRoomCode()">
+        <div class="room-code-label">Room Code</div>
+        <div class="room-code-value" id="roomCodeDisplay">------</div>
+        <div class="room-code-hint">👆 Click to copy · Share with friends to join!</div>
+      </div>
+
+      <div class="lobby-share-actions">
+        <button class="btn btn-secondary" onclick="copyInviteLink()">Copy Invite Link</button>
+        <button class="btn btn-secondary" onclick="copyPrivateInviteLink()">Copy Private Invite</button>
+        <button class="btn btn-ghost" onclick="shareInviteWhatsApp()">Share on WhatsApp</button>
+        <button class="btn btn-secondary" id="downloadPlayersPdfBtn" onclick="downloadPlayersPdf()" style="display:none;">⬇️ Players List (PDF)</button>
+      </div>
+
+      <!-- Config Info -->
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;" id="configInfo"></div>
+
+      <!-- Teams Grid -->
+      <div style="width:100%;">
+        <h2 class="display" style="font-size:1.4rem;margin-bottom:1rem;text-align:center;">IPL Teams
+          <span style="font-size:0.9rem;font-weight:400;color:var(--text-sec);font-family:'Inter',sans-serif;" id="joinedCount"></span>
+        </h2>
+        <div class="lobby-teams-grid" id="teamSlotsGrid"></div>
+      </div>
+
+      <!-- Start Button (host only) -->
+      <div id="hostControls" style="display:none;text-align:center;">
+        <p id="waitingHint" style="color:var(--text-sec);font-size:0.9rem;margin-bottom:1rem;"></p>
+        <button class="btn btn-primary btn-xl" id="startBtn" onclick="startAuction()" disabled>
+          🏏 Start Auction
+        </button>
+        <div style="margin-top:0.75rem;">
+          <button class="btn btn-secondary" id="hostWatchlistBtn" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+          <button class="btn btn-secondary" id="iconPickBtnHost" onclick="openIconPickerModal()" style="display:none;">🏷️ Select Icon Players</button>
+        </div>
+      </div>
+
+      <!-- Non-host waiting -->
+      <div id="guestWaiting" style="display:none;text-align:center;">
+        <div class="spinner" style="margin:0 auto 1rem;"></div>
+        <p style="color:var(--text-sec)">Waiting for the host to start the auction...</p>
+        <div style="margin-top:0.8rem;">
+          <button class="btn btn-secondary" id="guestWatchlistBtn" onclick="openWatchlistModal()">⭐ My Watchlist</button>
+          <button class="btn btn-secondary" id="iconPickBtnGuest" onclick="openIconPickerModal()" style="display:none;">🏷️ Select Icon Players</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <div class="team-modal-overlay" id="watchlistModalOverlay" onclick="closeWatchlistModal()">
+    <div class="team-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>My Watchlist</h3>
+        <button class="btn btn-ghost" onclick="closeWatchlistModal()">Close</button>
+      </div>
+      <p class="watchlist-help">Star players you want to track. You will get a highlight when they come up in auction.</p>
+      <div class="watchlist-toolbar">
+        <span id="watchlistCountLabel">0 selected</span>
+        <button class="btn btn-ghost" onclick="clearWatchlist()">Clear All</button>
+      </div>
+      <div class="watchlist-list" id="watchlistList"></div>
+    </div>
+  </div>
+
+  <div class="team-modal-overlay" id="iconPickerModalOverlay" onclick="closeIconPickerModal()">
+    <div class="team-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>Icon Player Selection</h3>
+        <button class="btn btn-ghost" onclick="closeIconPickerModal()">Close</button>
+      </div>
+      <p class="watchlist-help" id="iconPickerHelp">Pick players at fixed icon price before auction starts.</p>
+      <div class="watchlist-toolbar iconpick-toolbar">
+        <span id="iconPickerCountLabel">0 selected</span>
+        <select id="iconPickTeamSelect" class="form-input iconpick-team-select" onchange="setIconPickTeam(this.value)" style="display:none;"></select>
+        <input id="iconPickerSearch" class="form-input iconpick-search" type="text" placeholder="Search player..." oninput="renderIconPickerModal()" />
+      </div>
+      <div class="watchlist-list" id="iconPickerList"></div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>© 2026 MyAuction</span>
+      <nav class="site-footer-links" aria-label="Legal and contact links">
+        <a href="about.html">About</a>
+        <a href="guide.html">Guide</a>
+        <a href="howto.html">How-To</a>
+        <a href="faq.html">FAQ</a>
+        <a href="learning-center.html">Learning Center</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms.html">Terms</a>
+        <a href="editorial-policy.html">Editorial Policy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- FIREBASE -->
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script defer src="js/firebase-config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/lobby.js"></script>
+
+  <script>
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast', 2500);
+    }
+    function copyRoomCode() {
+      const code = document.getElementById('roomCodeDisplay').textContent;
+      navigator.clipboard.writeText(code).then(() => showToast('Room code copied!', 'success'));
+    }
+    function copyInviteLink() {
+      const link = window.getLobbyInviteLink ? window.getLobbyInviteLink() : '';
+      if (!link) {
+        showToast('Invite link unavailable.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(link).then(() => showToast('Invite link copied!', 'success'));
+    }
+    function copyPrivateInviteLink() {
+      const link = window.getLobbyInviteLink ? window.getLobbyInviteLink(true) : '';
+      if (!link) {
+        showToast('Private invite unavailable.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(link).then(() => showToast('Private invite copied!', 'success'));
+    }
+    function shareInviteWhatsApp() {
+      const link = window.getLobbyInviteLink ? window.getLobbyInviteLink() : '';
+      if (!link) {
+        showToast('Invite link unavailable.', 'error');
+        return;
+      }
+      const auctionTitle = window.lobbyAuctionBrandTitle || 'Auction';
+      const text = encodeURIComponent(`Join my ${auctionTitle} room: ${link}`);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+    function leaveRoom() {
+      if (confirm('Leave this auction room?')) {
+        clearSession();
+        window.location.href = 'index.html';
+      }
+    }
+  </script>
+</body>
+</html>
+

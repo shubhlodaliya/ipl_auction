@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results — IPL Auction</title>
+  <meta name="description" content="Final IPL auction results, squad breakdowns, team rankings, and highlights." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="canonical" href="/results.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="IPL Auction Results" />
+  <meta property="og:description" content="Review final squads, spending, and team power rankings after auction completion." />
+  <meta property="og:url" content="/results.html" />
+  <meta property="og:image" content="/assets/team-logos/csk.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="IPL Auction Results" />
+  <meta name="twitter:description" content="Check final teams, bids, and ranking insights from completed auctions." />
+  <meta name="twitter:image" content="/assets/team-logos/csk.png" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏏</text></svg>" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5628134630271944" crossorigin="anonymous"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "IPL Auction",
+        "url": "/index.html",
+        "logo": "/assets/team-logos/csk.png"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "/index.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Results",
+            "item": "/results.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🏏 IPL Auction</div>
+    <button class="btn btn-ghost" id="newAuctionHeaderBtn" onclick="newAuction()">New Auction</button>
+  </header>
+
+  <!-- LOADING -->
+  <div class="waiting-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <p style="color:var(--text-sec)">Loading results...</p>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsContent" style="display:none;">
+    <div class="results-layout">
+
+      <div class="results-hero fade-in">
+        <div style="font-size:3rem;margin-bottom:0.5rem;">🏆</div>
+        <h1 class="results-title">Auction Complete!</h1>
+        <p class="results-sub" id="resultsSub">Here are the final squad breakdowns</p>
+      </div>
+
+      <!-- Summary Stats -->
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;" id="summaryStats"></div>
+
+      <!-- Team Power Ranking -->
+      <section class="team-power-section glass" id="teamPowerSection" style="display:none;">
+        <div class="team-power-head">
+          <h2>Team Power Rankings</h2>
+          <p>Auto-calculated from Best Playing 11 and bench depth.</p>
+        </div>
+        <div class="team-power-topline" id="teamPowerTopline"></div>
+        <div class="team-power-grid" id="teamPowerGrid"></div>
+      </section>
+
+      <div class="results-actions" id="resultsActions">
+        <button class="btn btn-secondary" id="playing11Btn" onclick="openPlaying11Modal()">My Playing 11</button>
+        <button class="btn btn-secondary" id="teamPowerToggleBtn" onclick="toggleTeamPowerRankings()">Show Team Power Ranking</button>
+        <button class="btn btn-secondary" onclick="openTopPickModal()">Top 10 Picks</button>
+        <button class="btn btn-primary" onclick="exportResultsPdf()">Export All Teams PDF</button>
+      </div>
+      <p id="teamPowerHint" style="text-align:center;color:var(--text-sec);font-size:0.9rem;margin:0.65rem 0 1.2rem;">
+        Click Team Power Ranking to view algorithm-based ranking on this page.
+      </p>
+
+      <!-- Re-auction Setup -->
+      <section class="reauction-section glass" id="reAuctionSection" style="display:none;">
+        <div class="reauction-head">
+          <h2>Re-Auction For Unsold Players</h2>
+          <p id="reAuctionHint">Select unsold players and mark your team ready.</p>
+        </div>
+        <div class="reauction-body" id="reAuctionBody"></div>
+      </section>
+
+      <!-- Teams Grid -->
+      <div class="results-grid" id="resultsGrid"></div>
+
+      <div style="text-align:center;margin-top:2rem;">
+        <button class="btn btn-primary btn-lg" id="newAuctionBottomBtn" onclick="newAuction()">🏏 Start New Auction</button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>© 2026 MyAuction</span>
+      <nav class="site-footer-links" aria-label="Legal and contact links">
+        <a href="about.html">About</a>
+        <a href="guide.html">Guide</a>
+        <a href="howto.html">How-To</a>
+        <a href="faq.html">FAQ</a>
+        <a href="learning-center.html">Learning Center</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms.html">Terms</a>
+        <a href="editorial-policy.html">Editorial Policy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- FIREBASE -->
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <script defer src="js/firebase-config.js"></script>
+  <script defer src="js/utils.js"></script>
+  <script defer src="js/auth.js"></script>
+  <script defer src="js/results.js"></script>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Playing 11 Modal -->
+  <div class="team-modal-overlay" id="playing11ModalOverlay" onclick="closePlaying11Modal()">
+    <div class="team-modal playing11-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3>Select Your Best Playing 11</h3>
+        <button class="btn btn-ghost" onclick="closePlaying11Modal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="playing11ModalContent">
+        <!-- Content rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Picks Modal -->
+  <div class="team-modal-overlay" id="topPickModalOverlay" onclick="closeTopPickModal()">
+    <div class="team-modal top-pick-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="topPickModalTitle">Top 10 Picks</h3>
+        <button class="btn btn-ghost" onclick="closeTopPickModal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="topPickModalContent">
+        <!-- Content rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Viewer Quick View Modal (Unsold / Teams) -->
+  <div class="team-modal-overlay" id="viewerQuickModalOverlay" onclick="closeViewerQuickModal()">
+    <div class="team-modal viewer-quick-modal" onclick="event.stopPropagation()">
+      <div class="team-modal-header">
+        <h3 id="viewerQuickModalTitle">Details</h3>
+        <button class="btn btn-ghost" onclick="closeViewerQuickModal()">Close</button>
+      </div>
+      <div class="team-modal-content" id="viewerQuickModalContent">
+        <!-- Content rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function newAuction() {
+      const session = getSession();
+      if (!session?.isHost) {
+        const t = document.getElementById('toast');
+        if (t) {
+          t.textContent = 'Only host can start a new auction.';
+          t.className = 'toast show error';
+          setTimeout(() => { t.className = 'toast'; }, 2200);
+        }
+        return;
+      }
+
+      clearSession();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
+

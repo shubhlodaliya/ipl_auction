@@ -1,0 +1,22 @@
+{
+  "deckTitle": "IPL Auction Platform — Website & Features",
+  "outputFile": "ppt/output/IPL_Auction_Website_Overview.pptx",
+  "screenshotsDir": "ppt/assets/screenshots",
+  "slides": [
+    {"id": "home", "title": "Home (Create / Join)", "image": "01_home.png"},
+    {"id": "auth", "title": "Login / Sign Up", "image": "02_auth.png"},
+    {"id": "create", "title": "Create Auction Settings", "image": "03_create_settings.png"},
+    {"id": "join", "title": "Join Auction + Watch Live", "image": "04_join_watch.png"},
+    {"id": "manual", "title": "Manual Auction Setup", "image": "05_manual_setup.png"},
+    {"id": "lobby", "title": "Lobby (Invite, Teams, Start)", "image": "06_lobby.png"},
+    {"id": "watchlist", "title": "Watchlist", "image": "07_watchlist.png"},
+    {"id": "iconpick", "title": "Icon Player Selection", "image": "08_icon_pick.png"},
+    {"id": "auction", "title": "Auction Screen Overview", "image": "09_auction_overview.png"},
+    {"id": "bidding", "title": "Bidding Controls", "image": "10_bidding_controls.png"},
+    {"id": "paddle", "title": "Paddle Mode (Host bids for all teams)", "image": "11_paddle_mode.png"},
+    {"id": "soldnow", "title": "SOLD NOW (Host instant finalize)", "image": "12_sold_now.png"},
+    {"id": "voice", "title": "Voice Room in Chat", "image": "13_voice_room.png"},
+    {"id": "results", "title": "Results + Export", "image": "14_results.png"},
+    {"id": "reauction", "title": "Re-Auction For Unsold Players", "image": "15_reauction.png"}
+  ]
+}

@@ -3243,7 +3243,8 @@ function getLivePlayerStatus(playerId) {
 let livePlayerListType = 'available';
 
 function renderLivePlayerListRows() {
-  const safeType = livePlayerListType === 'sold' || livePlayerListType === 'unsold' ? livePlayerListType : 'available';
+  const allowedTypes = new Set(['sold', 'unsold', 'available', 'all']);
+  const safeType = allowedTypes.has(livePlayerListType) ? livePlayerListType : 'available';
   const summaryEl = document.getElementById('livePlayerListSummary');
   const contentEl = document.getElementById('livePlayerListContent');
   const searchEl = document.getElementById('livePlayerListSearch');
@@ -3252,7 +3253,7 @@ function renderLivePlayerListRows() {
   const query = String(searchEl?.value || '').trim().toLowerCase();
 
   const basePlayers = [...allPlayers]
-    .filter((player) => getLivePlayerStatus(player.id) === safeType)
+    .filter((player) => (safeType === 'all' ? true : getLivePlayerStatus(player.id) === safeType))
     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
   const filteredPlayers = query
@@ -3300,25 +3301,43 @@ function renderLivePlayerListRows() {
     `;
   }).join('');
 
-  summaryEl.innerHTML = `
-    <span class="pool-summary-pill ${safeType}">${filteredPlayers.length} players</span>
-    <span class="pool-summary-total">of ${basePlayers.length}</span>
-  `;
+  if (safeType === 'all') {
+    const statusCounts = basePlayers.reduce((acc, player) => {
+      const status = getLivePlayerStatus(player.id);
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+    summaryEl.innerHTML = `
+      <span class="pool-summary-pill available">${statusCounts.available || 0} available</span>
+      <span class="pool-summary-pill sold">${statusCounts.sold || 0} sold</span>
+      <span class="pool-summary-pill unsold">${statusCounts.unsold || 0} unsold</span>
+      <span class="pool-summary-total">Total ${basePlayers.length}</span>
+    `;
+  } else {
+    summaryEl.innerHTML = `
+      <span class="pool-summary-pill ${safeType}">${filteredPlayers.length} players</span>
+      <span class="pool-summary-total">of ${basePlayers.length}</span>
+    `;
+  }
   contentEl.innerHTML = rows || '<div class="state-empty" style="padding:1.5rem 1rem;"><p>No players found for this search.</p></div>';
 }
 
 function openLivePlayerListModal(type) {
-  const safeType = type === 'sold' || type === 'unsold' ? type : 'available';
+  const safeType = type === 'sold' || type === 'unsold' || type === 'all' ? type : 'available';
   const overlayEl = document.getElementById('livePlayerListModalOverlay');
   const titleEl = document.getElementById('livePlayerListModalTitle');
   const searchEl = document.getElementById('livePlayerListSearch');
   if (!overlayEl || !titleEl) return;
 
   livePlayerListType = safeType;
-  titleEl.textContent = `${safeType.charAt(0).toUpperCase()}${safeType.slice(1)} Players`;
+  titleEl.textContent = safeType === 'all'
+    ? 'All Players'
+    : `${safeType.charAt(0).toUpperCase()}${safeType.slice(1)} Players`;
   if (searchEl) {
     searchEl.value = '';
-    searchEl.placeholder = `Search ${safeType} players...`;
+    searchEl.placeholder = safeType === 'all'
+      ? 'Search players...'
+      : `Search ${safeType} players...`;
   }
   renderLivePlayerListRows();
   overlayEl.classList.add('visible');

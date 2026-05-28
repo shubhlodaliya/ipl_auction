@@ -192,7 +192,7 @@ async function renderScheduledAuctions() {
             <p>${metaLine}</p>
           </div>
           <div class="ma-tournament-time">STATUS<br>LOBBY</div>
-          <button class="ma-remind-btn" onclick="openPastLobbyAuction('${roomCode}')">Open</button>
+          <button class="ma-remind-btn" onclick="openScheduledViewer('${roomCode}')">Open</button>
         </div>`;
     }).join('') + `
       <div class="ma-tournament-item" style="justify-content:space-between;">
@@ -374,6 +374,29 @@ async function openPastLobbyAuction(roomCode) {
   } catch (err) {
     console.error('Open lobby failed:', err);
     showToast('Failed to open auction lobby.', 'error');
+  }
+}
+
+async function openScheduledViewer(roomCode) {
+  try {
+    const snap = await db.ref(`rooms/${roomCode}`).get();
+    if (!snap.exists()) {
+      showToast('Auction room no longer exists.', 'error');
+      return;
+    }
+
+    const room = snap.val() || {};
+    const config = room.config || {};
+    const statusText = String(config.status || 'lobby').toLowerCase();
+    if (statusText === 'finished') {
+      window.location.href = `results.html?room=${encodeURIComponent(roomCode)}`;
+      return;
+    }
+
+    window.location.href = `auction.html?room=${encodeURIComponent(roomCode)}&view=spectator`;
+  } catch (err) {
+    console.error('Open scheduled viewer failed:', err);
+    showToast('Failed to open auction viewer.', 'error');
   }
 }
 

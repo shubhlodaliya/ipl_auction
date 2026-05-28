@@ -4722,6 +4722,7 @@ body.results-viewer-mode .team-modal-overlay {
 .results-viewer-screen .broadcast-overlay {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 .results-viewer-main {
@@ -4769,6 +4770,10 @@ body.results-viewer-mode .team-modal-overlay {
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: center;
+  margin-top: 0.6rem;
+}
+
+.results-viewer-pills {
   margin-top: 0.6rem;
 }
 

@@ -1344,6 +1344,36 @@ async function loadResults() {
       if (viewerStats && summaryStats) viewerStats.appendChild(summaryStats);
       const viewerRoomCode = document.getElementById('resultsViewerRoomCode');
       if (viewerRoomCode) viewerRoomCode.textContent = String(roomCode || '').toUpperCase();
+      const viewerTeamsBtn = document.getElementById('viewerTeamsBtn');
+      if (viewerTeamsBtn) viewerTeamsBtn.addEventListener('click', () => openViewerQuickModal('teams'));
+      const viewerPlayersBtn = document.getElementById('viewerPlayersBtn');
+      if (viewerPlayersBtn) viewerPlayersBtn.addEventListener('click', () => openViewerQuickModal('players'));
+      const viewerPills = document.getElementById('resultsViewerPills');
+      if (viewerPills) {
+        const totalPlayers = Array.isArray(playersData) ? playersData.length : 0;
+        const availableCount = Math.max(0, totalPlayers - soldCount - unsoldCount);
+        viewerPills.innerHTML = `
+          <div class="broadcast-stat-pills">
+            <div class="stat-pill sold" data-viewer-pill="sold">Sold <span>${soldCount}</span></div>
+            <div class="stat-pill unsold" data-viewer-pill="unsold">Unsold <span>${unsoldCount}</span></div>
+            <div class="stat-pill available" data-viewer-pill="available">Available <span>${availableCount}</span></div>
+          </div>
+        `;
+
+        viewerPills.querySelectorAll('[data-viewer-pill]')
+          .forEach((pill) => {
+            pill.setAttribute('role', 'button');
+            pill.tabIndex = 0;
+            const type = pill.getAttribute('data-viewer-pill');
+            pill.addEventListener('click', () => openLivePlayerListModal(type));
+            pill.addEventListener('keydown', (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openLivePlayerListModal(type);
+              }
+            });
+          });
+      }
       setupViewerQuickCards();
     }
 

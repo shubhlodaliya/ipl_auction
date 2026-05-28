@@ -88,8 +88,8 @@
         </div>
         <div class="broadcast-banner" id="resultsViewerRoomCode">ROOM</div>
         <nav class="broadcast-nav">
-          <span onclick="openViewerQuickModal('teams')" style="cursor:pointer; text-decoration:underline;">TEAMS</span>
-          <span onclick="openViewerQuickModal('players')" style="cursor:pointer; text-decoration:underline;">PLAYERS</span>
+          <span id="viewerTeamsBtn" style="cursor:pointer; text-decoration:underline;">TEAMS</span>
+          <span id="viewerPlayersBtn" style="cursor:pointer; text-decoration:underline;">PLAYERS</span>
           <div class="broadcast-profile-icon">👤</div>
         </nav>
       </header>
@@ -102,6 +102,7 @@
           <button class="btn btn-secondary" onclick="openTopPickModal()">Top 10 Picks</button>
           <button class="btn btn-primary" onclick="exportResultsPdf()">Export All Teams PDF</button>
         </div>
+        <div class="results-viewer-pills" id="resultsViewerPills"></div>
       </div>
     </div>
 

@@ -1185,7 +1185,7 @@
       }
       if (typeof renderCreateTeamGrid === 'function') renderCreateTeamGrid();
 
-      // Handle invite URL params
+      // Handle invite URL 
       const params = new URLSearchParams(window.location.search);
       const inviteRoom = (params.get('room') || '').trim().toUpperCase();
       const invitePasscode = (params.get('passcode') || '').trim();

@@ -4689,6 +4689,103 @@ body.spectator-mode #voiceStatusBadge {
 }
 
 /* Results page: viewer (spectator) quick-access mode */
+body.results-viewer-mode .header,
+body.results-viewer-mode .site-footer {
+  display: none !important;
+}
+
+body.results-viewer-mode .results-layout {
+  display: none !important;
+}
+
+body.results-viewer-mode .results-viewer-screen {
+  display: flex !important;
+}
+
+body.results-viewer-mode .team-modal-overlay {
+  z-index: 12050 !important;
+}
+
+.results-viewer-screen {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+  font-family: 'Rajdhani', system-ui, sans-serif;
+  background: radial-gradient(circle at 50% 0%, #1e0b5f 0%, #090423 48%, #04020f 100%);
+}
+
+.results-viewer-screen .broadcast-bg,
+.results-viewer-screen .broadcast-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.results-viewer-main {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem 3.5rem;
+  gap: 1.2rem;
+  text-align: center;
+}
+
+.results-viewer-title {
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+
+.results-viewer-sub {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.78);
+}
+
+.results-viewer-stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.results-viewer-screen .results-summary-card {
+  background: rgba(10, 18, 34, 0.7);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.35);
+}
+
+.results-viewer-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.6rem;
+}
+
+.results-viewer-actions .btn {
+  min-width: 200px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+@media (max-width: 720px) {
+  .results-viewer-actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 body.results-viewer-mode #resultsGrid {
   display: none !important;
 }

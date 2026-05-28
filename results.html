@@ -78,6 +78,33 @@
 
   <!-- RESULTS -->
   <div id="resultsContent" style="display:none;">
+    <div class="results-viewer-screen" id="resultsViewerScreen" style="display:none;">
+      <div class="broadcast-bg"></div>
+      <div class="broadcast-overlay"></div>
+
+      <header class="broadcast-header">
+        <div class="broadcast-logo">
+          <span aria-label="Auction">🏏</span>
+        </div>
+        <div class="broadcast-banner" id="resultsViewerRoomCode">ROOM</div>
+        <nav class="broadcast-nav">
+          <span onclick="openViewerQuickModal('teams')" style="cursor:pointer; text-decoration:underline;">TEAMS</span>
+          <span onclick="openViewerQuickModal('players')" style="cursor:pointer; text-decoration:underline;">PLAYERS</span>
+          <div class="broadcast-profile-icon">👤</div>
+        </nav>
+      </header>
+
+      <div class="results-viewer-main">
+        <div class="results-viewer-title">Auction Complete!</div>
+        <div class="results-viewer-sub" id="resultsViewerSub">Room: —</div>
+        <div class="results-viewer-stats" id="viewerSummaryStats"></div>
+        <div class="results-viewer-actions">
+          <button class="btn btn-secondary" onclick="openTopPickModal()">Top 10 Picks</button>
+          <button class="btn btn-primary" onclick="exportResultsPdf()">Export All Teams PDF</button>
+        </div>
+      </div>
+    </div>
+
     <div class="results-layout">
 
       <div class="results-hero fade-in">

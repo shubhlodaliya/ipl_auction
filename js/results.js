@@ -1085,6 +1085,8 @@ async function loadResults() {
   const isViewer = !!(session?.isSpectator || params.get('view') === 'spectator' || params.get('view') === 'viewer');
   if (isViewer) {
     document.body.classList.add('results-viewer-mode');
+    const viewerScreen = document.getElementById('resultsViewerScreen');
+    if (viewerScreen) viewerScreen.style.display = 'flex';
   }
 
   if (!roomCode) {
@@ -1141,7 +1143,8 @@ async function loadResults() {
     // Summary stats
     const totalSales = Object.values(soldPlayers).reduce((s, sp) => s + sp.soldPrice, 0);
     const soldCount = Object.keys(soldPlayers).length;
-    const unsoldCount = buildUnsoldQueue(playerQueue, soldPlayers).length;
+    const unsoldQueue = buildUnsoldQueue(playerQueue, soldPlayers);
+    const unsoldCount = unsoldQueue.length;
 
     const topPickList = Object.entries(soldPlayers)
       .map(([pid, sale]) => {
@@ -1261,6 +1264,10 @@ async function loadResults() {
     resultsExportState.unsoldCount = unsoldCount;
     resultsExportState.totalSales = totalSales;
     resultsExportState.roomTeamCatalog = roomTeamCatalog;
+    resultsExportState.players = playersData;
+    resultsExportState.playerMap = playerMap;
+    resultsExportState.soldPlayers = soldPlayers;
+    resultsExportState.unsoldQueue = unsoldQueue;
     const teamExportSelect = document.getElementById('teamExportSelect');
     if (teamExportSelect) teamExportSelect.dataset.isManualAuction = isManualAuction ? '1' : '0';
     updateTeamExportSelect(sortedTeams, roomCode);
@@ -1331,14 +1338,23 @@ async function loadResults() {
       `;
     }).join('');
 
-      if (isViewer) {
+    if (isViewer) {
+      const viewerStats = document.getElementById('viewerSummaryStats');
+      const summaryStats = document.getElementById('summaryStats');
+      if (viewerStats && summaryStats) viewerStats.appendChild(summaryStats);
+      const viewerRoomCode = document.getElementById('resultsViewerRoomCode');
+      if (viewerRoomCode) viewerRoomCode.textContent = String(roomCode || '').toUpperCase();
       setupViewerQuickCards();
     }
 
     // Update subtitle
-    document.getElementById('resultsSub').textContent = isManualAuction
+    const resultsSubText = isManualAuction
       ? `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams`
       : `Room: ${roomCode} · ${soldCount} players sold across ${Object.keys(teams).length} teams · #1 ${teamPowerData.rankings[0]?.team || '-'}`;
+    const resultsSubEl = document.getElementById('resultsSub');
+    if (resultsSubEl) resultsSubEl.textContent = resultsSubText;
+    const viewerSubEl = document.getElementById('resultsViewerSub');
+    if (viewerSubEl) viewerSubEl.textContent = resultsSubText;
 
     setupReAuction(roomCode, room, session, playerMap, playerQueue, soldPlayers);
     setupPlaying11(roomCode, session, teams, teamSquads);
@@ -2145,6 +2161,53 @@ async function toggleReAuctionReady() {
     if (selectedCount === 0) {
       showToast('Select at least 1 player before marking ready.', 'error');
       return;
+    }
+
+    if (type === 'players') {
+      titleEl.textContent = 'Players';
+      const players = Array.isArray(resultsExportState.players) ? resultsExportState.players : [];
+      const soldMap = resultsExportState.soldPlayers || {};
+      const unsoldSet = new Set((resultsExportState.unsoldQueue || []).map((id) => String(id)));
+
+      if (!players.length) {
+        contentEl.innerHTML = '<div class="state-empty"><p>No players found.</p></div>';
+        overlay.classList.add('visible');
+        return;
+      }
+
+      const rows = [...players]
+        .map((player) => ({
+          id: String(player.id || ''),
+          name: player.name || String(player.id || 'Player'),
+          role: player.role || 'Player',
+          country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
+          base: Number(player.base_price_lakh) || 0,
+          photo: player.photo_url || ''
+        }))
+        .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+      contentEl.innerHTML = rows.map((p) => {
+        const status = soldMap[p.id] ? 'sold' : (unsoldSet.has(p.id) ? 'unsold' : 'remaining');
+        const initials = getPlayerInitials(p.name);
+        const color = getRoleColor(p.role);
+        const icon = getRoleIcon(p.role);
+        const avatarHtml = p.photo
+          ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+          : escapeHtml(initials);
+        const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
+        return `
+          <div class="live-player-row ${status}">
+            <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+            <div class="live-player-main">
+              <div class="result-player-name">${escapeHtml(p.name)}</div>
+              <div class="live-player-sub">${icon} ${escapeHtml(p.role)} · ${countryText} · ${formatPrice(p.base)}</div>
+            </div>
+            <span class="pool-status ${status}">${status === 'remaining' ? 'AVAILABLE' : status.toUpperCase()}</span>
+          </div>
+        `;
+      }).join('');
+
+      overlay.classList.add('visible');
     }
   }
 

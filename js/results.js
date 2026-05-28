@@ -1082,7 +1082,7 @@ async function loadResults() {
   const roomCode = (session && session.roomCode) || params.get('room');
   const shouldAutoPdf = params.get('pdf') === '1' || params.get('download') === 'pdf';
 
-  const isViewer = !!(session?.isSpectator || params.get('view') === 'spectator' || params.get('view') === 'viewer');
+  const isViewer = !!(session?.isSpectator || params.get('view') === 'spectator' || params.get('view') === 'viewer') && !session?.isHost;
   if (isViewer) {
     document.body.classList.add('results-viewer-mode');
     const viewerScreen = document.getElementById('resultsViewerScreen');

@@ -3958,6 +3958,18 @@ body.spectator-mode #voiceStatusBadge {
   font-weight: 700;
 }
 
+.viewer-team-pdf {
+  padding: 0.45rem 0.75rem;
+  font-weight: 700;
+}
+
+.viewer-team-pdf svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  display: block;
+}
+
 .viewer-team-back {
   display: flex;
   justify-content: flex-start;

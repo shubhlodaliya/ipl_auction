@@ -1489,6 +1489,12 @@ function openViewerQuickModal(type, teamId = null) {
                 </div>
               </div>
               <div class="viewer-team-actions">
+                <button class="btn btn-ghost viewer-team-pdf" data-team-pdf="${tId}" title="Download ${escapeHtml(teamName)} PDF" aria-label="Download ${escapeHtml(teamName)} PDF">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3a1 1 0 0 1 1 1v9.6l2.3-2.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L11 13.6V4a1 1 0 0 1 1-1z" />
+                    <path d="M5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1z" />
+                  </svg>
+                </button>
                 <button class="btn btn-secondary viewer-team-btn" data-team="${tId}">Players</button>
               </div>
             </div>
@@ -1501,6 +1507,12 @@ function openViewerQuickModal(type, teamId = null) {
       .forEach((btn) => {
         const targetId = btn.getAttribute('data-team');
         btn.addEventListener('click', () => openViewerQuickModal('teamPlayers', targetId));
+      });
+
+    contentEl.querySelectorAll('[data-team-pdf]')
+      .forEach((btn) => {
+        const targetId = btn.getAttribute('data-team-pdf');
+        btn.addEventListener('click', () => exportTeamPdfById(targetId));
       });
 
     overlay.classList.add('visible');

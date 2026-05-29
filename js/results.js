@@ -1592,6 +1592,115 @@ function openViewerQuickModal(type, teamId = null) {
     return;
   }
 
+  if (type === 'sold') {
+    titleEl.textContent = 'Sold Players';
+    const soldMap = resultsExportState.soldPlayers || {};
+    const playersById = resultsExportState.playerMap || {};
+    const entries = Object.entries(soldMap || {});
+
+    if (!entries.length) {
+      contentEl.innerHTML = '<div class="state-empty"><p>No sold players.</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    const rows = entries
+      .map(([pid, sale]) => {
+        const player = playersById[pid] || playersById[String(pid)] || null;
+        if (!player) return null;
+        return {
+          id: String(pid),
+          name: player.name || String(pid),
+          role: player.role || '',
+          country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
+          base: Number(player.base_price_lakh) || 0,
+          photo: player.photo_url || '',
+          soldPrice: Number(sale?.soldPrice || 0)
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+    contentEl.innerHTML = `
+      <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> sold players</div>
+      <div class="viewer-unsold-list">
+        ${rows.map((p) => {
+          const initials = getPlayerInitials(p.name);
+          const color = getRoleColor(p.role);
+          const icon = getRoleIcon(p.role);
+          const avatarHtml = p.photo
+            ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+            : escapeHtml(initials);
+          const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
+          return `
+            <div class="result-player-row">
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="result-player-name">${escapeHtml(p.name)}</div>
+                <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
+              </div>
+              <div class="result-player-price">${formatPrice(p.soldPrice || p.base)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    overlay.classList.add('visible');
+    return;
+  }
+
+  if (type === 'available') {
+    titleEl.textContent = 'Available Players';
+    const players = Array.isArray(resultsExportState.players) ? resultsExportState.players : [];
+    const soldMap = resultsExportState.soldPlayers || {};
+    const unsoldSet = new Set((resultsExportState.unsoldQueue || []).map((id) => String(id)));
+
+    const rows = players
+      .filter((player) => !soldMap[String(player.id)] && !unsoldSet.has(String(player.id)))
+      .map((player) => ({
+        id: String(player.id || ''),
+        name: player.name || String(player.id || 'Player'),
+        role: player.role || 'Player',
+        country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
+        base: Number(player.base_price_lakh) || 0,
+        photo: player.photo_url || ''
+      }))
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+    if (!rows.length) {
+      contentEl.innerHTML = '<div class="state-empty"><p>No available players.</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    contentEl.innerHTML = `
+      <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> available players</div>
+      <div class="viewer-unsold-list">
+        ${rows.map((p) => {
+          const initials = getPlayerInitials(p.name);
+          const color = getRoleColor(p.role);
+          const icon = getRoleIcon(p.role);
+          const avatarHtml = p.photo
+            ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+            : escapeHtml(initials);
+          const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
+          return `
+            <div class="result-player-row">
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="result-player-name">${escapeHtml(p.name)}</div>
+                <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
+              </div>
+              <div class="result-player-price">${formatPrice(p.base)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    overlay.classList.add('visible');
+    return;
+  }
+
   if (type === 'unsold') {
     titleEl.textContent = 'Unsold Players';
     const playersById = reAuctionState.playersById || {};
@@ -1599,115 +1708,6 @@ function openViewerQuickModal(type, teamId = null) {
 
     if (!queue.length && Number(resultsExportState?.unsoldCount || 0) > 0) {
       contentEl.innerHTML = '<div class="state-empty"><p>Loading unsold players...</p></div>';
-      overlay.classList.add('visible');
-      return;
-    }
-
-    if (type === 'sold') {
-      titleEl.textContent = 'Sold Players';
-      const soldMap = resultsExportState.soldPlayers || {};
-      const playersById = resultsExportState.playerMap || {};
-      const entries = Object.entries(soldMap || {});
-
-      if (!entries.length) {
-        contentEl.innerHTML = '<div class="state-empty"><p>No sold players.</p></div>';
-        overlay.classList.add('visible');
-        return;
-      }
-
-      const rows = entries
-        .map(([pid, sale]) => {
-          const player = playersById[pid] || playersById[String(pid)] || null;
-          if (!player) return null;
-          return {
-            id: String(pid),
-            name: player.name || String(pid),
-            role: player.role || '',
-            country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
-            base: Number(player.base_price_lakh) || 0,
-            photo: player.photo_url || '',
-            soldPrice: Number(sale?.soldPrice || 0)
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => String(a.name).localeCompare(String(b.name)));
-
-      contentEl.innerHTML = `
-        <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> sold players</div>
-        <div class="viewer-unsold-list">
-          ${rows.map((p) => {
-            const initials = getPlayerInitials(p.name);
-            const color = getRoleColor(p.role);
-            const icon = getRoleIcon(p.role);
-            const avatarHtml = p.photo
-              ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
-              : escapeHtml(initials);
-            const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
-            return `
-              <div class="result-player-row">
-                <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
-                <div style="flex:1;min-width:0;">
-                  <div class="result-player-name">${escapeHtml(p.name)}</div>
-                  <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
-                </div>
-                <div class="result-player-price">${formatPrice(p.soldPrice || p.base)}</div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-      overlay.classList.add('visible');
-      return;
-    }
-
-    if (type === 'available') {
-      titleEl.textContent = 'Available Players';
-      const players = Array.isArray(resultsExportState.players) ? resultsExportState.players : [];
-      const soldMap = resultsExportState.soldPlayers || {};
-      const unsoldSet = new Set((resultsExportState.unsoldQueue || []).map((id) => String(id)));
-
-      const rows = players
-        .filter((player) => !soldMap[String(player.id)] && !unsoldSet.has(String(player.id)))
-        .map((player) => ({
-          id: String(player.id || ''),
-          name: player.name || String(player.id || 'Player'),
-          role: player.role || 'Player',
-          country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
-          base: Number(player.base_price_lakh) || 0,
-          photo: player.photo_url || ''
-        }))
-        .sort((a, b) => String(a.name).localeCompare(String(b.name)));
-
-      if (!rows.length) {
-        contentEl.innerHTML = '<div class="state-empty"><p>No available players.</p></div>';
-        overlay.classList.add('visible');
-        return;
-      }
-
-      contentEl.innerHTML = `
-        <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> available players</div>
-        <div class="viewer-unsold-list">
-          ${rows.map((p) => {
-            const initials = getPlayerInitials(p.name);
-            const color = getRoleColor(p.role);
-            const icon = getRoleIcon(p.role);
-            const avatarHtml = p.photo
-              ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
-              : escapeHtml(initials);
-            const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
-            return `
-              <div class="result-player-row">
-                <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
-                <div style="flex:1;min-width:0;">
-                  <div class="result-player-name">${escapeHtml(p.name)}</div>
-                  <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
-                </div>
-                <div class="result-player-price">${formatPrice(p.base)}</div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
       overlay.classList.add('visible');
       return;
     }
@@ -1758,6 +1758,7 @@ function openViewerQuickModal(type, teamId = null) {
       </div>
     `;
     overlay.classList.add('visible');
+    return;
   }
 }
 

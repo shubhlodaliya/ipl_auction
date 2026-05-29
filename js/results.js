@@ -1438,7 +1438,7 @@ function closeViewerQuickModal() {
   overlay.classList.remove('visible');
 }
 
-function openViewerQuickModal(type) {
+function openViewerQuickModal(type, teamId = null) {
   const overlay = document.getElementById('viewerQuickModalOverlay');
   const titleEl = document.getElementById('viewerQuickModalTitle');
   const contentEl = document.getElementById('viewerQuickModalContent');
@@ -1446,8 +1446,115 @@ function openViewerQuickModal(type) {
 
   if (type === 'teams') {
     titleEl.textContent = 'All Teams';
-    const grid = document.getElementById('resultsGrid');
-    contentEl.innerHTML = grid?.innerHTML || '<div class="state-empty"><p>No teams found.</p></div>';
+    const teams = resultsExportState.teams || {};
+    const teamSquads = resultsExportState.teamSquads || {};
+    const teamCatalog = resultsExportState.roomTeamCatalog || {};
+    const entries = Object.entries(teams);
+
+    if (!entries.length) {
+      contentEl.innerHTML = '<div class="state-empty"><p>No teams found.</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    contentEl.innerHTML = `
+      <div class="viewer-team-list">
+        ${entries.map(([tId, team]) => {
+          const squad = teamSquads[tId] || [];
+          const spent = squad.reduce((sum, item) => sum + Number(item.price || 0), 0);
+          const teamDef = teamCatalog[tId] || {};
+          const teamName = team.name || teamDef.name || `Team ${tId}`;
+          const teamShort = teamDef.short || team.short || tId;
+          const teamLogo = teamDef.logo || team.logo || '';
+          const logoHtml = teamLogo
+            ? `<img src="${teamLogo}" alt="${escapeHtml(teamName)} logo" loading="lazy" decoding="async" />`
+            : `<span>${escapeHtml(teamShort)}</span>`;
+          return `
+            <div class="viewer-team-card" data-team-card="${tId}">
+              <div class="viewer-team-left">
+                <div class="viewer-team-logo">${logoHtml}</div>
+                <div class="viewer-team-info">
+                  <div class="viewer-team-name">${escapeHtml(teamName)}</div>
+                  <div class="viewer-team-sub">${escapeHtml(teamShort)}</div>
+                </div>
+              </div>
+              <div class="viewer-team-meta">
+                <div class="viewer-team-stat">
+                  <span>Spent</span>
+                  <strong>${formatPrice(spent)}</strong>
+                </div>
+                <div class="viewer-team-stat">
+                  <span>Players</span>
+                  <strong>${squad.length}</strong>
+                </div>
+              </div>
+              <div class="viewer-team-actions">
+                <button class="btn btn-secondary viewer-team-btn" data-team="${tId}">Players</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    contentEl.querySelectorAll('[data-team]')
+      .forEach((btn) => {
+        const targetId = btn.getAttribute('data-team');
+        btn.addEventListener('click', () => openViewerQuickModal('teamPlayers', targetId));
+      });
+
+    overlay.classList.add('visible');
+    return;
+  }
+
+  if (type === 'teamPlayers') {
+    const teams = resultsExportState.teams || {};
+    const teamSquads = resultsExportState.teamSquads || {};
+    const teamCatalog = resultsExportState.roomTeamCatalog || {};
+    const team = teams[teamId] || teamCatalog[teamId] || null;
+    const teamName = team?.name || teamCatalog[teamId]?.name || 'Team Players';
+    const squad = teamSquads[teamId] || [];
+
+    titleEl.textContent = `${teamName} Players`;
+
+    if (!squad.length) {
+      contentEl.innerHTML = `
+        <div class="viewer-team-back">
+          <button class="btn btn-ghost" type="button" onclick="openViewerQuickModal('teams')">Back to Teams</button>
+        </div>
+        <div class="state-empty"><p>No players in this team.</p></div>
+      `;
+      overlay.classList.add('visible');
+      return;
+    }
+
+    const rows = [...squad].sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    contentEl.innerHTML = `
+      <div class="viewer-team-back">
+        <button class="btn btn-ghost" type="button" onclick="openViewerQuickModal('teams')">Back to Teams</button>
+      </div>
+      <div class="viewer-team-player-list">
+        ${rows.map(({ player, price, isIcon }) => {
+          if (!player) return '';
+          const color = getRoleColor(player.role);
+          const initials = getPlayerInitials(player.name);
+          const icon = getRoleIcon(player.role);
+          const avatarHtml = player.photo_url
+            ? `<img src="${player.photo_url}" alt="${escapeHtml(player.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+            : escapeHtml(initials);
+          return `
+            <div class="result-player-row">
+              <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+              <div style="flex:1;min-width:0;">
+                <div class="result-player-name">${escapeHtml(player.name)}${isIcon ? '<span class="icon-player-tag">ICON</span>' : ''}</div>
+                <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(player.role || 'Player')} · ${formatPrice(player.base_price_lakh)}</div>
+              </div>
+              <div class="result-player-price">${formatPrice(price)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
     overlay.classList.add('visible');
     return;
   }

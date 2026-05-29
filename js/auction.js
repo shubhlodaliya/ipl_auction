@@ -4,7 +4,7 @@
 
 const auctionUrlParams = new URLSearchParams(window.location.search);
 const session = getSession();
-const roomCode = (session && session.roomCode) || String(auctionUrlParams.get('room') || '').trim();
+const roomCode = String(auctionUrlParams.get('room') || '').trim() || (session && session.roomCode) || '';
 if (!roomCode) {
   window.location.href = 'index.html';
   throw new Error('No room specified');

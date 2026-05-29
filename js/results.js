@@ -1079,7 +1079,7 @@ async function loadResults() {
   // Try to get roomCode from session, or from URL param
   const session = getSession();
   const params = new URLSearchParams(window.location.search);
-  const roomCode = (session && session.roomCode) || params.get('room');
+  const roomCode = params.get('room') || (session && session.roomCode);
   const shouldAutoPdf = params.get('pdf') === '1' || params.get('download') === 'pdf';
 
   const isViewer = !!(session?.isSpectator || params.get('view') === 'spectator' || params.get('view') === 'viewer') && !session?.isHost;

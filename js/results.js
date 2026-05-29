@@ -1346,6 +1346,7 @@ async function loadResults() {
       if (viewerStats && summaryStats) {
         viewerStats.appendChild(summaryStats);
         setupViewerQuickCards();
+        setupViewerCardDelegation();
       }
       const viewerRoomCode = document.getElementById('resultsViewerRoomCode');
       if (viewerRoomCode) viewerRoomCode.textContent = getResultsBrandTitle(room);
@@ -1390,8 +1391,8 @@ async function loadResults() {
 }
 
 function setupViewerQuickCards() {
-  const unsold = document.getElementById('summaryUnsoldCard');
   const sold = document.getElementById('summarySoldCard');
+  const unsold = document.getElementById('summaryUnsoldCard');
   const available = document.getElementById('summaryAvailableCard');
 
   const attach = (el, type, label) => {
@@ -1412,6 +1413,38 @@ function setupViewerQuickCards() {
   attach(sold, 'sold', 'View sold players');
   attach(unsold, 'unsold', 'View unsold players');
   attach(available, 'available', 'View available players');
+}
+
+function setupViewerCardDelegation() {
+  const container = document.getElementById('viewerSummaryStats');
+  if (!container || container.dataset.viewerDelegation === '1') return;
+  container.dataset.viewerDelegation = '1';
+
+  container.addEventListener('click', (event) => {
+    const card = event.target.closest('.results-summary-card');
+    if (!card) return;
+
+    if (card.id === 'summarySoldCard') {
+      openViewerQuickModal('sold');
+    } else if (card.id === 'summaryUnsoldCard') {
+      openViewerQuickModal('unsold');
+    } else if (card.id === 'summaryAvailableCard') {
+      openViewerQuickModal('available');
+    }
+  });
+
+  container.addEventListener('keydown', (event) => {
+    const card = event.target.closest('.results-summary-card');
+    if (!card || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    if (card.id === 'summarySoldCard') {
+      openViewerQuickModal('sold');
+    } else if (card.id === 'summaryUnsoldCard') {
+      openViewerQuickModal('unsold');
+    } else if (card.id === 'summaryAvailableCard') {
+      openViewerQuickModal('available');
+    }
+  });
 }
 
 function closeViewerQuickModal() {

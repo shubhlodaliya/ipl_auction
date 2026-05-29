@@ -4893,6 +4893,18 @@ body.results-viewer-mode .team-modal-overlay {
   margin-top: 0.6rem;
 }
 
+.results-viewer-top-picks {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+
+.results-viewer-top-picks:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.65);
+}
+
 .results-viewer-pills {
   margin-top: 0.6rem;
 }

@@ -1176,6 +1176,8 @@ async function loadResults() {
     const topPickTeamName = topPickEntry?.teamName || '—';
     const topPickPrice = topPickEntry ? formatPrice(topPickEntry.price) : '—';
 
+    const totalPlayers = Array.isArray(playersData) ? playersData.length : 0;
+    const availableCount = Math.max(0, totalPlayers - soldCount - unsoldCount);
     document.getElementById('summaryStats').innerHTML = `
       <div class="glass results-summary-card" id="summarySoldCard" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Players Sold</div>
@@ -1185,9 +1187,9 @@ async function loadResults() {
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Unsold</div>
         <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--red)">${unsoldCount}</div>
       </div>
-      <div class="glass results-summary-card" id="summaryTeamsCard" style="padding:0.8rem 1.5rem;text-align:center;">
-        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Teams</div>
-        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--blue)">${Object.keys(teams).length}</div>
+      <div class="glass results-summary-card" id="summaryAvailableCard" style="padding:0.8rem 1.5rem;text-align:center;">
+        <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Available</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.8rem;color:var(--gold)">${availableCount}</div>
       </div>
       <div class="glass results-summary-card" id="summarySpentCard" style="padding:0.8rem 1.5rem;text-align:center;">
         <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-sec)">Total Spent</div>
@@ -1343,37 +1345,13 @@ async function loadResults() {
       const summaryStats = document.getElementById('summaryStats');
       if (viewerStats && summaryStats) viewerStats.appendChild(summaryStats);
       const viewerRoomCode = document.getElementById('resultsViewerRoomCode');
-      if (viewerRoomCode) viewerRoomCode.textContent = String(roomCode || '').toUpperCase();
+      if (viewerRoomCode) viewerRoomCode.textContent = getResultsBrandTitle(room);
       const viewerTeamsBtn = document.getElementById('viewerTeamsBtn');
       if (viewerTeamsBtn) viewerTeamsBtn.addEventListener('click', () => openViewerQuickModal('teams'));
       const viewerPlayersBtn = document.getElementById('viewerPlayersBtn');
       if (viewerPlayersBtn) viewerPlayersBtn.addEventListener('click', () => openViewerQuickModal('players'));
       const viewerPills = document.getElementById('resultsViewerPills');
-      if (viewerPills) {
-        const totalPlayers = Array.isArray(playersData) ? playersData.length : 0;
-        const availableCount = Math.max(0, totalPlayers - soldCount - unsoldCount);
-        viewerPills.innerHTML = `
-          <div class="broadcast-stat-pills">
-            <div class="stat-pill sold" data-viewer-pill="sold">Sold <span>${soldCount}</span></div>
-            <div class="stat-pill unsold" data-viewer-pill="unsold">Unsold <span>${unsoldCount}</span></div>
-            <div class="stat-pill available" data-viewer-pill="available">Available <span>${availableCount}</span></div>
-          </div>
-        `;
-
-        viewerPills.querySelectorAll('[data-viewer-pill]')
-          .forEach((pill) => {
-            pill.setAttribute('role', 'button');
-            pill.tabIndex = 0;
-            const type = pill.getAttribute('data-viewer-pill');
-            pill.addEventListener('click', () => openLivePlayerListModal(type));
-            pill.addEventListener('keydown', (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                openLivePlayerListModal(type);
-              }
-            });
-          });
-      }
+      if (viewerPills) viewerPills.style.display = 'none';
       setupViewerQuickCards();
     }
 
@@ -1411,7 +1389,8 @@ async function loadResults() {
 
 function setupViewerQuickCards() {
   const unsold = document.getElementById('summaryUnsoldCard');
-  const teams = document.getElementById('summaryTeamsCard');
+  const sold = document.getElementById('summarySoldCard');
+  const available = document.getElementById('summaryAvailableCard');
 
   const attach = (el, type, label) => {
     if (!el) return;
@@ -1428,8 +1407,9 @@ function setupViewerQuickCards() {
     });
   };
 
+  attach(sold, 'sold', 'View sold players');
   attach(unsold, 'unsold', 'View unsold players');
-  attach(teams, 'teams', 'View all teams');
+  attach(available, 'available', 'View available players');
 }
 
 function closeViewerQuickModal() {
@@ -1578,6 +1558,115 @@ function openViewerQuickModal(type, teamId = null) {
 
     if (!queue.length && Number(resultsExportState?.unsoldCount || 0) > 0) {
       contentEl.innerHTML = '<div class="state-empty"><p>Loading unsold players...</p></div>';
+      overlay.classList.add('visible');
+      return;
+    }
+
+    if (type === 'sold') {
+      titleEl.textContent = 'Sold Players';
+      const soldMap = resultsExportState.soldPlayers || {};
+      const playersById = resultsExportState.playerMap || {};
+      const entries = Object.entries(soldMap || {});
+
+      if (!entries.length) {
+        contentEl.innerHTML = '<div class="state-empty"><p>No sold players.</p></div>';
+        overlay.classList.add('visible');
+        return;
+      }
+
+      const rows = entries
+        .map(([pid, sale]) => {
+          const player = playersById[pid] || playersById[String(pid)] || null;
+          if (!player) return null;
+          return {
+            id: String(pid),
+            name: player.name || String(pid),
+            role: player.role || '',
+            country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
+            base: Number(player.base_price_lakh) || 0,
+            photo: player.photo_url || '',
+            soldPrice: Number(sale?.soldPrice || 0)
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+      contentEl.innerHTML = `
+        <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> sold players</div>
+        <div class="viewer-unsold-list">
+          ${rows.map((p) => {
+            const initials = getPlayerInitials(p.name);
+            const color = getRoleColor(p.role);
+            const icon = getRoleIcon(p.role);
+            const avatarHtml = p.photo
+              ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+              : escapeHtml(initials);
+            const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
+            return `
+              <div class="result-player-row">
+                <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+                <div style="flex:1;min-width:0;">
+                  <div class="result-player-name">${escapeHtml(p.name)}</div>
+                  <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
+                </div>
+                <div class="result-player-price">${formatPrice(p.soldPrice || p.base)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+      overlay.classList.add('visible');
+      return;
+    }
+
+    if (type === 'available') {
+      titleEl.textContent = 'Available Players';
+      const players = Array.isArray(resultsExportState.players) ? resultsExportState.players : [];
+      const soldMap = resultsExportState.soldPlayers || {};
+      const unsoldSet = new Set((resultsExportState.unsoldQueue || []).map((id) => String(id)));
+
+      const rows = players
+        .filter((player) => !soldMap[String(player.id)] && !unsoldSet.has(String(player.id)))
+        .map((player) => ({
+          id: String(player.id || ''),
+          name: player.name || String(player.id || 'Player'),
+          role: player.role || 'Player',
+          country: player.country || (player.category && String(player.category).toLowerCase() === 'manual' ? 'Manual' : ''),
+          base: Number(player.base_price_lakh) || 0,
+          photo: player.photo_url || ''
+        }))
+        .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+      if (!rows.length) {
+        contentEl.innerHTML = '<div class="state-empty"><p>No available players.</p></div>';
+        overlay.classList.add('visible');
+        return;
+      }
+
+      contentEl.innerHTML = `
+        <div class="viewer-unsold-meta">Showing <strong>${rows.length}</strong> available players</div>
+        <div class="viewer-unsold-list">
+          ${rows.map((p) => {
+            const initials = getPlayerInitials(p.name);
+            const color = getRoleColor(p.role);
+            const icon = getRoleIcon(p.role);
+            const avatarHtml = p.photo
+              ? `<img src="${p.photo}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="handlePlayerImageError(this, '${initials}')" />`
+              : escapeHtml(initials);
+            const countryText = p.country ? `${getCountryFlag(p.country)} ${escapeHtml(p.country)}` : '—';
+            return `
+              <div class="result-player-row">
+                <div class="result-player-avatar" style="background:linear-gradient(135deg,${color}99,${color}44)">${avatarHtml}</div>
+                <div style="flex:1;min-width:0;">
+                  <div class="result-player-name">${escapeHtml(p.name)}</div>
+                  <div style="font-size:0.72rem;color:var(--text-dim)">${icon} ${escapeHtml(p.role || 'Player')} · ${countryText}</div>
+                </div>
+                <div class="result-player-price">${formatPrice(p.base)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
       overlay.classList.add('visible');
       return;
     }

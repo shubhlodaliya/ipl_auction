@@ -4877,6 +4877,7 @@ body.results-viewer-mode .team-modal-overlay {
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 0.5rem;
+  pointer-events: auto;
 }
 
 .results-viewer-screen .results-summary-card {

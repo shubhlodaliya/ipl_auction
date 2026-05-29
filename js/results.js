@@ -1347,6 +1347,12 @@ async function loadResults() {
         viewerStats.appendChild(summaryStats);
         setupViewerQuickCards();
         setupViewerCardDelegation();
+        const soldCard = document.getElementById('summarySoldCard');
+        if (soldCard) soldCard.onclick = () => openViewerQuickModal('sold');
+        const unsoldCard = document.getElementById('summaryUnsoldCard');
+        if (unsoldCard) unsoldCard.onclick = () => openViewerQuickModal('unsold');
+        const availableCard = document.getElementById('summaryAvailableCard');
+        if (availableCard) availableCard.onclick = () => openViewerQuickModal('available');
       }
       const viewerRoomCode = document.getElementById('resultsViewerRoomCode');
       if (viewerRoomCode) viewerRoomCode.textContent = getResultsBrandTitle(room);

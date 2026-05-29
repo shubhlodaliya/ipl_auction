@@ -1352,6 +1352,12 @@ async function loadResults() {
       if (viewerPlayersBtn) viewerPlayersBtn.addEventListener('click', () => openViewerQuickModal('players'));
       const viewerPills = document.getElementById('resultsViewerPills');
       if (viewerPills) viewerPills.style.display = 'none';
+      const soldCard = document.getElementById('summarySoldCard');
+      if (soldCard) soldCard.addEventListener('click', () => openViewerQuickModal('sold'));
+      const unsoldCard = document.getElementById('summaryUnsoldCard');
+      if (unsoldCard) unsoldCard.addEventListener('click', () => openViewerQuickModal('unsold'));
+      const availableCard = document.getElementById('summaryAvailableCard');
+      if (availableCard) availableCard.addEventListener('click', () => openViewerQuickModal('available'));
       setupViewerQuickCards();
     }
 

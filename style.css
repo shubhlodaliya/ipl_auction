@@ -4932,6 +4932,10 @@ body.results-viewer-mode .results-summary-card {
   user-select: none;
 }
 
+body.results-viewer-mode .results-summary-card div:first-child {
+  color: #dce6ff !important;
+}
+
 body.results-viewer-mode .results-summary-card:active {
   transform: scale(0.985);
 }

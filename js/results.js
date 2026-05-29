@@ -2501,7 +2501,8 @@ function createPdfDocument() {
   return new window.jspdf.jsPDF({
     orientation: 'portrait',
     unit: 'pt',
-    format: 'a4'
+    format: 'a4',
+    compress: true
   });
 }
 
@@ -2543,15 +2544,16 @@ async function blobToDataUrl(blob) {
   });
 }
 
-async function blobToPngDataUrl(blob) {
+async function blobToJpegDataUrl(blob, maxSize = 220, quality = 0.7) {
   try {
     const bitmap = await createImageBitmap(blob);
     const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
+    const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(bitmap, 0, 0);
-    return canvas.toDataURL('image/png');
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', quality);
   } catch (err) {
     try {
       return await blobToDataUrl(blob);
@@ -2569,7 +2571,7 @@ async function loadImageDataUrl(url) {
     const response = await fetch(safeUrl, { mode: 'cors' });
     if (!response.ok) throw new Error('Image fetch failed');
     const blob = await response.blob();
-    const dataUrl = await blobToPngDataUrl(blob);
+    const dataUrl = await blobToJpegDataUrl(blob);
     if (!dataUrl) throw new Error('Image conversion failed');
     pdfImageCache.set(safeUrl, dataUrl);
     return dataUrl;
@@ -2594,7 +2596,7 @@ function drawPdfCircleBadge(doc, x, y, radius, label) {
 async function drawImageInBox(doc, url, x, y, w, h, fallbackLabel) {
   const dataUrl = await loadImageDataUrl(url);
   if (dataUrl) {
-    doc.addImage(dataUrl, 'PNG', x, y, w, h);
+    doc.addImage(dataUrl, 'JPEG', x, y, w, h);
     return;
   }
 
@@ -2616,8 +2618,6 @@ async function drawPdfHeader(doc, title, teamName, roomCode, leftBadgeText, team
   doc.setLineWidth(1);
   doc.line(36, 40, pageWidth - 36, 40);
 
-  drawPdfCircleBadge(doc, 58, 22, 18, leftBadgeText || 'IPL');
-
   doc.setTextColor(...PDF_THEME.blue);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
@@ -2626,12 +2626,12 @@ async function drawPdfHeader(doc, title, teamName, roomCode, leftBadgeText, team
   doc.setTextColor(...PDF_THEME.slate900);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text(String(teamName || 'Team Squad'), pageWidth / 2, 54, { align: 'center' });
+  doc.text(String(teamName || 'Team Squad'), pageWidth / 2, 62, { align: 'center' });
 
   doc.setTextColor(...PDF_THEME.slate500);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.text(`Room: ${roomCode}`, pageWidth / 2, 70, { align: 'center' });
+  doc.text(`Room: ${roomCode}`, pageWidth / 2, 78, { align: 'center' });
 
   if (teamLogoUrl) {
     const logoSize = 36;
@@ -2669,7 +2669,7 @@ async function renderPdfTeamRoster(doc, payload) {
   const pageHeight = doc.internal.pageSize.getHeight();
   const leftMargin = 36;
   const rightMargin = 36;
-  const topStart = 92;
+  const topStart = 102;
   const bottomMargin = 36;
   const gutter = 12;
 
@@ -2746,11 +2746,6 @@ async function renderPdfTeamRoster(doc, payload) {
 
     const priceLabel = formatPricePdf(price || 0);
     drawPdfPriceTag(doc, x + innerPad, y + cardHeight - 22, priceLabel);
-
-    doc.setTextColor(...PDF_THEME.blue);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(metaSize);
-    doc.text(String(team?.name || teamId || '').toUpperCase(), x + cardWidth - innerPad, y + cardHeight - 8, { align: 'right' });
 
     const fallbackInitials = getPlayerInitials(nameText || 'P');
     await drawImageInBox(doc, player?.photo_url || '', imageBox.x, imageBox.y, imageBox.w, imageBox.h, fallbackInitials);

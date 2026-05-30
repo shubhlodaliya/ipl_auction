@@ -4906,6 +4906,17 @@ body.results-viewer-mode .team-modal-overlay {
   border-color: rgba(255, 255, 255, 0.65);
 }
 
+.results-viewer-home {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.results-viewer-home:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
 .results-viewer-pills {
   margin-top: 0.6rem;
 }

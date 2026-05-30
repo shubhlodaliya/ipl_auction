@@ -83,9 +83,6 @@
       <div class="broadcast-overlay"></div>
 
       <header class="broadcast-header">
-        <div class="broadcast-logo">
-          <span aria-label="Auction">🏏</span>
-        </div>
         <div class="broadcast-banner" id="resultsViewerRoomCode">ROOM</div>
         <nav class="broadcast-nav">
           <span id="viewerTeamsBtn" style="cursor:pointer; text-decoration:underline;">TEAMS</span>
@@ -99,6 +96,7 @@
         <div class="results-viewer-sub" id="resultsViewerSub">Room: —</div>
         <div class="results-viewer-stats" id="viewerSummaryStats"></div>
         <div class="results-viewer-actions">
+          <button class="btn btn-ghost results-viewer-home" onclick="window.location.href='index.html'">Home</button>
           <button class="btn btn-secondary results-viewer-top-picks" onclick="openTopPickModal()">Top 10 Picks</button>
           <button class="btn btn-primary" onclick="exportResultsPdf()">Export All Teams PDF</button>
         </div>

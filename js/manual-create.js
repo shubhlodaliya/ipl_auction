@@ -674,9 +674,32 @@ async function uploadRemoteSourceWithFallback(source, signPayload) {
   throw lastErr || new Error('Image URL could not be uploaded.');
 }
 
-async function uploadManualAssets(roomCode, teams, players) {
+async function uploadManualAssets(roomCode, teams, players, options = {}) {
   const assetCache = readManualAssetCache();
   const failedAssets = [];
+  let auctionPhoto = '';
+
+  const auctionPhotoFile = options?.auctionPhotoFile || null;
+  if (auctionPhotoFile) {
+    const auctionAssetKey = getFileAssetKey(auctionPhotoFile, 'auction');
+    const cachedAuctionPhoto = getCachedAssetUrl(assetCache, auctionAssetKey);
+    if (cachedAuctionPhoto) {
+      auctionPhoto = cachedAuctionPhoto;
+    } else {
+      try {
+        auctionPhoto = await uploadFileToCloudinary(auctionPhotoFile, {
+          roomCode,
+          entityType: 'player',
+          entityId: 'auction-cover',
+          fileName: auctionPhotoFile.name || 'auction-photo',
+          sharedAssetKey: auctionAssetKey
+        });
+        setCachedAssetUrl(assetCache, auctionAssetKey, auctionPhoto);
+      } catch (error) {
+        failedAssets.push(`Auction Photo: ${error?.message || String(error)}`);
+      }
+    }
+  }
 
   for (const team of teams) {
     if (!team.logoFile) continue;
@@ -761,7 +784,7 @@ async function uploadManualAssets(roomCode, teams, players) {
 
   saveManualAssetCache(assetCache);
 
-  return failedAssets;
+  return { failedAssets, auctionPhoto };
 }
 
 async function createManualRoom() {
@@ -787,6 +810,7 @@ async function createManualRoom() {
   const hostManagerOnly = hostRoleMode !== 'playing';
   const hostBidsForAllTeams = hostRoleMode === 'paddle';
   const scheduledStartAt = parseDateTimeLocal(document.getElementById('manualStartTime')?.value || '');
+  const auctionPhotoFile = document.getElementById('auctionPhotoFile')?.files?.[0] || null;
 
   const teams = collectTeams(true);
   const players = collectPlayers();
@@ -816,11 +840,14 @@ async function createManualRoom() {
   btn.disabled = true;
   btn.textContent = 'Uploading assets...';
   let failedAssets = [];
+  let auctionPhoto = '';
 
   try {
     const code = await reserveAvailableRoomCode();
 
-    failedAssets = await uploadManualAssets(code, teams, players);
+    const uploadResult = await uploadManualAssets(code, teams, players, { auctionPhotoFile });
+    failedAssets = uploadResult.failedAssets || [];
+    auctionPhoto = String(uploadResult.auctionPhoto || '').trim();
 
     const manualTeams = {};
     teams.forEach(t => {
@@ -907,6 +934,7 @@ async function createManualRoom() {
         maxIconPlayers,
         manualPlayerFields: customPlayerFields,
         auctionMode: 'manual',
+        auctionPhoto,
         invitePasscode: passcode,
         status: 'lobby',
         createdAt: Date.now(),

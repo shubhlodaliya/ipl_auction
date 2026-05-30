@@ -1054,6 +1054,22 @@
       return Number(cfg?.startedAt || cfg?.reAuctionStartedAt || cfg?.createdAt || cfg?.updatedAt || 0);
     }
 
+    function getRoomAuctionPhoto(room) {
+      const cfg = room?.config || {};
+      const direct = String(cfg.auctionPhoto || cfg.auctionImage || '').trim();
+      if (direct) return direct;
+
+      const manualTeams = room?.manualTeams || {};
+      const manualLogo = Object.values(manualTeams).map((team) => String(team?.logo || '').trim()).find(Boolean);
+      if (manualLogo) return manualLogo;
+
+      const teams = room?.teams || {};
+      const teamLogo = Object.values(teams).map((team) => String(team?.logo || '').trim()).find(Boolean);
+      if (teamLogo) return teamLogo;
+
+      return 'assets/site-logo.svg';
+    }
+
     function toggleLiveExplore() {
       liveExploreAll = !liveExploreAll;
       if (liveRoomsCache) renderLiveRooms(liveRoomsCache);
@@ -1120,6 +1136,7 @@
         const teams = room.teams || {};
         const teamCount = Object.keys(teams).length;
         const title = cfg.auctionTitle || (cfg.auctionType === 'manual' ? 'Custom Auction' : 'IPL Auction');
+        const photo = getRoomAuctionPhoto(room);
         const started = formatTimeSince(getRoomStartedAt(cfg));
         const auctionTypeLabel = cfg.auctionType === 'manual' ? 'Manual Auction' : 'IPL Auction';
         const auctionTypeClass = cfg.auctionType === 'manual' ? 'manual' : 'ipl';
@@ -1131,7 +1148,14 @@
               <span class="ends">Started ${started}</span>
             </div>
             <div class="ma-auction-card-body">
-              <h4>${escHtml(title)} <span style="font-size:0.7rem;color:#888;font-weight:400;">#${escHtml(code)}</span></h4>
+              <div class="ma-auction-card-main">
+                <div class="ma-auction-thumb-wrap">
+                  <img class="ma-auction-thumb" src="${escHtml(photo)}" alt="${escHtml(title)} logo" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/site-logo.svg';" />
+                </div>
+                <div class="ma-auction-card-content">
+                  <h4>${escHtml(title)} <span style="font-size:0.7rem;color:#888;font-weight:400;">#${escHtml(code)}</span></h4>
+                </div>
+              </div>
               <div class="ma-auction-meta">
                 <div class="ma-auction-meta-item">
                   <label>Auction Type</label>

@@ -70,6 +70,22 @@ function normalizeHistoryStatus(status) {
   return 'lobby';
 }
 
+function getRoomAuctionPhoto(room) {
+  const config = room?.config || {};
+  const direct = String(config.auctionPhoto || config.auctionImage || '').trim();
+  if (direct) return direct;
+
+  const manualTeams = room?.manualTeams || {};
+  const manualLogo = Object.values(manualTeams).map((team) => String(team?.logo || '').trim()).find(Boolean);
+  if (manualLogo) return manualLogo;
+
+  const teams = room?.teams || {};
+  const teamLogo = Object.values(teams).map((team) => String(team?.logo || '').trim()).find(Boolean);
+  if (teamLogo) return teamLogo;
+
+  return 'assets/site-logo.svg';
+}
+
 function mapRoomToHistoryRow(roomCode, room) {
   const config = room?.config || {};
   const createdAt = Number(config.createdAt || 0) || Date.now();
@@ -90,6 +106,7 @@ function mapRoomToHistoryRow(roomCode, room) {
     createdAt,
     updatedAt,
     scheduledStartAt,
+    auctionPhoto: getRoomAuctionPhoto(room),
     migratedFromRoom: true
   };
 }
@@ -172,6 +189,7 @@ async function renderScheduledAuctions() {
     listEl.innerHTML = rows.slice(0, 12).map((row) => {
       const roomCode = escapeHtml(String(row.roomCode || '').toUpperCase());
       const title = escapeHtml(row.title || 'Auction');
+      const auctionPhoto = escapeHtml(String(row.auctionPhoto || 'assets/site-logo.svg'));
       const startAt = Number(row.scheduledStartAt || 0) || 0;
       const startLabel = escapeHtml(formatScheduleLabel(startAt));
       const date = new Date(startAt);
@@ -183,6 +201,9 @@ async function renderScheduledAuctions() {
 
       return `
         <div class="ma-tournament-item">
+          <div class="ma-tournament-thumb-wrap">
+            <img class="ma-tournament-thumb" src="${auctionPhoto}" alt="${title} logo" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/site-logo.svg';" />
+          </div>
           <div class="ma-tournament-date">
             <div class="day">${escapeHtml(day)}</div>
             <div class="month">${escapeHtml(month)}</div>

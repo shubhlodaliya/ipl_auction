@@ -70,6 +70,284 @@ body {
     radial-gradient(ellipse at 50% 90%, rgba(204,31,31,0.02) 0%, transparent 60%);
 }
 
+  /* ============================================================
+     AUCTION PAGE THEME
+     ============================================================ */
+  body.auction-page {
+    --bg: #fffafb;
+    --surface: #fff3f5;
+    --card: #ffffff;
+    --card-hover: #fff7f8;
+    --border: rgba(142, 29, 43, 0.18);
+    --border-hover: rgba(142, 29, 43, 0.3);
+    --gold: #8e1d2b;
+    --gold-dim: rgba(142, 29, 43, 0.1);
+    --gold-glow: rgba(142, 29, 43, 0.2);
+    --blue: #8e1d2b;
+    --blue-dim: rgba(142, 29, 43, 0.1);
+    --green: #8e1d2b;
+    --green-dim: rgba(142, 29, 43, 0.1);
+    --red: #8e1d2b;
+    --red-dim: rgba(142, 29, 43, 0.1);
+    --orange: #8e1d2b;
+    --text: #2f1217;
+    --text-sec: #6f4a50;
+    --text-dim: #a3868b;
+    background-image:
+      radial-gradient(ellipse at 12% 18%, rgba(142, 29, 43, 0.05) 0%, transparent 48%),
+      radial-gradient(ellipse at 88% 12%, rgba(142, 29, 43, 0.04) 0%, transparent 42%),
+      linear-gradient(180deg, #fffefe 0%, #fff6f7 100%);
+  }
+
+  body.auction-page .header,
+  body.auction-page .glass,
+  body.auction-page .player-spotlight,
+  body.auction-page .bid-panel,
+  body.auction-page .teams-sidebar,
+  body.auction-page .spectator-panel,
+  body.auction-page .team-card,
+  body.auction-page .team-modal,
+  body.auction-page .live-player-list-modal,
+  body.auction-page .viewer-modal,
+  body.auction-page .all-teams-modal,
+  body.auction-page .reauction-section {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: var(--border);
+    box-shadow: 0 14px 34px rgba(142, 29, 43, 0.08);
+  }
+
+  body.auction-page .logo,
+  body.auction-page .sidebar-title,
+  body.auction-page .current-bid-amount,
+  body.auction-page .team-power-topline,
+  body.auction-page .result-player-name,
+  body.auction-page .player-name,
+  body.auction-page .spectator-title {
+    color: var(--gold);
+  }
+
+  body.auction-page .progress-bar-fill,
+  body.auction-page .timer-ring-progress,
+  body.auction-page .pool-status.sold,
+  body.auction-page .pool-status.unsold,
+  body.auction-page .pool-status.available,
+  body.auction-page .pool-status.remaining,
+  body.auction-page .current-bid-amount,
+  body.auction-page .logo span {
+    stroke: var(--gold);
+    color: var(--gold);
+  }
+
+  body.auction-page .btn-primary,
+  body.auction-page .btn-secondary,
+  body.auction-page .btn-ghost,
+  body.auction-page .btn-danger,
+  body.auction-page .quick-bid-btn,
+  body.auction-page .base-bid-btn,
+  body.auction-page .pass-btn,
+  body.auction-page .sell-now-btn,
+  body.auction-page .undo-action-btn,
+  body.auction-page .withdraw-btn,
+  body.auction-page .skip-pool-btn,
+  body.auction-page .live-list-btn,
+  body.auction-page .auction-room-code-chip,
+  body.auction-page .pool-banner-btn,
+  body.auction-page .my-team-chip,
+  body.auction-page .spectator-count-badge,
+  body.auction-page .chat-mute-badge,
+  body.auction-page .host-proxy-bid-wrap,
+  body.auction-page .host-proxy-bid-list button,
+  body.auction-page .reauction-role-chip,
+  body.auction-page .team-power-card,
+  body.auction-page .team-power-stat,
+  body.auction-page .player-spotlight .state-loading,
+  body.auction-page .no-purse-warning {
+    transition: var(--transition);
+  }
+
+  body.auction-page .btn-primary,
+  body.auction-page .quick-bid-btn,
+  body.auction-page .base-bid-btn,
+  body.auction-page .sell-now-btn,
+  body.auction-page .undo-action-btn,
+  body.auction-page .withdraw-btn,
+  body.auction-page .skip-pool-btn,
+  body.auction-page .pass-btn,
+  body.auction-page .live-list-btn,
+  body.auction-page .auction-room-code-chip,
+  body.auction-page .pool-banner-btn,
+  body.auction-page .host-proxy-bid-list button,
+  body.auction-page .reauction-role-chip.active {
+    background: linear-gradient(135deg, #8e1d2b 0%, #b43a49 100%);
+    border-color: rgba(142, 29, 43, 0.35);
+    color: #ffffff;
+  }
+
+  body.auction-page .btn-secondary,
+  body.auction-page .btn-ghost,
+  body.auction-page .live-list-btn,
+  body.auction-page .auction-room-code-chip,
+  body.auction-page .pool-banner-btn,
+  body.auction-page .reauction-role-chip,
+  body.auction-page .host-proxy-bid-list button {
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--gold);
+    border: 1px solid var(--border);
+  }
+
+  body.auction-page .btn-primary:hover,
+  body.auction-page .btn-secondary:hover,
+  body.auction-page .btn-ghost:hover,
+  body.auction-page .btn-danger:hover,
+  body.auction-page .quick-bid-btn:hover:not(:disabled),
+  body.auction-page .base-bid-btn:hover:not(:disabled),
+  body.auction-page .sell-now-btn:hover:not(:disabled),
+  body.auction-page .undo-action-btn:hover:not(:disabled),
+  body.auction-page .withdraw-btn:hover:not(:disabled),
+  body.auction-page .skip-pool-btn:hover:not(:disabled),
+  body.auction-page .pass-btn:hover:not(:disabled),
+  body.auction-page .live-list-btn:hover,
+  body.auction-page .auction-room-code-chip:hover,
+  body.auction-page .pool-banner-btn:hover,
+  body.auction-page .host-proxy-bid-list button:hover,
+  body.auction-page .reauction-role-chip:hover {
+    background: #7a1623;
+    color: #ffffff;
+    border-color: #7a1623;
+    box-shadow: 0 10px 24px rgba(122, 22, 35, 0.18);
+    transform: translateY(-1px);
+  }
+
+  body.auction-page .btn-secondary:hover,
+  body.auction-page .btn-ghost:hover,
+  body.auction-page .auction-room-code-chip:hover,
+  body.auction-page .reauction-role-chip:hover,
+  body.auction-page .host-proxy-bid-list button:hover {
+    color: #ffffff;
+  }
+
+  body.auction-page .btn-danger,
+  body.auction-page .pass-btn,
+  body.auction-page .undo-action-btn,
+  body.auction-page .withdraw-btn {
+    color: #ffffff;
+  }
+
+  body.auction-page .quick-bid-btn {
+    background: linear-gradient(160deg, #8e1d2b, #a93a46);
+    color: #ffffff;
+    border-color: rgba(142, 29, 43, 0.35);
+    box-shadow: 0 10px 22px rgba(142, 29, 43, 0.16);
+  }
+
+  body.auction-page .quick-bid-btn:hover:not(:disabled),
+  body.auction-page .base-bid-btn:hover:not(:disabled) {
+    color: #ffffff;
+  }
+
+  body.auction-page .base-bid-btn:disabled,
+  body.auction-page .quick-bid-btn:disabled,
+  body.auction-page .pass-btn:disabled,
+  body.auction-page .sell-now-btn:disabled,
+  body.auction-page .undo-action-btn:disabled,
+  body.auction-page .withdraw-btn:disabled,
+  body.auction-page .skip-pool-btn:disabled {
+    opacity: 0.42;
+  }
+
+  body.auction-page .spectator-count-badge,
+  body.auction-page .chat-mute-badge,
+  body.auction-page .my-team-chip,
+  body.auction-page .auction-room-code-chip,
+  body.auction-page .pool-banner-btn {
+    border-color: var(--border);
+  }
+
+  body.auction-page .spectator-count-badge,
+  body.auction-page .chat-mute-badge {
+    background: rgba(255,255,255,0.9);
+    color: var(--text-sec);
+  }
+
+  body.auction-page .my-team-chip {
+    background: rgba(142, 29, 43, 0.1);
+    color: var(--gold);
+  }
+
+  body.auction-page .progress-bar-wrap,
+  body.auction-page .timer-ring-bg,
+  body.auction-page .bid-history-wrap,
+  body.auction-page .host-proxy-bid-wrap,
+  body.auction-page .withdrawn-teams-wrap,
+  body.auction-page .reauction-player-list,
+  body.auction-page .reauction-stat-card,
+  body.auction-page .reauction-section,
+  body.auction-page .live-player-search-input,
+  body.auction-page .spectator-card,
+  body.auction-page .spectator-panel .spectator-stats-grid > div,
+  body.auction-page .team-power-card,
+  body.auction-page .team-power-grid > div {
+    background: rgba(255,255,255,0.9);
+    border-color: var(--border);
+  }
+
+  body.auction-page .progress-bar-fill,
+  body.auction-page .timer-ring-progress {
+    fill: none;
+    stroke: #8e1d2b;
+  }
+
+  body.auction-page .quick-chat-toolbar {
+    border-color: var(--border);
+    background: rgba(255,255,255,0.75);
+  }
+
+  body.auction-page .pool-status.sold,
+  body.auction-page .pool-status.unsold,
+  body.auction-page .pool-status.available,
+  body.auction-page .pool-status.remaining {
+    background: rgba(142, 29, 43, 0.08);
+    color: var(--gold);
+    border-color: rgba(142, 29, 43, 0.2);
+  }
+
+  body.auction-page .no-purse-warning,
+  body.auction-page .current-bid-label,
+  body.auction-page .spectator-label,
+  body.auction-page .host-proxy-bid-title,
+  body.auction-page .reauction-head h2,
+  body.auction-page .reauction-stat-value,
+  body.auction-page .reauction-stat-label,
+  body.auction-page .result-player-price {
+    color: var(--gold);
+  }
+
+  body.auction-page .reauction-note,
+  body.auction-page .reauction-controls span,
+  body.auction-page .reauction-filter-meta,
+  body.auction-page .reauction-player-meta,
+  body.auction-page .bid-history-empty,
+  body.auction-page .timer-value,
+  body.auction-page .progress-text,
+  body.auction-page .spectator-note,
+  body.auction-page .purse-label,
+  body.auction-page .purse-amount,
+  body.auction-page .host-proxy-bid-sub {
+    color: var(--text-sec);
+  }
+
+  body.auction-page .spinner {
+    border-top-color: #8e1d2b;
+  }
+
+  body.auction-page .result-player-row.selected,
+  body.auction-page .reauction-player-row.selected,
+  body.auction-page .team-card.active,
+  body.auction-page .live-player-row.sold {
+    background: rgba(142, 29, 43, 0.08);
+    border-color: rgba(142, 29, 43, 0.2);
+  }
+
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; border: none; font-family: inherit; }
 input, select { font-family: inherit; }

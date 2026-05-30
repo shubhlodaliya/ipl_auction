@@ -2234,6 +2234,7 @@ function renderReAuctionSection() {
   const teams = room?.teams || {};
   const myTeamId = session?.teamId;
   const amHost = !!session?.isHost;
+  const isManualAuction = room?.config?.auctionType === 'manual';
   const isHostControlledMode = !!(room?.config?.auctionType === 'manual' && room?.config?.hostBidsForAllTeams && amHost);
   const myEligible = !!myTeamId && eligibleTeamIds.includes(myTeamId);
 
@@ -2246,6 +2247,34 @@ function renderReAuctionSection() {
   if (!eligibleTeamIds.length ) {
     hint.textContent = 'All teams have full squads. Re-auction is not available.';
     body.innerHTML = `<div class="state-empty"><p>No team has an empty slot.</p></div>`;
+    return;
+  }
+
+  if (isManualAuction) {
+    hint.textContent = 'Manual auction restarts with every unsold player automatically.';
+    body.innerHTML = `
+      <div class="reauction-status-grid">
+        <div class="reauction-stat-card">
+          <div class="reauction-stat-label">Unsold Players</div>
+          <div class="reauction-stat-value">${unsoldQueue.length}</div>
+        </div>
+        <div class="reauction-stat-card">
+          <div class="reauction-stat-label">Eligible Teams</div>
+          <div class="reauction-stat-value">${eligibleTeamIds.length}</div>
+        </div>
+        <div class="reauction-stat-card">
+          <div class="reauction-stat-label">Restart Mode</div>
+          <div class="reauction-stat-value">All Unsold</div>
+        </div>
+      </div>
+
+      <div class="reauction-note">All unsold players will be added back into the auction queue. Use the list button to review them first.</div>
+
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+        <button class="btn btn-secondary" onclick="openViewerQuickModal('unsold')">View Unsold Players</button>
+        <button class="btn btn-primary btn-lg" onclick="startReAuctionFromResults()">Restart Auction (${unsoldQueue.length} players)</button>
+      </div>
+    `;
     return;
   }
 
@@ -2518,9 +2547,12 @@ async function startReAuctionFromResults() {
   const reAuction = room.reAuction || {};
   const selections = reAuction.selections || {};
   const readyMap = reAuction.ready || {};
-const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.hostBidsForAllTeams);
+  const isManualAuction = room.config?.auctionType === 'manual';
+  const hostControlled = !!(isManualAuction && room.config?.hostBidsForAllTeams);
 
-  const allReady = hostControlled
+  const allReady = isManualAuction
+    ? true
+    : (hostControlled
     ? true
     : (eligibleTeamIds.length > 0 && eligibleTeamIds.every(teamId => !!readyMap[teamId]));
   if (!allReady) {
@@ -2528,22 +2560,26 @@ const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.
     return;
   }
 
-  const selectedUnion = new Set();
-  if (hostControlled) {
-    const hostSelections = selections.__host__ || {};
-    Object.keys(hostSelections).forEach(pid => {
-      if (hostSelections[pid]) selectedUnion.add(String(pid));
-    });
-  } else {
-    eligibleTeamIds.forEach(teamId => {
-      const teamSel = selections[teamId] || {};
-      Object.keys(teamSel).forEach(pid => {
-        if (teamSel[pid]) selectedUnion.add(String(pid));
-      });
-    });
-  }
+  const selectedQueue = isManualAuction
+    ? unsoldQueue
+    : (() => {
+      const selectedUnion = new Set();
+      if (hostControlled) {
+        const hostSelections = selections.__host__ || {};
+        Object.keys(hostSelections).forEach(pid => {
+          if (hostSelections[pid]) selectedUnion.add(String(pid));
+        });
+      } else {
+        eligibleTeamIds.forEach(teamId => {
+          const teamSel = selections[teamId] || {};
+          Object.keys(teamSel).forEach(pid => {
+            if (teamSel[pid]) selectedUnion.add(String(pid));
+          });
+        });
+      }
 
-  const selectedQueue = unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
+      return unsoldQueue.filter(pid => selectedUnion.has(String(pid)));
+    })();
   if (!selectedQueue.length) {
     showToast('No players selected for re-auction.', 'error');
     return;
@@ -2591,6 +2627,11 @@ const hostControlled = !!(room.config?.auctionType === 'manual' && room.config?.
   updates[`rooms/${roomCode}/reAuction/startedAt`] = now;
   updates[`rooms/${roomCode}/reAuction/startedBy`] = session.teamId;
   updates[`rooms/${roomCode}/unsoldPlayers`] = nextUnsoldMap;
+
+  if (isManualAuction) {
+    updates[`rooms/${roomCode}/reAuction/selections`] = {};
+    updates[`rooms/${roomCode}/reAuction/ready`] = {};
+  }
 
   await db.ref().update(updates);
 }

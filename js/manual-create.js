@@ -19,8 +19,12 @@ async function reserveAvailableRoomCode(maxAttempts = 30) {
 
 window.addEventListener('DOMContentLoaded', initManualSetup);
 
-function initManualSetup() {
+async function initManualSetup() {
   if (typeof requireAuth === 'function' && !requireAuth('index.html')) return;
+
+  if (typeof waitForAuthReady === 'function') {
+    await waitForAuthReady();
+  }
 
   for (let i = 0; i < 4; i += 1) addTeamRow();
   for (let i = 0; i < 12; i += 1) addPlayerRow();
@@ -898,6 +902,15 @@ async function submitManualPaymentRequest() {
   const errEl = document.getElementById('manualSetupError');
   if (errEl) errEl.style.display = 'none';
 
+  if (typeof waitForAuthReady === 'function') {
+    await waitForAuthReady();
+  }
+
+  const currentUser = typeof getCurrentAuthUser === 'function' ? getCurrentAuthUser() : null;
+  if (!currentUser?.uid) {
+    return showManualSetupError('Please login again before submitting payment.');
+  }
+
   const summary = getManualPaymentSummary();
   if (!summary.passcode) return showManualSetupError('Room passcode is required.');
   if (summary.teams.length < 2) return showManualSetupError('Add at least 2 teams before submitting payment.');
@@ -986,6 +999,15 @@ function showManualSetupError(message) {
 async function createManualRoom() {
   const errEl = document.getElementById('manualSetupError');
   errEl.style.display = 'none';
+
+  if (typeof waitForAuthReady === 'function') {
+    await waitForAuthReady();
+  }
+
+  const currentUser = typeof getCurrentAuthUser === 'function' ? getCurrentAuthUser() : null;
+  if (!currentUser?.uid) {
+    return showError('Please login again before creating the room.');
+  }
   const authUid = typeof getAuthUid === 'function'
     ? getAuthUid()
     : String(localStorage.getItem('ipl_auth_uid') || '').trim();

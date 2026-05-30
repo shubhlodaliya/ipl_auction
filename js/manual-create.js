@@ -22,8 +22,22 @@ window.addEventListener('DOMContentLoaded', initManualSetup);
 function initManualSetup() {
   if (typeof requireAuth === 'function' && !requireAuth('index.html')) return;
 
+  updateAdminDashboardLink();
   for (let i = 0; i < 4; i += 1) addTeamRow();
   for (let i = 0; i < 12; i += 1) addPlayerRow();
+  updateManualPaymentUi();
+  refreshManualPaymentStatus();
+}
+
+function updateAdminDashboardLink() {
+  const link = document.getElementById('adminDashboardLink');
+  if (!link) return;
+
+  const adminEmails = Array.isArray(window.ADMIN_DASHBOARD_EMAILS) ? window.ADMIN_DASHBOARD_EMAILS : [];
+  const currentEmail = String(localStorage.getItem('ipl_auth_email') || '').trim().toLowerCase();
+  const allowed = adminEmails.map((email) => String(email || '').trim().toLowerCase()).filter(Boolean).includes(currentEmail);
+
+  link.style.display = allowed ? 'inline-flex' : 'none';
 }
 
 function toggleManualTimerUnlimited(enabled) {
@@ -104,6 +118,7 @@ function addTeamRow() {
 
   container.appendChild(row);
   syncHostTeamOptions();
+  updateManualPaymentUi();
 }
 
 function addPlayerRow(prefill = null) {
@@ -405,6 +420,7 @@ function removeRow(rowId, callback = null) {
   const row = document.getElementById(rowId);
   if (row && row.parentNode) row.parentNode.removeChild(row);
   if (typeof callback === 'function') callback();
+  updateManualPaymentUi();
 }
 
 function applyBasePriceToAll() {
@@ -787,6 +803,198 @@ async function uploadManualAssets(roomCode, teams, players, options = {}) {
   return { failedAssets, auctionPhoto };
 }
 
+function getManualAuctionPlan(teamCount) {
+  const count = Number(teamCount || 0);
+  if (count <= 3) return { amount: 0, label: 'Free plan', requiresPayment: false };
+  if (count === 4) return { amount: 299, label: '₹299 plan', requiresPayment: true };
+  if (count === 5) return { amount: 399, label: '₹399 plan', requiresPayment: true };
+  return { amount: null, label: 'Custom plan', requiresPayment: true };
+}
+
+function getManualPaymentRequestId() {
+  return String(localStorage.getItem('ipl_manual_payment_request_id') || '').trim();
+}
+
+function setManualPaymentRequestId(requestId) {
+  const value = String(requestId || '').trim();
+  if (value) localStorage.setItem('ipl_manual_payment_request_id', value);
+  else localStorage.removeItem('ipl_manual_payment_request_id');
+}
+
+function getManualPaymentSummary() {
+  const teams = collectTeams(false);
+  const players = collectPlayers();
+  const teamCount = teams.length;
+  const plan = getManualAuctionPlan(teamCount);
+
+  return {
+    teams,
+    players,
+    teamCount,
+    plan,
+    auctionTitle: String(document.getElementById('auctionTitle')?.value || '').trim().slice(0, 40) || 'My Auction',
+    passcode: String(document.getElementById('invitePasscode')?.value || '').trim(),
+    budget: Number(document.getElementById('budgetLakh')?.value || 0),
+    maxSquadSize: Number(document.getElementById('maxSquadSize')?.value || 0),
+    minSquadSize: Number(document.getElementById('minSquadSize')?.value || 0),
+    timerSeconds: Number(document.getElementById('timerSeconds')?.value || 0),
+    timerUnlimited: !!document.getElementById('timerUnlimited')?.checked,
+    bidOptions: parseBidOptions(),
+    iconPlayerPrice: Number(document.getElementById('iconPlayerPrice')?.value || 0),
+    maxIconPlayers: Number(document.getElementById('maxIconPlayers')?.value || 0),
+    hostRoleMode: getSelectedHostRoleMode(),
+    scheduledStartAt: parseDateTimeLocal(document.getElementById('manualStartTime')?.value || ''),
+    auctionPhotoFile: document.getElementById('auctionPhotoFile')?.files?.[0] || null,
+    paymentReceiptFile: document.getElementById('paymentReceiptFile')?.files?.[0] || null,
+    paymentTxnId: String(document.getElementById('paymentTxnId')?.value || '').trim(),
+    paymentPayerName: String(document.getElementById('paymentPayerName')?.value || '').trim()
+  };
+}
+
+function updateManualPaymentUi() {
+  const summary = getManualPaymentSummary();
+  const planEl = document.getElementById('paymentPlanSummary');
+  const statusEl = document.getElementById('paymentRequestStatus');
+  const submitBtn = document.getElementById('submitPaymentRequestBtn');
+  const amountText = summary.plan.amount === null ? 'Custom amount' : (summary.plan.amount === 0 ? 'Free' : `₹${summary.plan.amount}`);
+
+  if (planEl) {
+    planEl.value = `${summary.teamCount} teams → ${summary.plan.label} (${amountText})`;
+  }
+  if (submitBtn) {
+    submitBtn.disabled = !summary.teamCount || summary.plan.amount === null;
+    submitBtn.textContent = summary.plan.amount === 0 ? 'No payment needed' : 'Submit Payment Request';
+  }
+  if (statusEl && !getManualPaymentRequestId()) {
+    statusEl.textContent = summary.plan.amount === 0
+      ? 'This setup is free. You can create the auction room directly.'
+      : 'No payment request submitted yet.';
+  }
+}
+
+async function refreshManualPaymentStatus() {
+  updateManualPaymentUi();
+  const requestId = getManualPaymentRequestId();
+  const statusEl = document.getElementById('paymentRequestStatus');
+  const createBtn = document.getElementById('createManualRoomBtn');
+
+  if (!requestId) {
+    if (createBtn) createBtn.disabled = false;
+    return;
+  }
+
+  try {
+    const snap = await db.ref(`paymentRequests/${requestId}`).get();
+    if (!snap.exists()) {
+      if (statusEl) statusEl.textContent = 'Payment request not found. Submit a fresh request.';
+      if (createBtn) createBtn.disabled = true;
+      return;
+    }
+
+    const request = snap.val() || {};
+    const status = String(request.status || 'pending').toLowerCase();
+    if (statusEl) {
+      if (status === 'approved') statusEl.textContent = `Approved. ${request.amount ? `Paid ${formatPrice(request.amount)}` : 'No payment required'}. You can create the room now.`;
+      else if (status === 'rejected') statusEl.textContent = 'Rejected by admin. Please submit a new request.';
+      else if (status === 'expired') statusEl.textContent = 'Expired. Please submit a new request.';
+      else statusEl.textContent = 'Pending admin approval. Check again after the dashboard review.';
+    }
+    if (createBtn) createBtn.disabled = status !== 'approved';
+  } catch (error) {
+    console.error('Failed to refresh payment status:', error);
+    if (statusEl) statusEl.textContent = 'Could not fetch payment status. Try again.';
+  }
+}
+
+async function submitManualPaymentRequest() {
+  const errEl = document.getElementById('manualSetupError');
+  if (errEl) errEl.style.display = 'none';
+
+  const summary = getManualPaymentSummary();
+  if (!summary.passcode) return showManualSetupError('Room passcode is required.');
+  if (summary.teams.length < 2) return showManualSetupError('Add at least 2 teams before submitting payment.');
+  if (summary.players.length < 1) return showManualSetupError('Add at least 1 player before submitting payment.');
+  if (summary.plan.amount === null) return showManualSetupError('Payment plans currently support only 3, 4, or 5 team auctions.');
+
+  if (summary.plan.amount === 0) {
+    setManualPaymentRequestId('');
+    const statusEl = document.getElementById('paymentRequestStatus');
+    if (statusEl) statusEl.textContent = 'This setup is free. You can create the auction room directly.';
+    showToast('No payment is needed for this plan.', 'success');
+    return;
+  }
+
+  const requestId = `pay_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const submitBtn = document.getElementById('submitPaymentRequestBtn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+  }
+
+  try {
+    let receiptUrl = '';
+    if (summary.paymentReceiptFile) {
+      receiptUrl = await uploadFileToCloudinary(summary.paymentReceiptFile, {
+        roomCode: requestId,
+        entityType: 'player',
+        entityId: 'payment-receipt',
+        fileName: summary.paymentReceiptFile.name || 'payment-receipt',
+        sharedAssetKey: getFileAssetKey(summary.paymentReceiptFile, 'payment-receipt')
+      });
+    }
+
+    await db.ref(`paymentRequests/${requestId}`).set({
+      requestId,
+      status: 'pending',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      auctionTitle: summary.auctionTitle,
+      passcode: summary.passcode,
+      teamCount: summary.teamCount,
+      amount: summary.plan.amount,
+      budget: summary.budget,
+      maxSquadSize: summary.maxSquadSize,
+      minSquadSize: summary.minSquadSize,
+      timerSeconds: summary.timerUnlimited ? 0 : summary.timerSeconds,
+      timerUnlimited: summary.timerUnlimited,
+      bidOptions: summary.bidOptions,
+      iconPlayerPrice: summary.iconPlayerPrice,
+      maxIconPlayers: summary.maxIconPlayers,
+      hostRoleMode: summary.hostRoleMode,
+      scheduledStartAt: summary.scheduledStartAt || 0,
+      paymentTxnId: summary.paymentTxnId,
+      paymentPayerName: summary.paymentPayerName,
+      receiptUrl,
+      teamNames: summary.teams.map(t => t.name).filter(Boolean),
+      playerNames: summary.players.map(p => p.name).filter(Boolean),
+      submittedByUid: getAuthUid(),
+      submittedByName: String(localStorage.getItem('ipl_auth_name') || '').trim()
+    });
+
+    setManualPaymentRequestId(requestId);
+    const statusEl = document.getElementById('paymentRequestStatus');
+    if (statusEl) {
+      statusEl.textContent = `Submitted. Request ID: ${requestId}. Waiting for admin approval.`;
+    }
+    showToast('Payment request submitted.', 'success');
+  } catch (error) {
+    console.error('Payment request submission failed:', error);
+    showManualSetupError(error?.message || 'Failed to submit payment request.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Payment Request';
+    }
+  }
+}
+
+function showManualSetupError(message) {
+  const errEl = document.getElementById('manualSetupError');
+  if (!errEl) return;
+  errEl.textContent = message;
+  errEl.style.display = 'block';
+}
+
 async function createManualRoom() {
   const errEl = document.getElementById('manualSetupError');
   errEl.style.display = 'none';
@@ -815,6 +1023,8 @@ async function createManualRoom() {
   const teams = collectTeams(true);
   const players = collectPlayers();
   const hostTeamId = document.getElementById('hostTeamSelect').value;
+  const paymentPlan = getManualAuctionPlan(teams.length);
+  const paymentRequestId = getManualPaymentRequestId();
 
   if (!passcode) return showError('Room passcode is required.');
   if (teams.length < 2) return showError('Add at least 2 teams.');
@@ -829,6 +1039,21 @@ async function createManualRoom() {
   if (!timerUnlimited && timerSeconds < 5) return showError('Timer must be at least 5 seconds, or enable Unlimited Timer.');
   if (!bidOptions.length) return showError('Add at least one bid option.');
   if (scheduledStartAt && scheduledStartAt < Date.now() - 60 * 1000) return showError('Start time must be in the future.');
+
+  if (paymentPlan.amount > 0) {
+    if (!paymentRequestId) return showError('Submit the payment request first and wait for admin approval.');
+    const paymentSnap = await db.ref(`paymentRequests/${paymentRequestId}`).get();
+    if (!paymentSnap.exists()) return showError('Payment request not found. Please submit it again.');
+
+    const paymentRequest = paymentSnap.val() || {};
+    const paymentStatus = String(paymentRequest.status || 'pending').toLowerCase();
+    if (Number(paymentRequest.teamCount || 0) !== teams.length || Number(paymentRequest.amount || 0) !== paymentPlan.amount) {
+      return showError('Payment request does not match the current team count. Please submit a new request.');
+    }
+    if (paymentStatus !== 'approved') {
+      return showError('Payment is still pending approval. Please wait for the admin dashboard to approve it.');
+    }
+  }
 
   // Paddle mode: keep bid UI simple by forcing a single bid button.
   const effectiveBidOptions = hostBidsForAllTeams ? [bidOptions[0]] : bidOptions;
@@ -967,6 +1192,17 @@ async function createManualRoom() {
       isHost: true,
       isSpectator: hostManagerOnly
     });
+
+    if (paymentRequestId) {
+      await db.ref(`paymentRequests/${paymentRequestId}`).update({
+        status: 'used',
+        usedAt: Date.now(),
+        roomCode: code,
+        updatedAt: Date.now()
+      }).catch(() => {});
+      setManualPaymentRequestId('');
+    }
+
     window.location.href = 'lobby.html';
   } catch (err) {
     console.error(err);

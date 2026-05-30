@@ -15,6 +15,9 @@ const IPL_TEAMS = [
   { id: "gt", name: "Gujarat Titans", short: "GT", primary: "#1DA462", secondary: "#1C1C1C", logo: "assets/team-logos/gt.png" }
 ];
 
+// Add more admin emails here when needed.
+window.ADMIN_DASHBOARD_EMAILS = ['shubhlodaliya@gmail.com'];
+
 function getTeam(teamId) {
   return IPL_TEAMS.find(t => t.id === teamId) || null;
 }

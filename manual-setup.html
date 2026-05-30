@@ -68,7 +68,7 @@
       <a class="btn btn-ghost" href="guide.html" style="text-decoration:none;">Auction Rules Guide</a>
       <a class="btn btn-ghost" href="howto.html" style="text-decoration:none;">Room Setup Tutorial</a>
       <a class="btn btn-ghost" href="faq.html" style="text-decoration:none;">FAQ</a>
-      <a class="btn btn-secondary" href="admin-dashboard.html" id="adminDashboardLink" style="display:none;text-decoration:none;">Admin Dashboard</a>
+      <a class="btn btn-secondary" href="admin-dashboard.html" data-admin-dashboard-link="1" style="display:none;text-decoration:none;">Admin Dashboard</a>
       <button class="btn btn-ghost" onclick="window.location.href='index.html'">Back</button>
     </div>
   </header>
@@ -96,50 +96,6 @@
           <input class="form-input" id="auctionPhotoFile" type="file" accept="image/*" />
         </div>
       </div>
-
-      <section class="manual-section" style="border-top:1px solid var(--border);padding-top:1rem;">
-        <div class="manual-section-head">
-          <h3>Payment & Approval</h3>
-          <button class="btn btn-secondary" type="button" onclick="refreshManualPaymentStatus()">Check Status</button>
-        </div>
-
-        <div class="manual-payment-grid" style="display:grid;grid-template-columns:minmax(240px,300px) 1fr;gap:1rem;align-items:start;">
-          <div class="glass" style="padding:1rem;text-align:center;">
-            <div style="font-size:0.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.45rem;">UPI QR</div>
-            <img src="assets/payment-qr.svg" alt="UPI QR code" style="width:100%;max-width:240px;margin:0 auto;border-radius:14px;border:1px solid var(--border);background:#fff;" />
-            <p style="font-size:0.82rem;color:var(--text-sec);margin-top:0.75rem;line-height:1.5;">Scan the QR, pay the amount for your team plan, then submit transaction details below.</p>
-          </div>
-
-          <div class="glass" style="padding:1rem;display:grid;gap:0.8rem;">
-            <div class="form-group">
-              <label class="form-label">Plan Summary</label>
-              <input class="form-input" id="paymentPlanSummary" type="text" readonly value="3 teams = Free | 4 teams = ₹299 | 5 teams = ₹399" />
-            </div>
-            <div class="manual-grid-two" style="grid-template-columns:1fr 1fr;gap:0.8rem;">
-              <div class="form-group">
-                <label class="form-label">Transaction ID / UTR</label>
-                <input class="form-input" id="paymentTxnId" type="text" maxlength="60" placeholder="Enter UTR or transaction id" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Payer Name</label>
-                <input class="form-input" id="paymentPayerName" type="text" maxlength="60" placeholder="Name on payment" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Payment Screenshot (optional)</label>
-              <input class="form-input" id="paymentReceiptFile" type="file" accept="image/*" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Approval Status</label>
-              <div id="paymentRequestStatus" style="font-size:0.9rem;color:var(--text-sec);padding:0.75rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:rgba(255,255,255,0.6);">No payment request submitted yet.</div>
-            </div>
-            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-              <button class="btn btn-secondary" type="button" id="submitPaymentRequestBtn" onclick="submitManualPaymentRequest()">Submit Payment Request</button>
-              <button class="btn btn-ghost" type="button" onclick="refreshManualPaymentStatus()">Refresh Status</button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <div class="manual-grid-four">
         <div class="form-group">
@@ -203,6 +159,50 @@
         </div>
 
         <div id="manualPlayersList" class="manual-list"></div>
+      </section>
+
+      <section class="manual-section" style="border-top:1px solid var(--border);padding-top:1rem;">
+        <div class="manual-section-head">
+          <h3>Payment & Approval</h3>
+          <button class="btn btn-secondary" type="button" onclick="refreshManualPaymentStatus()">Check Status</button>
+        </div>
+
+        <div class="manual-payment-grid" style="display:grid;grid-template-columns:minmax(240px,300px) 1fr;gap:1rem;align-items:start;">
+          <div class="glass" style="padding:1rem;text-align:center;">
+            <div style="font-size:0.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.45rem;">UPI QR</div>
+            <img src="assets/payment-qr.svg" alt="UPI QR code" style="width:100%;max-width:240px;margin:0 auto;border-radius:14px;border:1px solid var(--border);background:#fff;" />
+            <p style="font-size:0.82rem;color:var(--text-sec);margin-top:0.75rem;line-height:1.5;">Scan the QR, pay the amount for your team plan, then submit transaction details below.</p>
+          </div>
+
+          <div class="glass" style="padding:1rem;display:grid;gap:0.8rem;">
+            <div class="form-group">
+              <label class="form-label">Plan Summary</label>
+              <input class="form-input" id="paymentPlanSummary" type="text" readonly value="3 teams = Free | 4 teams = ₹299 | 5 teams = ₹399" />
+            </div>
+            <div class="manual-grid-two" style="grid-template-columns:1fr 1fr;gap:0.8rem;">
+              <div class="form-group">
+                <label class="form-label">Transaction ID / UTR</label>
+                <input class="form-input" id="paymentTxnId" type="text" maxlength="60" placeholder="Enter UTR or transaction id" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Payer Name</label>
+                <input class="form-input" id="paymentPayerName" type="text" maxlength="60" placeholder="Name on payment" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Payment Screenshot (optional)</label>
+              <input class="form-input" id="paymentReceiptFile" type="file" accept="image/*" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Approval Status</label>
+              <div id="paymentRequestStatus" style="font-size:0.9rem;color:var(--text-sec);padding:0.75rem 0.9rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:rgba(255,255,255,0.6);">No payment request submitted yet.</div>
+            </div>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+              <button class="btn btn-secondary" type="button" id="submitPaymentRequestBtn" onclick="submitManualPaymentRequest()">Submit Payment Request</button>
+              <button class="btn btn-ghost" type="button" onclick="refreshManualPaymentStatus()">Refresh Status</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <div class="manual-grid-two">

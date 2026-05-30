@@ -105,6 +105,18 @@ function applyAuthUi(user) {
     if (joinName && !joinName.value.trim()) joinName.value = suggested;
     if (hostName && !hostName.value.trim()) hostName.value = suggested;
   }
+
+  updateAdminDashboardLinks(user);
+}
+
+function updateAdminDashboardLinks(user = null) {
+  const adminEmails = Array.isArray(window.ADMIN_DASHBOARD_EMAILS) ? window.ADMIN_DASHBOARD_EMAILS : [];
+  const currentEmail = String(user?.email || localStorage.getItem('ipl_auth_email') || '').trim().toLowerCase();
+  const allowed = !!currentEmail && adminEmails.map((email) => String(email || '').trim().toLowerCase()).filter(Boolean).includes(currentEmail);
+
+  document.querySelectorAll('[data-admin-dashboard-link="1"]').forEach((el) => {
+    el.style.display = allowed ? 'inline-flex' : 'none';
+  });
 }
 
 function switchAuthMode(mode) {

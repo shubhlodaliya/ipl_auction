@@ -22,22 +22,10 @@ window.addEventListener('DOMContentLoaded', initManualSetup);
 function initManualSetup() {
   if (typeof requireAuth === 'function' && !requireAuth('index.html')) return;
 
-  updateAdminDashboardLink();
   for (let i = 0; i < 4; i += 1) addTeamRow();
   for (let i = 0; i < 12; i += 1) addPlayerRow();
   updateManualPaymentUi();
   refreshManualPaymentStatus();
-}
-
-function updateAdminDashboardLink() {
-  const link = document.getElementById('adminDashboardLink');
-  if (!link) return;
-
-  const adminEmails = Array.isArray(window.ADMIN_DASHBOARD_EMAILS) ? window.ADMIN_DASHBOARD_EMAILS : [];
-  const currentEmail = String(localStorage.getItem('ipl_auth_email') || '').trim().toLowerCase();
-  const allowed = adminEmails.map((email) => String(email || '').trim().toLowerCase()).filter(Boolean).includes(currentEmail);
-
-  link.style.display = allowed ? 'inline-flex' : 'none';
 }
 
 function toggleManualTimerUnlimited(enabled) {

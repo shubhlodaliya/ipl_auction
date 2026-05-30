@@ -128,7 +128,8 @@ async function loadPaymentRequests() {
     listEl.innerHTML = sorted.map(renderRequestCard).join('');
   } catch (err) {
     console.error('Failed to load payment requests:', err);
-    listEl.innerHTML = '<div class="admin-empty">Could not load payment requests.</div>';
+    const detail = String(err?.message || err?.code || 'Unknown error');
+    listEl.innerHTML = `<div class="admin-empty">Could not load payment requests.<br><span style="display:block;margin-top:0.45rem;font-size:0.82rem;">${escapeHtml(detail)}</span></div>`;
   }
 }
 
@@ -178,6 +179,10 @@ async function copyRequestId(requestId) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
+  if (typeof waitForAuthReady === 'function') {
+    await waitForAuthReady();
+  }
+
   if (typeof requireAuth === 'function' && !requireAuth('index.html')) return;
 
   const email = getAdminEmail();

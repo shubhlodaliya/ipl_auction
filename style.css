@@ -126,6 +126,53 @@ body {
     color: var(--gold);
   }
 
+  body.auction-page .player-info-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,245,247,0.98));
+    border-color: rgba(142, 29, 43, 0.22);
+    box-shadow: 0 16px 36px rgba(142, 29, 43, 0.09);
+  }
+
+  body.auction-page .badge-role,
+  body.auction-page .badge-category-Indian,
+  body.auction-page .badge-category-Overseas,
+  body.auction-page .badge-country,
+  body.auction-page .badge-extra-field,
+  body.auction-page .player-extra-fields .badge-extra-field,
+  body.auction-page .watchlist-live-pill,
+  body.auction-page .player-bid-team-tile,
+  body.auction-page .base-price {
+    color: var(--text);
+  }
+
+  body.auction-page .badge-role,
+  body.auction-page .badge-category-Indian,
+  body.auction-page .badge-category-Overseas,
+  body.auction-page .badge-country,
+  body.auction-page .badge-extra-field {
+    background: rgba(142, 29, 43, 0.07) !important;
+    border: 1px solid rgba(142, 29, 43, 0.18) !important;
+    color: #4d1a21 !important;
+  }
+
+  body.auction-page .player-extra-fields .badge-extra-field {
+    background: rgba(142, 29, 43, 0.08) !important;
+    border-color: rgba(142, 29, 43, 0.22) !important;
+    color: #4d1a21 !important;
+  }
+
+  body.auction-page .base-price {
+    color: var(--text-sec);
+  }
+
+  body.auction-page .base-price span {
+    color: var(--text);
+  }
+
+  body.auction-page .player-badges .badge,
+  body.auction-page .player-extra-fields .badge {
+    box-shadow: none;
+  }
+
   body.auction-page .progress-bar-fill,
   body.auction-page .timer-ring-progress,
   body.auction-page .pool-status.sold,

@@ -2553,8 +2553,8 @@ async function startReAuctionFromResults() {
   const allReady = isManualAuction
     ? true
     : (hostControlled
-    ? true
-    : (eligibleTeamIds.length > 0 && eligibleTeamIds.every(teamId => !!readyMap[teamId]));
+      ? true
+      : (eligibleTeamIds.length > 0 && eligibleTeamIds.every(teamId => !!readyMap[teamId])));
   if (!allReady) {
     showToast('All eligible teams must be ready.', 'error');
     return;

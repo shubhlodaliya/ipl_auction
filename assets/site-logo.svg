@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">IPL Auction</title>
+  <desc id="desc">Cricket bat style logo for IPL Auction</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8e1d2b"/>
+      <stop offset="100%" stop-color="#b43a49"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="164" fill="rgba(255,255,255,0.09)"/>
+  <path d="M176 348c16-74 67-163 124-220 14-14 36-13 49 1 13 14 13 35-1 49-57 57-146 108-220 124l48 46z" fill="#fff7f8"/>
+  <path d="M324 140l48 48" stroke="#f7d7da" stroke-width="18" stroke-linecap="round"/>
+  <path d="M196 314l-34 34" stroke="#f7d7da" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="356" cy="156" r="18" fill="#fff7f8"/>
+  <text x="50%" y="438" text-anchor="middle" font-family="Rajdhani, Arial, sans-serif" font-size="54" font-weight="700" fill="#fff7f8">IPL AUCTION</text>
+</svg>

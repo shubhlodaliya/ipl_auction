@@ -6514,7 +6514,7 @@ body.broadcast-mode #teamModalOverlay {
   background: linear-gradient(180deg, rgba(5, 9, 28, 0.9), rgba(5, 9, 28, 0.64));
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 209, 64, 0.24);
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .broadcast-logo {
@@ -6581,6 +6581,13 @@ body.broadcast-mode #teamModalOverlay {
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 1px;
+  position: absolute;
+  right: 1.6rem;
+}
+
+.results-viewer-home-top {
+  position: absolute;
+  left: 1.6rem;
 }
 
 .broadcast-profile-icon {

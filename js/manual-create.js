@@ -853,6 +853,15 @@ function getManualPaymentCachedRequest(requestId = '') {
   }
 }
 
+function escapeManualHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function renderManualPaymentStatus(request) {
   const statusEl = document.getElementById('paymentRequestStatus');
   const createBtn = document.getElementById('createManualRoomBtn');
@@ -865,8 +874,8 @@ function renderManualPaymentStatus(request) {
     const reason = String(request.rejectionReason || '').trim();
     const rejectedBy = String(request.rejectedBy || '').trim();
     statusEl.innerHTML = reason
-      ? `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}.<br><span style="display:block;margin-top:0.35rem;color:var(--red);font-weight:600;">Reason: ${escapeHtml(reason)}</span><span style="display:block;margin-top:0.25rem;">Please submit a new request.</span>`
-      : `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}. Please submit a new request.`;
+      ? `Rejected by admin${rejectedBy ? ` (${escapeManualHtml(rejectedBy)})` : ''}.<br><span style="display:block;margin-top:0.35rem;color:var(--red);font-weight:600;">Reason: ${escapeManualHtml(reason)}</span><span style="display:block;margin-top:0.25rem;">Please submit a new request.</span>`
+      : `Rejected by admin${rejectedBy ? ` (${escapeManualHtml(rejectedBy)})` : ''}. Please submit a new request.`;
   } else if (status === 'expired') {
     statusEl.textContent = 'Expired. Please submit a new request.';
   } else {

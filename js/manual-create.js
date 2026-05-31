@@ -7,6 +7,16 @@ let playerCounter = 0;
 let customPlayerFields = [];
 const MANUAL_ASSET_CACHE_KEY = 'ipl_manual_asset_cache_v1';
 const MANUAL_ASSET_CACHE_LIMIT = 500;
+const MANUAL_PAYMENT_TIERS = [
+  { maxTeams: 3, amount: 0, label: 'Free plan' },
+  { maxTeams: 4, amount: 299, label: '₹299 plan' },
+  { maxTeams: 6, amount: 399, label: '₹399 plan' },
+  { maxTeams: 8, amount: 499, label: '₹499 plan' },
+  { maxTeams: 12, amount: 599, label: '₹599 plan' },
+  { maxTeams: 16, amount: 699, label: '₹699 plan' },
+  { maxTeams: 20, amount: 799, label: '₹799 plan' },
+  { maxTeams: 30, amount: 999, label: '₹999 plan' }
+];
 
 async function reserveAvailableRoomCode(maxAttempts = 30) {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -797,10 +807,17 @@ async function uploadManualAssets(roomCode, teams, players, options = {}) {
 
 function getManualAuctionPlan(teamCount) {
   const count = Number(teamCount || 0);
-  if (count <= 3) return { amount: 0, label: 'Free plan', requiresPayment: false };
-  if (count === 4) return { amount: 299, label: '₹299 plan', requiresPayment: true };
-  if (count === 5) return { amount: 399, label: '₹399 plan', requiresPayment: true };
-  return { amount: null, label: 'Custom plan', requiresPayment: true };
+  if (count <= 3) {
+    return { amount: 0, label: 'Free plan', tierTeams: 3, requiresPayment: false };
+  }
+
+  const tier = MANUAL_PAYMENT_TIERS.find((item) => count <= item.maxTeams) || MANUAL_PAYMENT_TIERS[MANUAL_PAYMENT_TIERS.length - 1];
+  return {
+    amount: tier.amount,
+    label: tier.amount === 0 ? 'Free plan' : tier.label,
+    tierTeams: tier.maxTeams,
+    requiresPayment: tier.amount > 0
+  };
 }
 
 function getManualPaymentRequestId() {
@@ -848,13 +865,15 @@ function updateManualPaymentUi() {
   const planEl = document.getElementById('paymentPlanSummary');
   const statusEl = document.getElementById('paymentRequestStatus');
   const submitBtn = document.getElementById('submitPaymentRequestBtn');
-  const amountText = summary.plan.amount === null ? 'Custom amount' : (summary.plan.amount === 0 ? 'Free' : `₹${summary.plan.amount}`);
+  const amountText = summary.plan.amount === 0
+    ? 'Free'
+    : `₹${summary.plan.amount}${summary.plan.tierTeams ? ` / up to ${summary.plan.tierTeams} teams` : ''}`;
 
   if (planEl) {
     planEl.value = `${summary.teamCount} teams → ${summary.plan.label} (${amountText})`;
   }
   if (submitBtn) {
-    submitBtn.disabled = !summary.teamCount || summary.plan.amount === null;
+    submitBtn.disabled = !summary.teamCount;
     submitBtn.textContent = summary.plan.amount === 0 ? 'No payment needed' : 'Submit Payment Request';
   }
   if (statusEl && !getManualPaymentRequestId()) {
@@ -915,7 +934,6 @@ async function submitManualPaymentRequest() {
   if (!summary.passcode) return showManualSetupError('Room passcode is required.');
   if (summary.teams.length < 2) return showManualSetupError('Add at least 2 teams before submitting payment.');
   if (summary.players.length < 1) return showManualSetupError('Add at least 1 player before submitting payment.');
-  if (summary.plan.amount === null) return showManualSetupError('Payment plans currently support only 3, 4, or 5 team auctions.');
 
   if (summary.plan.amount === 0) {
     setManualPaymentRequestId('');
@@ -953,6 +971,7 @@ async function submitManualPaymentRequest() {
       passcode: summary.passcode,
       teamCount: summary.teamCount,
       amount: summary.plan.amount,
+      pricingTierTeams: summary.plan.tierTeams || null,
       budget: summary.budget,
       maxSquadSize: summary.maxSquadSize,
       minSquadSize: summary.minSquadSize,

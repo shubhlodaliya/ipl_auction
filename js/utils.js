@@ -16,7 +16,7 @@ const IPL_TEAMS = [
 ];
 
 // Add more admin emails here when needed.
-window.ADMIN_DASHBOARD_EMAILS = ['shubhlodaliya@gmail.com'];
+window.ADMIN_DASHBOARD_EMAILS = ['shubhlodaliya@gmail.com', 'tilakmoradiya1111@gmail.com'];
 
 function getTeam(teamId) {
   return IPL_TEAMS.find(t => t.id === teamId) || null;

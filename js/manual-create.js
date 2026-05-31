@@ -36,7 +36,7 @@ async function initManualSetup() {
     await waitForAuthReady();
   }
 
-  for (let i = 0; i < 4; i += 1) addTeamRow();
+  for (let i = 0; i < 3; i += 1) addTeamRow();
   for (let i = 0; i < 12; i += 1) addPlayerRow();
   updateManualPaymentUi();
   refreshManualPaymentStatus();

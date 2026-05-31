@@ -830,6 +830,52 @@ function setManualPaymentRequestId(requestId) {
   else localStorage.removeItem('ipl_manual_payment_request_id');
 }
 
+function getManualPaymentCacheKey(requestId = '') {
+  const value = String(requestId || getManualPaymentRequestId() || '').trim();
+  return value ? `ipl_manual_payment_cache_${value}` : '';
+}
+
+function setManualPaymentCachedRequest(requestId, requestData) {
+  const key = getManualPaymentCacheKey(requestId);
+  if (!key) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(requestData || {}));
+  } catch (_) {}
+}
+
+function getManualPaymentCachedRequest(requestId = '') {
+  const key = getManualPaymentCacheKey(requestId);
+  if (!key) return null;
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null');
+  } catch (_) {
+    return null;
+  }
+}
+
+function renderManualPaymentStatus(request) {
+  const statusEl = document.getElementById('paymentRequestStatus');
+  const createBtn = document.getElementById('createManualRoomBtn');
+  if (!statusEl || !request) return;
+
+  const status = String(request.status || 'pending').toLowerCase();
+  if (status === 'approved') {
+    statusEl.textContent = `Approved. ${request.amount ? `Paid ${formatPrice(request.amount)}` : 'No payment required'}. You can create the room now.`;
+  } else if (status === 'rejected') {
+    const reason = String(request.rejectionReason || '').trim();
+    const rejectedBy = String(request.rejectedBy || '').trim();
+    statusEl.innerHTML = reason
+      ? `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}.<br><span style="display:block;margin-top:0.35rem;color:var(--red);font-weight:600;">Reason: ${escapeHtml(reason)}</span><span style="display:block;margin-top:0.25rem;">Please submit a new request.</span>`
+      : `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}. Please submit a new request.`;
+  } else if (status === 'expired') {
+    statusEl.textContent = 'Expired. Please submit a new request.';
+  } else {
+    statusEl.textContent = 'Pending admin approval. Check again after the dashboard review.';
+  }
+
+  if (createBtn) createBtn.disabled = status !== 'approved';
+}
+
 function getManualPaymentSummary() {
   const teams = collectTeams(false);
   const players = collectPlayers();
@@ -903,22 +949,15 @@ async function refreshManualPaymentStatus() {
     }
 
     const request = snap.val() || {};
-    const status = String(request.status || 'pending').toLowerCase();
-    if (statusEl) {
-      if (status === 'approved') statusEl.textContent = `Approved. ${request.amount ? `Paid ${formatPrice(request.amount)}` : 'No payment required'}. You can create the room now.`;
-      else if (status === 'rejected') {
-        const reason = String(request.rejectionReason || '').trim();
-        const rejectedBy = String(request.rejectedBy || '').trim();
-        statusEl.innerHTML = reason
-          ? `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}.<br><span style="display:block;margin-top:0.35rem;color:var(--red);font-weight:600;">Reason: ${escapeHtml(reason)}</span><span style="display:block;margin-top:0.25rem;">Please submit a new request.</span>`
-          : `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}. Please submit a new request.`;
-      }
-      else if (status === 'expired') statusEl.textContent = 'Expired. Please submit a new request.';
-      else statusEl.textContent = 'Pending admin approval. Check again after the dashboard review.';
-    }
-    if (createBtn) createBtn.disabled = status !== 'approved';
+    setManualPaymentCachedRequest(requestId, request);
+    renderManualPaymentStatus(request);
   } catch (error) {
     console.error('Failed to refresh payment status:', error);
+    const cachedRequest = getManualPaymentCachedRequest(requestId);
+    if (cachedRequest) {
+      renderManualPaymentStatus(cachedRequest);
+      return;
+    }
     if (statusEl) statusEl.textContent = 'Could not fetch payment status. Try again.';
   }
 }
@@ -998,6 +1037,34 @@ async function submitManualPaymentRequest() {
     });
 
     setManualPaymentRequestId(requestId);
+    setManualPaymentCachedRequest(requestId, {
+      requestId,
+      status: 'pending',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      auctionTitle: summary.auctionTitle,
+      passcode: summary.passcode,
+      teamCount: summary.teamCount,
+      amount: summary.plan.amount,
+      pricingTierTeams: summary.plan.tierTeams || null,
+      budget: summary.budget,
+      maxSquadSize: summary.maxSquadSize,
+      minSquadSize: summary.minSquadSize,
+      timerSeconds: summary.timerUnlimited ? 0 : summary.timerSeconds,
+      timerUnlimited: summary.timerUnlimited,
+      bidOptions: summary.bidOptions,
+      iconPlayerPrice: summary.iconPlayerPrice,
+      maxIconPlayers: summary.maxIconPlayers,
+      hostRoleMode: summary.hostRoleMode,
+      scheduledStartAt: summary.scheduledStartAt || 0,
+      paymentTxnId: summary.paymentTxnId,
+      paymentPayerName: summary.paymentPayerName,
+      receiptUrl,
+      teamNames: summary.teams.map(t => t.name).filter(Boolean),
+      playerNames: summary.players.map(p => p.name).filter(Boolean),
+      submittedByUid: getAuthUid(),
+      submittedByName: String(localStorage.getItem('ipl_auth_name') || '').trim()
+    });
     const statusEl = document.getElementById('paymentRequestStatus');
     if (statusEl) {
       statusEl.textContent = `Submitted. Request ID: ${requestId}. Waiting for admin approval.`;

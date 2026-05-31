@@ -906,7 +906,13 @@ async function refreshManualPaymentStatus() {
     const status = String(request.status || 'pending').toLowerCase();
     if (statusEl) {
       if (status === 'approved') statusEl.textContent = `Approved. ${request.amount ? `Paid ${formatPrice(request.amount)}` : 'No payment required'}. You can create the room now.`;
-      else if (status === 'rejected') statusEl.textContent = 'Rejected by admin. Please submit a new request.';
+      else if (status === 'rejected') {
+        const reason = String(request.rejectionReason || '').trim();
+        const rejectedBy = String(request.rejectedBy || '').trim();
+        statusEl.innerHTML = reason
+          ? `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}.<br><span style="display:block;margin-top:0.35rem;color:var(--red);font-weight:600;">Reason: ${escapeHtml(reason)}</span><span style="display:block;margin-top:0.25rem;">Please submit a new request.</span>`
+          : `Rejected by admin${rejectedBy ? ` (${escapeHtml(rejectedBy)})` : ''}. Please submit a new request.`;
+      }
       else if (status === 'expired') statusEl.textContent = 'Expired. Please submit a new request.';
       else statusEl.textContent = 'Pending admin approval. Check again after the dashboard review.';
     }

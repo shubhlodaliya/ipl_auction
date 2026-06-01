@@ -1183,18 +1183,6 @@
       if (!grid) return;
       if (typeof db === 'undefined') { setTimeout(loadLiveRooms, 800); return; }
 
-      if (typeof waitForAuthReady === 'function' && !window.__liveRoomsAuthWaitStarted) {
-        window.__liveRoomsAuthWaitStarted = true;
-        waitForAuthReady().then(() => {
-          window.__liveRoomsAuthWaitStarted = false;
-          loadLiveRooms();
-        }).catch((err) => {
-          console.error('Live auctions auth wait failed:', err);
-          window.__liveRoomsAuthWaitStarted = false;
-        });
-        return;
-      }
-
       if (liveRoomsListenerAttached) {
         if (liveRoomsCache) renderLiveRooms(liveRoomsCache);
         return;

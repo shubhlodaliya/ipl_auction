@@ -113,9 +113,6 @@ function mapRoomToHistoryRow(roomCode, room) {
 
 async function getHostOwnedRooms(authUid) {
   if (!authUid) return [];
-  if (typeof waitForAuthReady === 'function') {
-    await waitForAuthReady();
-  }
   const roomsSnap = await db.ref('rooms').get();
   if (!roomsSnap.exists()) return [];
   const rooms = roomsSnap.val() || {};
@@ -151,10 +148,6 @@ function initCreatePage() {
 async function renderScheduledAuctions() {
   const listEl = document.getElementById('scheduledAuctionsList');
   if (!listEl) return;
-
-  if (typeof waitForAuthReady === 'function') {
-    await waitForAuthReady();
-  }
 
   listEl.innerHTML = `
     <div class="ma-tournament-item" style="justify-content:space-between;">
@@ -243,10 +236,6 @@ async function renderScheduledAuctions() {
 async function renderPastAuctions() {
   const listEl = document.getElementById('pastAuctionsList');
   if (!listEl) return;
-
-  if (typeof waitForAuthReady === 'function') {
-    await waitForAuthReady();
-  }
 
   const authUid = getAuthUid();
   if (!authUid) {

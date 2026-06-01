@@ -149,7 +149,8 @@ async function renderScheduledAuctions() {
   const listEl = document.getElementById('scheduledAuctionsList');
   if (!listEl) return;
 
-  const authUid = getAuthUid();
+  const authUser = typeof waitForAuthReady === 'function' ? await waitForAuthReady() : null;
+  const authUid = String(authUser?.uid || getAuthUid() || '').trim();
   if (!authUid) {
     listEl.innerHTML = `
       <div class="ma-tournament-item" style="justify-content:space-between;">

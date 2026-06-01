@@ -187,7 +187,14 @@ async function renderScheduledAuctions() {
         return !['finished', 'terminated'].includes(status);
       })
       .map(([roomCode, room]) => mapRoomToHistoryRow(roomCode, room))
-      .sort((a, b) => Number(a.scheduledStartAt || 0) - Number(b.scheduledStartAt || 0));
+      .sort((a, b) => {
+        const aStart = Number(a.scheduledStartAt || 0) || 0;
+        const bStart = Number(b.scheduledStartAt || 0) || 0;
+        const aExpired = aStart < now;
+        const bExpired = bStart < now;
+        if (aExpired !== bExpired) return aExpired ? 1 : -1;
+        return aStart - bStart;
+      });
 
     if (!rows.length) {
       listEl.innerHTML = `

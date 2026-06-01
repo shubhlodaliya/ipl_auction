@@ -149,6 +149,19 @@ async function renderScheduledAuctions() {
   const listEl = document.getElementById('scheduledAuctionsList');
   if (!listEl) return;
 
+  const authUid = getAuthUid();
+  if (!authUid) {
+    listEl.innerHTML = `
+      <div class="ma-tournament-item" style="justify-content:space-between;">
+        <div>
+          <div style="font-weight:700;color:var(--text);">Login to view scheduled auctions</div>
+          <div style="font-size:0.85rem;color:var(--text-dim);">Please sign in to load upcoming rooms.</div>
+        </div>
+        <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
+      </div>`;
+    return;
+  }
+
   listEl.innerHTML = `
     <div class="ma-tournament-item" style="justify-content:space-between;">
       <div style="color:var(--text-dim);font-size:0.9rem;">Loading scheduled auctions...</div>
@@ -225,9 +238,12 @@ async function renderScheduledAuctions() {
       </div>`;
   } catch (err) {
     console.error('Failed to load scheduled auctions:', err);
+    const message = String(err?.message || '').toLowerCase().includes('permission')
+      ? 'Login required to view scheduled auctions.'
+      : 'Could not load scheduled auctions.';
     listEl.innerHTML = `
       <div class="ma-tournament-item" style="justify-content:space-between;">
-        <div style="color:var(--text-dim);font-size:0.9rem;">Could not load scheduled auctions.</div>
+        <div style="color:var(--text-dim);font-size:0.9rem;">${message}</div>
         <button class="ma-remind-btn" onclick="renderScheduledAuctions()">Refresh</button>
       </div>`;
   }

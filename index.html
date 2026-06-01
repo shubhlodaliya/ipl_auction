@@ -1103,7 +1103,12 @@
       if (!grid) return;
 
       const allLive = Object.entries(rooms || {})
-        .filter(([code, room]) => room && room.config && room.config.status === 'auction')
+        .filter(([code, room]) => {
+          if (!room || !room.config) return false;
+          const status = String(room.config.status || room.status || '').toLowerCase();
+          const hasActiveAuction = status === 'auction' || status === 'live' || !!room.currentAuction?.playerId || String(room.currentAuction?.status || '').toLowerCase() === 'bidding';
+          return hasActiveAuction;
+        })
         .sort((a, b) => getRoomStartedAt(b[1].config) - getRoomStartedAt(a[1].config));
 
       const todayLive = allLive.filter(([code, room]) => isTimestampToday(getRoomStartedAt(room.config)));
@@ -1187,6 +1192,9 @@
       db.ref('rooms').on('value', function (snap) {
         liveRoomsCache = snap.exists() ? (snap.val() || {}) : {};
         renderLiveRooms(liveRoomsCache);
+      }, function (err) {
+        console.error('Failed to load live auctions:', err);
+        grid.innerHTML = '<div class="ma-no-live">⚠️ Could not load live auctions right now. Please refresh.</div>';
       });
     }
 

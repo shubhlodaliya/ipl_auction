@@ -165,11 +165,12 @@ async function renderScheduledAuctions() {
     const rows = Object.entries(rooms)
       .filter(([roomCode, room]) => {
         if (!roomCode || !room?.config) return false;
-        const status = String(room.config.status || '').toLowerCase();
+        const status = String(room.config.status || room.status || '').toLowerCase();
         const scheduledStartAt = Number(room.config.scheduledStartAt || 0) || 0;
         if (scheduledStartAt > 0 && scheduledStartAt < now - weekMs) return false;
-        // Show only rooms in lobby status with a scheduled start time set
-        return status === 'lobby' && scheduledStartAt > 0;
+        if (!scheduledStartAt) return false;
+        // Show any room that has a scheduled start time and is not already terminated/finished.
+        return !['finished', 'terminated'].includes(status);
       })
       .map(([roomCode, room]) => mapRoomToHistoryRow(roomCode, room))
       .sort((a, b) => Number(a.scheduledStartAt || 0) - Number(b.scheduledStartAt || 0));
@@ -195,6 +196,8 @@ async function renderScheduledAuctions() {
       const date = new Date(startAt);
       const day = String(date.getDate()).padStart(2, '0');
       const month = date.toLocaleString([], { month: 'short' }).toUpperCase();
+      const rowStatus = String(row.status || '').toLowerCase();
+      const statusLabel = rowStatus === 'auction' ? 'LIVE' : (rowStatus === 'finished' ? 'FINISHED' : 'LOBBY');
       const metaLine = startAt < now
         ? '<span style="color:var(--red);font-weight:700;">Scheduled time passed</span>'
         : `<span style="color:var(--text-dim);font-weight:700;">Starts at ${startLabel}</span>`;
@@ -212,7 +215,7 @@ async function renderScheduledAuctions() {
             <h4>${title} <span style="font-size:0.75rem;color:var(--text-dim);font-weight:500;">#${roomCode}</span></h4>
             <p>${metaLine}</p>
           </div>
-          <div class="ma-tournament-time">STATUS<br>LOBBY</div>
+          <div class="ma-tournament-time">STATUS<br>${escapeHtml(statusLabel)}</div>
           <button class="ma-remind-btn" onclick="openScheduledViewer('${roomCode}')">Open</button>
         </div>`;
     }).join('') + `

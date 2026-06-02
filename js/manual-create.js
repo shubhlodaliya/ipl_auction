@@ -1112,34 +1112,87 @@ async function submitManualPaymentRequest() {
 }
 
 async function sendPaymentRequestEmailNotification(payload) {
-  const formData = new FormData();
-  formData.append('name', payload.submittedByName || 'Unknown');
-  formData.append('email', payload.submittedByEmail || '');
-  formData.append('message', 'Please confirm this request from the admin dashboard and approve it if the payment details match.');
-  formData.append('requestId', payload.requestId || '');
-  formData.append('auctionTitle', payload.auctionTitle || '');
-  formData.append('paymentPayerName', payload.paymentPayerName || '');
-  formData.append('transactionId', payload.paymentTxnId || '');
-  formData.append('requestedAmount', String(payload.amount || 0));
-  formData.append('teamCount', String(payload.teamCount || 0));
-  formData.append('receiptUrl', payload.receiptUrl || '');
-  formData.append('_subject', `Payment request pending approval: ${payload.auctionTitle || 'IPL Auction'}`);
-  formData.append('_template', 'table');
-  formData.append('_captcha', 'false');
-  formData.append('_replyto', payload.submittedByEmail || '');
-  formData.append('_cc', 'tilakmoradiya1111@gmail.com');
+  return new Promise((resolve, reject) => {
+    const iframeName = `payment_mail_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    iframe.setAttribute('aria-hidden', 'true');
 
-  const response = await fetch('https://formsubmit.co/ajax/shubhlodaliya@gmail.com', {
-    method: 'POST',
-    body: formData
+    const form = document.createElement('form');
+    form.action = 'https://formsubmit.co/shubhlodaliya@gmail.com';
+    form.method = 'POST';
+    form.target = iframeName;
+    form.style.display = 'none';
+
+    const fields = {
+      name: payload.submittedByName || 'Unknown',
+      email: payload.submittedByEmail || '',
+      message: [
+        'Please confirm this request from the admin dashboard and approve it if the payment details match.',
+        '',
+        `Request ID: ${payload.requestId || '—'}`,
+        `Auction: ${payload.auctionTitle || '—'}`,
+        `Username: ${payload.submittedByName || 'Unknown'}`,
+        `Payer Name: ${payload.paymentPayerName || '—'}`,
+        `Transaction ID / UTR: ${payload.paymentTxnId || '—'}`,
+        `Requested Amount: ₹${Number(payload.amount || 0)}`,
+        `Team Count: ${Number(payload.teamCount || 0)}`,
+        payload.receiptUrl ? `Receipt URL: ${payload.receiptUrl}` : 'Receipt URL: not attached'
+      ].join('\n'),
+      requestId: payload.requestId || '',
+      auctionTitle: payload.auctionTitle || '',
+      paymentPayerName: payload.paymentPayerName || '',
+      transactionId: payload.paymentTxnId || '',
+      requestedAmount: String(payload.amount || 0),
+      teamCount: String(payload.teamCount || 0),
+      receiptUrl: payload.receiptUrl || '',
+      _subject: `Payment request pending approval: ${payload.auctionTitle || 'IPL Auction'}`,
+      _template: 'table',
+      _captcha: 'false',
+      _replyto: payload.submittedByEmail || '',
+      _cc: 'tilakmoradiya1111@gmail.com'
+    };
+
+    Object.entries(fields).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = String(value || '');
+      form.appendChild(input);
+    });
+
+    let settled = false;
+    const cleanup = () => {
+      if (form.parentNode) form.parentNode.removeChild(form);
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    };
+
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      fn(value);
+    };
+
+    iframe.addEventListener('load', () => {
+      window.setTimeout(() => finish(resolve, { success: true }), 250);
+    });
+
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+
+    try {
+      form.submit();
+    } catch (error) {
+      finish(reject, error);
+      return;
+    }
+
+    window.setTimeout(() => {
+      if (!settled) finish(resolve, { success: true });
+    }, 1500);
   });
-
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok || result?.success === false) {
-    throw new Error(result?.message || 'Failed to notify admins by email.');
-  }
-
-  return result;
 }
 
 function showManualSetupError(message) {

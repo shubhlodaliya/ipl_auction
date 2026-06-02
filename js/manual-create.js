@@ -1016,6 +1016,18 @@ async function submitManualPaymentRequest() {
       });
     }
 
+    const requestPayload = {
+      requestId,
+      auctionTitle: summary.auctionTitle,
+      submittedByName: String(localStorage.getItem('ipl_auth_name') || '').trim(),
+      submittedByEmail: String(currentUser.email || '').trim(),
+      paymentPayerName: summary.paymentPayerName,
+      paymentTxnId: summary.paymentTxnId,
+      amount: summary.plan.amount,
+      teamCount: summary.teamCount,
+      receiptUrl
+    };
+
     await db.ref(`paymentRequests/${requestId}`).set({
       requestId,
       status: 'pending',
@@ -1042,7 +1054,8 @@ async function submitManualPaymentRequest() {
       teamNames: summary.teams.map(t => t.name).filter(Boolean),
       playerNames: summary.players.map(p => p.name).filter(Boolean),
       submittedByUid: getAuthUid(),
-      submittedByName: String(localStorage.getItem('ipl_auth_name') || '').trim()
+      submittedByName: String(localStorage.getItem('ipl_auth_name') || '').trim(),
+      submittedByEmail: String(currentUser.email || '').trim()
     });
 
     setManualPaymentRequestId(requestId);
@@ -1072,8 +1085,16 @@ async function submitManualPaymentRequest() {
       teamNames: summary.teams.map(t => t.name).filter(Boolean),
       playerNames: summary.players.map(p => p.name).filter(Boolean),
       submittedByUid: getAuthUid(),
-      submittedByName: String(localStorage.getItem('ipl_auth_name') || '').trim()
+      submittedByName: String(localStorage.getItem('ipl_auth_name') || '').trim(),
+      submittedByEmail: String(currentUser.email || '').trim()
     });
+
+    try {
+      await sendPaymentRequestEmailNotification(requestPayload);
+    } catch (emailError) {
+      console.warn('Payment request email notification failed:', emailError);
+    }
+
     const statusEl = document.getElementById('paymentRequestStatus');
     if (statusEl) {
       statusEl.textContent = `Submitted. Request ID: ${requestId}. Waiting for admin approval.`;
@@ -1088,6 +1109,37 @@ async function submitManualPaymentRequest() {
       submitBtn.textContent = 'Submit Payment Request';
     }
   }
+}
+
+async function sendPaymentRequestEmailNotification(payload) {
+  const formData = new FormData();
+  formData.append('name', payload.submittedByName || 'Unknown');
+  formData.append('email', payload.submittedByEmail || '');
+  formData.append('message', 'Please confirm this request from the admin dashboard and approve it if the payment details match.');
+  formData.append('requestId', payload.requestId || '');
+  formData.append('auctionTitle', payload.auctionTitle || '');
+  formData.append('paymentPayerName', payload.paymentPayerName || '');
+  formData.append('transactionId', payload.paymentTxnId || '');
+  formData.append('requestedAmount', String(payload.amount || 0));
+  formData.append('teamCount', String(payload.teamCount || 0));
+  formData.append('receiptUrl', payload.receiptUrl || '');
+  formData.append('_subject', `Payment request pending approval: ${payload.auctionTitle || 'IPL Auction'}`);
+  formData.append('_template', 'table');
+  formData.append('_captcha', 'false');
+  formData.append('_replyto', payload.submittedByEmail || '');
+  formData.append('_cc', 'tilakmoradiya1111@gmail.com');
+
+  const response = await fetch('https://formsubmit.co/ajax/shubhlodaliya@gmail.com', {
+    method: 'POST',
+    body: formData
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result?.success === false) {
+    throw new Error(result?.message || 'Failed to notify admins by email.');
+  }
+
+  return result;
 }
 
 function showManualSetupError(message) {

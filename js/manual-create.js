@@ -9,13 +9,13 @@ const MANUAL_ASSET_CACHE_KEY = 'ipl_manual_asset_cache_v1';
 const MANUAL_ASSET_CACHE_LIMIT = 500;
 const MANUAL_PAYMENT_TIERS = [
   { maxTeams: 3, amount: 0, label: 'Free plan' },
-  { maxTeams: 4, amount: 299, label: '₹299 plan' },
-  { maxTeams: 6, amount: 399, label: '₹399 plan' },
-  { maxTeams: 8, amount: 499, label: '₹499 plan' },
-  { maxTeams: 12, amount: 599, label: '₹599 plan' },
-  { maxTeams: 16, amount: 699, label: '₹699 plan' },
-  { maxTeams: 20, amount: 799, label: '₹799 plan' },
-  { maxTeams: 30, amount: 999, label: '₹999 plan' }
+  { maxTeams: 4, amount: 799, label: '₹799 plan' },
+  { maxTeams: 6, amount: 899, label: '₹899 plan' },
+  { maxTeams: 8, amount: 999, label: '₹999 plan' },
+  { maxTeams: 12, amount: 1099, label: '₹1099 plan' },
+  { maxTeams: 16, amount: 1199, label: '₹1199 plan' },
+  { maxTeams: 20, amount: 1299, label: '₹1299 plan' },
+  { maxTeams: 30, amount: 1499, label: '₹1499 plan' }
 ];
 
 async function reserveAvailableRoomCode(maxAttempts = 30) {

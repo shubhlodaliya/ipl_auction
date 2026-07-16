@@ -136,7 +136,7 @@ function switchAuthMode(mode) {
       toggleText.textContent = 'Already have an account?';
       toggleLink.textContent = 'Login here';
     } else {
-      toggleText.textContent = 'New to MyAuction?';
+      toggleText.textContent = 'New to IPL Auction?';
       toggleLink.textContent = 'Register here';
     }
   }

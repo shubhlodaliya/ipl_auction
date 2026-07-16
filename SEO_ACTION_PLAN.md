@@ -26,7 +26,6 @@
   - `https://myiplauction.pro/guide.html`
   - `https://myiplauction.pro/howto.html`
   - `https://myiplauction.pro/faq.html`
-  - `https://myiplauction.pro/manual-setup.html`
 
 ## 4) Content SEO Targets
 Primary keyword clusters:

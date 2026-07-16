@@ -12,7 +12,7 @@ Use this pack to publish one high-quality SEO post each week for:
 ## Content Quality Checklist
 - Primary keyword in title, intro, 1-2 subheadings, conclusion.
 - Add one secondary keyword per section naturally.
-- Add internal links to: `/guide.html`, `/howto.html`, `/faq.html`, `/manual-setup.html`, `/index.html`.
+- Add internal links to: `/guide.html`, `/howto.html`, `/faq.html`, `/index.html`.
 - Add one FAQ section with 3-5 questions.
 - Keep paragraphs short and actionable.
 - Include one clear CTA: "Start your IPL auction room now" linking to `/index.html`.
@@ -78,7 +78,7 @@ Outline:
 7. CTA
 
 Internal links:
-- Manual setup controls: `/manual-setup.html`
+- Setup controls: `/howto.html`
 - Step-by-step tutorial: `/howto.html`
 - Start room: `/index.html`
 
@@ -156,7 +156,7 @@ Outline:
 
 Internal links:
 - Bidding strategy guide: `/guide.html`
-- Setup controls: `/manual-setup.html`
+- Setup controls: `/howto.html`
 
 ## Template 6: Comparison Post
 Title:
@@ -181,7 +181,7 @@ Outline:
 
 Internal links:
 - Setup guide: `/howto.html`
-- Manual setup: `/manual-setup.html`
+- Setup: `/howto.html`
 
 ## Reusable FAQ Block
 - What is the best budget for a mock IPL auction?

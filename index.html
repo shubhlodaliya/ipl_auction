@@ -267,13 +267,13 @@
   <!-- ANNOUNCEMENT BAR -->
   <div class="ma-announce">
     <span>📞</span>
-     <span>Welcome to the MyAuction &bull; Free IPL Auction Platform &bull; Play with Friends &bull; Real-Time
+     <span>Welcome to IPL Auction &bull; Free IPL auction platform &bull; Play with Friends &bull; Real-Time
       Bidding</span>
   </div>
 
   <!-- NAV -->
   <nav class="ma-nav">
-    <a class="ma-logo" href="index.html">My<span>Auction</span></a>
+    <a class="ma-logo" href="index.html">IPL<span>Auction</span></a>
     <div class="ma-nav-links">
       <a href="index.html" class="active">Home</a>
       <a href="#live-auctions">Today's Auctions</a>
@@ -295,11 +295,25 @@
   <!-- HERO -->
   <section class="ma-hero">
     <div class="ma-hero-left">
-      <div class="ma-hero-badge">Live Auction System</div>
-      <h1>MyAuction</h1>
-      <div class="ma-hero-sub">The Ultimate Arena for<br>Cricket Auctions.</div>
-      <p>Precision bidding meets high-stakes cricket management. Whether it's an elite IPL-style draft or a custom club
-        auction, dominate the market with real-time data and professional-grade tools.</p>
+      <div class="ma-hero-badge">IPL 2026 Auction House</div>
+      <h1>IPL Auction</h1>
+      <div class="ma-hero-sub">Built for fast,<br>franchise-style bidding.</div>
+      <p>Run a focused IPL auction experience with live bidding, clear team management, and a clean room flow designed
+        for friends, clubs, and cricket communities.</p>
+      <div class="ma-hero-stats">
+        <div class="ma-hero-stat">
+          <span>Live Bidding</span>
+          <strong>Realtime</strong>
+        </div>
+        <div class="ma-hero-stat">
+          <span>Room Style</span>
+          <strong>IPL Franchises</strong>
+        </div>
+        <div class="ma-hero-stat">
+          <span>Team Flow</span>
+          <strong>Fast Join + Create</strong>
+        </div>
+      </div>
       <div class="ma-hero-btns">
         <a href="#arena" class="ma-btn-hero-primary">Explore Auctions ↗</a>
         <a href="guide.html" class="ma-btn-hero-outline">View Guide</a>
@@ -307,6 +321,18 @@
     </div>
     <div class="ma-hero-img-wrap">
       <img class="ma-hero-illustration" src="assets/final.png" alt="IPL Auction Platform - Bid and Win Players" />
+      <div class="ma-hero-board">
+        <div class="ma-hero-board-head">
+          <span>Team Color Board</span>
+          <strong>Franchise Mode</strong>
+        </div>
+        <div class="ma-hero-board-grid">
+          <div class="ma-hero-board-item is-blue"><span>Royals</span><strong>#1E40AF</strong></div>
+          <div class="ma-hero-board-item is-gold"><span>Champions</span><strong>#F59E0B</strong></div>
+          <div class="ma-hero-board-item is-green"><span>All-Rounders</span><strong>#16A34A</strong></div>
+          <div class="ma-hero-board-item is-red"><span>Power Hitters</span><strong>#DC2626</strong></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -321,7 +347,7 @@
           <span class="ma-trust-chip">Secure Passcode Rooms</span>
           <span class="ma-trust-chip">Auto Budget Tracking</span>
           <span class="ma-trust-chip">Viewer Mode Support</span>
-          <span class="ma-trust-chip">Manual + IPL Modes</span>
+          <span class="ma-trust-chip">IPL Auction Rooms</span>
         </div>
       </div>
       <div class="ma-metrics">
@@ -351,43 +377,8 @@
 
   <!-- CHOOSE YOUR ARENA (with embedded create/join forms) -->
   <section class="ma-arena" id="arena">
-    <h2 class="ma-section-title">Choose Your Arena</h2>
+    <h2 class="ma-section-title">Choose Your IPL Arena</h2>
     <div class="ma-section-divider"></div>
-
-    <div class="ma-arena-grid ma-arena-full"
-      style="max-width:1100px;border:2px dashed #d0e0ff;padding:1.5rem;border-radius:8px;">
-
-      <!-- MANUAL AUCTION CARD -->
-      <div class="ma-arena-card">
-        <div class="ma-arena-card-header">
-          <div class="ma-arena-icon red">🎯</div>
-          <h3>Manual Auctions</h3>
-          <div style="margin-left:auto" class="ma-arena-trophy">🏆</div>
-        </div>
-        <p>Host professional player drafts with customizable rules, base prices, and bidding increments. Perfect for
-          local leagues and private tournaments.</p>
-        <ul class="ma-arena-features">
-          <li>Custom Player Pools</li>
-          <li>Real-Time Budget Tracking</li>
-          <li>Instant Leaderboards</li>
-        </ul>
-
-        <a href="manual-setup.html" class="ma-arena-btn" style="margin-top:1rem;">🎯 Open Manual Auction Setup</a>
-        <div style="margin-top:1rem;padding:1rem;background:#f0fff4;border-radius:6px;border:1px solid #bbf7d0;">
-          <p style="font-size:0.82rem;color:#166534;font-weight:600;margin-bottom:0.4rem;">&#8505; Setup includes:</p>
-          <ul style="font-size:0.8rem;color:#15803d;padding-left:1rem;line-height:1.8;">
-            <li>Add custom teams (name, logo, color)</li>
-            <li>Add custom players (photo, role, base price)</li>
-            <li>Custom bid buttons, timer, icon players</li>
-            <li>Host manager-only / paddle mode support</li>
-          </ul>
-        </div>
-        <div
-          style="margin-top:1rem;padding:0.75rem;background:#f9f9f9;border-radius:6px;border:1px solid #e5e5e5;text-align:center;">
-          <p style="font-size:0.8rem;color:#888;margin-bottom:0.4rem;">Already have a room code?</p>
-          <a href="#arena" class="ma-arena-btn" onclick="switchArenaTab('manual','join');" style="display:inline-block;width:auto;padding:0.5rem 1.25rem;font-size:0.78rem;">Go to Join Auction →</a>
-        </div>
-      </div>
 
       <!-- IPL AUCTION CARD -->
       <div class="ma-arena-card">
@@ -396,8 +387,8 @@
           <h3>IPL Auction</h3>
           <div style="margin-left:auto" class="ma-arena-trophy">🥇</div>
         </div>
-        <p>A specialized simulation engine mimicking the mega-auction experience. Includes
-          accelerated bidding rounds, and marquee player set protocols.</p>
+        <p>A focused auction room for IPL-style play, with fast create and join flows, live bidding, and team-first
+          room management.</p>
         <ul class="ma-arena-features">
           <li>Team Management</li>
           <li>Franchise Slot Management</li>
@@ -407,9 +398,9 @@
         <!-- TABS: Create / Join -->
         <div class="ma-section-tabs" style="margin-top:1rem;">
           <button class="ma-section-tab active" id="manualTabCreate" onclick="switchArenaTab('manual','create')">🎉
-            Create Auction</button>
+            Create IPL Room</button>
           <button class="ma-section-tab" id="manualTabJoin" onclick="switchArenaTab('manual','join')">🔗 Join
-            Auction</button>
+            IPL Room</button>
         </div>
 
         <!-- CREATE FORM -->
@@ -479,7 +470,7 @@
                 </label>
               </div>
             </div>
-            <button class="ma-arena-btn" id="createBtn" onclick="createRoom()">🚀 Create Auction Room</button>
+            <button class="ma-arena-btn" id="createBtn" onclick="createRoom()">🚀 Create IPL Room</button>
             <p id="createError" style="color:#cc1f1f;font-size:0.82rem;margin-top:0.5rem;display:none;"></p>
           </div>
         </div>
@@ -510,7 +501,7 @@
               </div>
               <input type="hidden" id="joinTeamId" />
             </div>
-            <button class="ma-arena-btn" id="joinBtn" onclick="joinRoom()">🚀 Join Auction</button>
+            <button class="ma-arena-btn" id="joinBtn" onclick="joinRoom()">🚀 Join IPL Room</button>
             <button class="ma-arena-btn" id="watchLiveBtn" onclick="watchLiveAuction()"
               style="margin-top:0.5rem;background:#555;">👀 Watch Live</button>
             <p id="joinError" style="color:#cc1f1f;font-size:0.82rem;margin-top:0.5rem;display:none;"></p>
@@ -751,15 +742,14 @@
   <footer class="ma-footer">
     <div class="ma-footer-grid">
       <div class="ma-footer-brand">
-        <a class="ma-logo" href="index.html">My<span style="color:#fff">Auction</span></a>
-        <p>Professional Cricket Auction Platform. Elevating the game through data-driven bidding systems.</p>
+        <a class="ma-logo" href="index.html">IPL<span style="color:#fff">Auction</span></a>
+        <p>Professional IPL auction platform. Built for focused, real-time franchise bidding.</p>
       </div>
       <div class="ma-footer-col">
         <h5>Platform</h5>
         <a href="about.html">About Us</a>
         <a href="guide.html">Auction Rules</a>
         <a href="howto.html">How To Play</a>
-        <a href="manual-setup.html">Manual Setup</a>
       </div>
       <div class="ma-footer-col">
         <h5>Legal</h5>
@@ -775,7 +765,7 @@
       </div>
     </div>
     <div class="ma-footer-bottom">
-      <span>&copy; 2026 MyAuction. Professional Cricket Auction Platform.</span>
+      <span>&copy; 2026 IPL Auction. Professional IPL Auction Platform.</span>
       <div class="ma-footer-socials">
         <a href="#">f</a>
         <a href="#">t</a>
@@ -840,7 +830,7 @@
         <button class="new-auth-submit" id="authSubmitBtn" type="submit">Login</button>
         
         <div class="new-auth-toggle">
-          <span id="authToggleText">New to MyAuction?</span> 
+          <span id="authToggleText">New to IPL Auction?</span> 
           <a href="#" id="authToggleLink" onclick="event.preventDefault(); switchAuthMode(typeof authMode!=='undefined' && authMode === 'login' ? 'signup' : 'login')">Register here</a>
         </div>
 

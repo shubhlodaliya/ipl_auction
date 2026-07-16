@@ -56,7 +56,6 @@ Use this with SEO_CONTENT_TEMPLATE_PACK.md and publish one post every week.
    - /guide.html
    - /howto.html
    - /faq.html
-   - /manual-setup.html
    - /index.html
 3. Share article on cricket groups, Discord, Telegram, and social pages.
 4. Track impressions/clicks after 7 days.
